@@ -1,0 +1,6 @@
+[computer]
+name = TinyVM a1
+
+[mmu]
+plugin = tinymmu_a1.so
+size_kb = 256

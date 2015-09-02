@@ -1,19 +1,30 @@
 from vm import VirtualMachine
+from forms.main_window import Ui_MainWindow
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QMainWindow, QAction, qApp, QFileDialog, QMessageBox, 
-    QSplitter, QHBoxLayout, QScrollArea, QTreeView, QTreeWidget, QTreeWidgetItem, QSizePolicy,
-    QWidget)
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import (QMainWindow, qApp, QFileDialog, QMessageBox, QTreeWidgetItem)
 from PyQt5.QtGui import QIcon
+
 
 class MainWindow(QMainWindow):
 
-
     def __init__(self):
-        super().__init__()
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        super(MainWindow, self).__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.setup_ui()
+        self.show()
+
+
+    def setup_ui(self):
         QIcon.setThemeName('oxygen')
-        self.init_ui()
+        # setup actions
+        self.ui.actionOpen_VM_configuration.setIcon(QIcon.fromTheme("document-open"))
+        self.ui.actionOpen_VM_configuration.triggered.connect(self.open_vm)
+        self.ui.actionQuit.setIcon(QIcon.fromTheme("application-exit"))
+        self.ui.actionQuit.triggered.connect(qApp.quit)
+        # other
+        self.ui.vmComponents.setHeaderLabels(['Component', 'Description'])
 
 
     def open_vm(self):
@@ -26,69 +37,15 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Error opening VM", str(err))
 
 
-    def init_ui(self):
-        self.setWindowTitle('TinyVM IDE')
-        self.init_menu()
-        self.init_toolbar()
-        self.center()
-        self.statusBar()
-        self.show()
-
-    
-    def init_menu(self):
-        menubar = self.menuBar()
-        file_menu = menubar.addMenu('&File')
-
-        open_vm = QAction(QIcon.fromTheme("document-open"), '&Open VM configuration...', self)
-        open_vm.triggered.connect(self.open_vm)
-        file_menu.addAction(open_vm)
-
-        file_menu.addSeparator()
-
-        exit_action = QAction(QIcon.fromTheme("exit"), '&Exit', self)
-        exit_action.triggered.connect(qApp.quit)
-        file_menu.addAction(exit_action)
-
-    
-    def init_toolbar(self):
-        toolbar = self.addToolBar('TinyVM')
-        
-        open_vm = QAction(QIcon.fromTheme("document-open"), 'Open VM configuration', self)
-        open_vm.triggered.connect(self.open_vm)
-        toolbar.addAction(open_vm)
-
-
-    def center(self):
-        # tree
-        self.vm_tree = QTreeWidget()
-        self.vm_tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        hbox = QHBoxLayout()
-        hbox.addWidget(self.vm_tree)
-
-        w = QWidget()
-        w.setLayout(hbox)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(w)
-
-        # splitter
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(scroll)
-
-        scroll = QScrollArea(splitter)
-
-        hbox = QHBoxLayout()
-        hbox.addWidget(splitter)
-
-        w = QWidget()
-        w.setLayout(hbox)
-        self.setCentralWidget(w)
-
-
     def configure_for_new_vm(self):
-        pass
+        # TODO - close all tabs, clear tree
+        vmc = self.ui.vmComponents
+        vm = QTreeWidgetItem(vmc, ['Computer', self.vm.name])
+        vm.setExpanded(True)
+        vm.setIcon(0, QIcon.fromTheme("computer"))
+        mem = QTreeWidgetItem(vm, ['Memory', self.vm.mmu.name + ' (' + self.vm.mmu.physical_size_str + ')'])
+        mem.setIcon(0, QIcon.fromTheme("media-flash-memory-stick"))
+
 
 
 # vim: ts=4:sw=4:sts=4:expandtab
