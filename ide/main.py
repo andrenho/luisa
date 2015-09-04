@@ -1,6 +1,8 @@
 from vm import VirtualMachine
 
-from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QFileDialog, QMessageBox
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QMainWindow, QAction, qApp, QFileDialog, QMessageBox, 
+    QSplitter, QHBoxLayout, QScrollArea, QTreeView, QTreeWidget)
 from PyQt5.QtGui import QIcon
 
 class MainWindow(QMainWindow):
@@ -10,6 +12,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         QIcon.setThemeName('oxygen')
         self.init_ui()
+        self.configure_for_new_vm()
 
 
     def open_vm(self):
@@ -54,6 +57,10 @@ class MainWindow(QMainWindow):
 
 
     def configure_for_new_vm(self):
-        pass
+        splitter = QSplitter(Qt.Vertical)
+        scroll = QScrollArea(splitter)
+        self.vm_tree = QTreeWidget(scroll)
+        self.setCentralWidget(splitter)
+
 
 # vim: ts=4:sw=4:sts=4:expandtab
