@@ -7,11 +7,12 @@ class MMU:
         self.size = config['mmu']['size_kb']
         self.physical_size_str = '{0} kB'.format(self.size)
         self.plugin = CDLL('./' + config['mmu']['plugin'])
+
+    def name(self):
         get_name = self.plugin.mmu_name
         get_name.restype = c_char_p
         get_name.argtypes = []
-        print(get_name())
-        self.name = ''
+        return get_name().decode('utf-8')
 
 
 class VirtualMachine:

@@ -39,13 +39,26 @@ class MainWindow(QMainWindow):
 
     def configure_for_new_vm(self):
         # TODO - close all tabs, clear tree
+
         vmc = self.ui.vmComponents
+        vmc.itemDoubleClicked.connect(self.vm_component_selected)
+
+        # vm
         vm = QTreeWidgetItem(vmc, ['Computer', self.vm.name])
         vm.setExpanded(True)
-        vm.setIcon(0, QIcon.fromTheme("computer"))
-        mem = QTreeWidgetItem(vm, ['Memory', self.vm.mmu.name + ' (' + self.vm.mmu.physical_size_str + ')'])
-        mem.setIcon(0, QIcon.fromTheme("media-flash-memory-stick"))
+        vm.setIcon(0, QIcon.fromTheme('computer'))
 
+        # memory
+        mem = QTreeWidgetItem(vm, ['Memory', self.vm.mmu.name() + ' (' + self.vm.mmu.physical_size_str + ')'])
+        mem.setIcon(0, QIcon.fromTheme('media-flash-memory-stick'))
+        pmem = QTreeWidgetItem(mem, ['Physical memory debugger'])
+        pmem.setIcon(0, QIcon.fromTheme('ksudoku'))
+        mem.setExpanded(True)
+
+
+    def vm_component_selected(self, item, column):
+        print(item)
+        print(column)
 
 
 # vim: ts=4:sw=4:sts=4:expandtab
