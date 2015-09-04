@@ -1,8 +1,11 @@
 from vm import VirtualMachine
+from page import Page
+from physical_memory import PhysicalMemory
+
 from forms.main_window import Ui_MainWindow
 
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import (QMainWindow, qApp, QFileDialog, QMessageBox, QTreeWidgetItem)
+from PyQt5.QtWidgets import (QMainWindow, qApp, QFileDialog, QMessageBox, QTreeWidgetItem, QWidget, QFrame, QHBoxLayout)
 from PyQt5.QtGui import QIcon
 
 
@@ -25,6 +28,7 @@ class MainWindow(QMainWindow):
         self.ui.actionQuit.triggered.connect(qApp.quit)
         # other
         self.ui.vmComponents.setHeaderLabels(['Component', 'Description'])
+        self.ui.vmComponents.setColumnWidth(0, 300)
 
 
     def open_vm(self):
@@ -53,12 +57,19 @@ class MainWindow(QMainWindow):
         mem.setIcon(0, QIcon.fromTheme('media-flash-memory-stick'))
         pmem = QTreeWidgetItem(mem, ['Physical memory debugger'])
         pmem.setIcon(0, QIcon.fromTheme('ksudoku'))
+        pmem.double_click_open = PhysicalMemory
         mem.setExpanded(True)
 
 
     def vm_component_selected(self, item, column):
-        print(item)
-        print(column)
+        try:
+            frame = item.double_click_open()
+            w = QWidget()
+            h = QHBoxLayout(w)
+            h.addWidget(Page(frame))
+            self.ui.tabs.addTab(w, frame.name())
+        except AttributeError:
+            pass
 
 
 # vim: ts=4:sw=4:sts=4:expandtab
