@@ -2,7 +2,8 @@ from vm import VirtualMachine
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QAction, qApp, QFileDialog, QMessageBox, 
-    QSplitter, QHBoxLayout, QScrollArea, QTreeView, QTreeWidget)
+    QSplitter, QHBoxLayout, QScrollArea, QTreeView, QTreeWidget, QTreeWidgetItem, QSizePolicy,
+    QWidget)
 from PyQt5.QtGui import QIcon
 
 class MainWindow(QMainWindow):
@@ -10,9 +11,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         QIcon.setThemeName('oxygen')
         self.init_ui()
-        self.configure_for_new_vm()
 
 
     def open_vm(self):
@@ -26,9 +27,10 @@ class MainWindow(QMainWindow):
 
 
     def init_ui(self):
+        self.setWindowTitle('TinyVM IDE')
         self.init_menu()
         self.init_toolbar()
-        self.setWindowTitle('TinyVM IDE')
+        self.center()
         self.statusBar()
         self.show()
 
@@ -56,11 +58,37 @@ class MainWindow(QMainWindow):
         toolbar.addAction(open_vm)
 
 
-    def configure_for_new_vm(self):
-        splitter = QSplitter(Qt.Vertical)
+    def center(self):
+        # tree
+        self.vm_tree = QTreeWidget()
+        self.vm_tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.vm_tree)
+
+        w = QWidget()
+        w.setLayout(hbox)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(w)
+
+        # splitter
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.addWidget(scroll)
+
         scroll = QScrollArea(splitter)
-        self.vm_tree = QTreeWidget(scroll)
-        self.setCentralWidget(splitter)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(splitter)
+
+        w = QWidget()
+        w.setLayout(hbox)
+        self.setCentralWidget(w)
+
+
+    def configure_for_new_vm(self):
+        pass
 
 
 # vim: ts=4:sw=4:sts=4:expandtab
