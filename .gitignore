@@ -32,7 +32,7 @@
 *.dSYM/
 
 # python
-__pycache__
+__pycache__/
 
 # vim
 .*.swo
