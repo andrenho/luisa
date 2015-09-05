@@ -20,9 +20,9 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setup_ui()
-        self.setup_pages()
         if vm:
             self.vm = VirtualMachine(vm)
+            self.setup_pages()
             self.configure_for_new_vm()
         self.show()
 
@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
             'Physical Memory': PhysicalMemory,
         }
         for name, p in pg.items():
-            frame = p()
+            frame = p(self.vm)
             w = QWidget()
             w.page = Page(frame, self.ui.tabs)
             h = QHBoxLayout(w)
@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         if fname != '':
             try:
                 self.vm = VirtualMachine(fname)
+                self.setup_pages()
                 self.configure_for_new_vm()
             except Exception as err:
                 QMessageBox.critical(self, "Error opening VM", str(err))

@@ -4,15 +4,22 @@ from ctypes import *
 class MMU:
 
     def __init__(self, config):
-        self.size = config['mmu']['size_kb']
-        self.physical_size_str = '{0} kB'.format(self.size)
         self.plugin = CDLL('./' + config['mmu']['plugin'])
+        self.plugin.mmu_init(int(config['mmu']['size_kb']) * 1024)
+        self.size = self.plugin.mmu_ph_size()
+        self.physical_size_str = '{0} kB'.format(self.size / 1024)
 
     def name(self):
         get_name = self.plugin.mmu_name
         get_name.restype = c_char_p
         get_name.argtypes = []
         return get_name().decode('utf-8')
+
+    def get8(self, pos):
+        if pos < self.size:
+            return self.plugin.mmu_ph_get8(pos)
+        else:
+            return None
 
 
 class VirtualMachine:
