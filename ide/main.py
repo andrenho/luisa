@@ -11,11 +11,19 @@ from PyQt5.QtGui import QIcon
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    # 
+    # CONSTRUCT UI
+    #
+
+    def __init__(self, vm=None):
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setup_ui()
+        self.setup_pages()
+        if vm:
+            self.vm = VirtualMachine(vm)
+            self.configure_for_new_vm()
         self.show()
 
 
@@ -29,9 +37,29 @@ class MainWindow(QMainWindow):
         # other
         self.ui.vmComponents.setHeaderLabels(['Component', 'Description'])
         self.ui.vmComponents.setColumnWidth(0, 300)
+        self.ui.tabs.tabCloseRequested.connect(lambda i: self.ui.tabs.removeTab(i))
 
+
+    def setup_pages(self):
+        '''Create all tab pages. New pages need to be added here.'''
+        self.pages_w = {}
+        pg = {
+            'Physical Memory': PhysicalMemory,
+        }
+        for name, p in pg.items():
+            frame = p()
+            w = QWidget()
+            w.page = Page(frame, self.ui.tabs)
+            h = QHBoxLayout(w)
+            h.addWidget(w.page)
+            self.pages_w[name] = w
+
+    # 
+    # ACTIONS
+    #
 
     def open_vm(self):
+        '''Open a new virtual machine.'''
         fname = QFileDialog.getOpenFileName(self, filter='VM Configuration (*.tinyvm);;All files (*)')[0]
         if fname != '':
             try:
@@ -42,6 +70,7 @@ class MainWindow(QMainWindow):
 
 
     def configure_for_new_vm(self):
+        '''Configure the UI to receive a newly loaded VM.'''
         # TODO - close all tabs, clear tree
 
         vmc = self.ui.vmComponents
@@ -57,17 +86,17 @@ class MainWindow(QMainWindow):
         mem.setIcon(0, QIcon.fromTheme('media-flash-memory-stick'))
         pmem = QTreeWidgetItem(mem, ['Physical memory debugger'])
         pmem.setIcon(0, QIcon.fromTheme('ksudoku'))
-        pmem.double_click_open = PhysicalMemory
+        pmem.option = 'Physical Memory'
         mem.setExpanded(True)
 
+    # 
+    # SIGNALS
+    #
 
     def vm_component_selected(self, item, column):
+        '''Called when a component is double clicked in the component tree.'''
         try:
-            frame = item.double_click_open()
-            w = QWidget()
-            h = QHBoxLayout(w)
-            h.addWidget(Page(frame))
-            self.ui.tabs.addTab(w, frame.name())
+            self.pages_w[item.option].page.attach()
         except AttributeError:
             pass
 

@@ -9,8 +9,10 @@ class PhysicalMemory(QFrame):
         self.ui = Ui_PhysicalMemory()
         self.ui.setupUi(self)
     
+
     def name(self):
         return 'Physical Memory'
+
 
     def icon(self):
         return 'ksudoku'
