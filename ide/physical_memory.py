@@ -2,6 +2,7 @@ from forms.physical_memory import Ui_PhysicalMemory
 
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtCore import QAbstractTableModel, Qt, QSize
+from PyQt5.QtGui import QBrush, QColor
 
 
 class MemoryModel(QAbstractTableModel):
@@ -17,13 +18,16 @@ class MemoryModel(QAbstractTableModel):
 
 
     def columnCount(self, parent):
-        return 16
+        return 17
 
 
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
-                return '_' + ('%X' % section)
+                if section == 16:
+                    return 'Data'
+                else:
+                    return '_' + ('%X' % section)
             else:
                 return ('%07X' % (section * 0x10)) + '_'
         else:
@@ -32,16 +36,32 @@ class MemoryModel(QAbstractTableModel):
 
     def data(self, index, role):
         if role == Qt.DisplayRole:
-            pos = index.row() * 0x10 + index.column()
-            v = self.mmu.get8(pos)
-            return '%02X' % v
+            if index.column() < 16:
+                pos = index.row() * 0x10 + index.column()
+                v = self.mmu.get8(pos)
+                return '%02X' % v
+            else:
+                s = ['.'] * 16
+                pos = index.row() * 0x10
+                for i in range(0,16):
+                    v = self.mmu.get8(pos+i)
+                    if v >= 32 and v < 127:
+                        s[i] = chr(v)
+                return ''.join(s)
         elif role == Qt.ToolTipRole:
-            pos = index.row() * 0x10 + index.column()
-            return '0x%08X' % pos
+            if index.column() < 16:
+                pos = index.row() * 0x10 + index.column()
+                return '0x%08X' % pos
+            else:
+                return None
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignHCenter | Qt.AlignVCenter
-        #elif role == Qt::BackgroundRole:
-            # TODO - last position
+        elif role == Qt.BackgroundRole:
+            pos = index.row() * 0x10 + index.column()
+            if self.mmu.changed_last_step(pos):
+                return QBrush(QColor(255, 196, 196))
+            else:
+                return None
         else:
             return None
 
@@ -62,10 +82,14 @@ class PhysicalMemory(QFrame):
 
 
     def setup_ui(self):
-        self.ui.table.setModel(MemoryModel(self.vm.mmu))
+        mm = MemoryModel(self.vm.mmu)
+        self.ui.table.setModel(mm)
         for i in range(0,16):
             self.ui.table.setColumnWidth(i, 27)
-    
+        self.ui.table.setColumnWidth(16, 140)
+        go_to = lambda: self.ui.table.scrollTo(\
+            mm.createIndex(self.ui.position.value(), 0, 0))
+        self.ui.position.editingFinished.connect(go_to)
     
     # 
     # INFORMATION

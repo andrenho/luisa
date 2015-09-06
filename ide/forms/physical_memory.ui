@@ -43,7 +43,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spinBox">
+      <widget class="QSpinBox" name="position">
        <property name="wrapping">
         <bool>false</bool>
        </property>
@@ -64,13 +64,6 @@
        </property>
        <property name="displayIntegerBase">
         <number>16</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string>Go to</string>
        </property>
       </widget>
      </item>

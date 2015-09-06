@@ -21,6 +21,9 @@ class MMU:
         else:
             return None
 
+    def changed_last_step(self, pos):
+        return True if self.plugin.mmu_ph_changed_last_step(pos) == 1 else False
+
 
 class VirtualMachine:
     

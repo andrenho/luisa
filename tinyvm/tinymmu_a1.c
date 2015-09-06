@@ -26,6 +26,15 @@ uint64_t mmu_ph_size()
 }
 
 
+int mmu_ph_changed_last_step(uint64_t pos)
+{
+    if(pos == 0x12)
+        return 1;
+    else
+        return 0;
+}
+
+
 uint8_t mmu_ph_get8(uint64_t pos)
 {
     return ph[pos];
