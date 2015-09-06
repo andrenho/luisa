@@ -21,6 +21,13 @@ class MemoryModel(QAbstractTableModel):
         return 17
 
 
+    def flags(self, index):
+        if index.column() < 16:
+            return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+        else:
+            return Qt.ItemIsEnabled
+
+
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
@@ -35,7 +42,7 @@ class MemoryModel(QAbstractTableModel):
 
 
     def data(self, index, role):
-        if role == Qt.DisplayRole:
+        if role == Qt.DisplayRole or role == Qt.EditRole:
             if index.column() < 16:
                 pos = index.row() * 0x10 + index.column()
                 v = self.mmu.get8(pos)
@@ -65,6 +72,17 @@ class MemoryModel(QAbstractTableModel):
         else:
             return None
 
+    def setData(self, index, value, role):
+        pos = index.row() * 0x10 + index.column()
+        try:
+            v = int(value, 16)
+            if v >= 0x0 and v <= 0xff:
+                self.mmu.set8(pos, v)
+                return True
+            else:
+                return False
+        except ValueError:
+            return False
 
 
 class PhysicalMemory(QFrame):

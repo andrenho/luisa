@@ -39,6 +39,7 @@ class Ui_PhysicalMemory(object):
         font.setPointSize(10)
         self.table.setFont(font)
         self.table.setAlternatingRowColors(True)
+        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.table.setGridStyle(QtCore.Qt.SolidLine)
         self.table.setObjectName("table")

@@ -28,16 +28,20 @@ uint64_t mmu_ph_size()
 
 int mmu_ph_changed_last_step(uint64_t pos)
 {
-    if(pos == 0x12)
-        return 1;
-    else
-        return 0;
+    (void) pos;
+    return 0; // TODO
 }
 
 
 uint8_t mmu_ph_get8(uint64_t pos)
 {
     return ph[pos];
+}
+
+
+void mmu_ph_set8(uint64_t pos, uint8_t data)
+{
+    ph[pos] = data;
 }
 
 

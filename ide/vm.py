@@ -21,6 +21,10 @@ class MMU:
         else:
             return None
 
+    def set8(self, pos, data):
+        if pos < self.size:
+            return self.plugin.mmu_ph_set8(pos, data)
+
     def changed_last_step(self, pos):
         return True if self.plugin.mmu_ph_changed_last_step(pos) == 1 else False
 
