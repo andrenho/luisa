@@ -35,6 +35,8 @@ TRFFile::GenerateBinary() const
     d.insert(end(d), begin(bss), end(bss));
     d.insert(end(d), begin(data), end(data));
     d.insert(end(d), begin(rodata), end(rodata));
+    d.insert(end(d), begin(comment), end(comment));
+    d.insert(end(d), begin(strtab), end(strtab));
 
     // TODO - others...
 
