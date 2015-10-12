@@ -2,15 +2,18 @@
 #define LIBTRF_H_
 
 #include <cstdint>
+
 #include <array>
 #include <string>
+#include <type_traits>
 #include <vector>
 using namespace std;
 
 class TRFFile {
     
+    enum class FileType : uint8_t { OBJECT=0, EXECUTABLE, KERNEL, LIBRARY };
+
     struct Header {
-        enum class FileType : uint8_t { OBJECT=0, EXECUTABLE, KERNEL, LIBRARY };
         uint8_t  header[4];
         uint8_t  trf_version;
         uint8_t  cpu_version;
@@ -46,12 +49,15 @@ public:
 
     vector<uint8_t> GenerateBinary() const;
 
-private:
+    Header header;
     vector<uint8_t> text, bss, data, rodata;
     string comment, strtab;
     vector<Symbol> symtab;
     vector<Reloc> reloc;
     vector<uint8_t> debug;
+
+private:
+    array<Section, 16> BuildSections() const;
 };
 
 #endif
