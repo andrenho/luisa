@@ -10,14 +10,19 @@
 using namespace std;
 
 class TRFFile {
+public:
     
-    enum class FileType : uint8_t { OBJECT=0, EXECUTABLE, KERNEL, LIBRARY };
+    // 
+    // STRUCTURE
+    //
+
+    enum class ObjectType : uint8_t { OBJECT=0, EXECUTABLE, KERNEL, LIBRARY };
 
     struct Header {
         uint8_t  header[4];
         uint8_t  trf_version;
         uint8_t  cpu_version;
-        FileType filetype;
+        ObjectType obj_type;
         uint8_t  reserved1;
         uint32_t entry_point;
         uint32_t reserved2;
@@ -31,12 +36,12 @@ class TRFFile {
     };
 
     struct Symbol {
-        enum class SymbolType : uint8_t { GLOBAL=0, LOCAL, EXTERN, PENDING };
-        SymbolType type;
-        uint8_t    unused1;
-        uint16_t   unused2;
-        uint32_t   str_idx;
-        uint32_t   str_len;
+        enum class Scope : uint8_t { GLOBAL=0, LOCAL, EXTERN, GLOBAL_PENDING, LOCAL_PENDING };
+        Scope  symbol_type;
+        SectionType section;
+        uint16_t    unused;
+        uint32_t    str_idx;
+        uint32_t    str_len;
     };
 
     struct Reloc {
@@ -44,10 +49,19 @@ class TRFFile {
         uint32_t index;
     };
 
-public:
+    // 
+    // METHODS / ATTRIBUTES
+    //
+
     TRFFile();
 
-    vector<uint8_t> GenerateBinary() const;
+    vector<uint8_t> GenerateBinary();
+
+    inline void SetObjectType(ObjectType t) { header.obj_type = t; }
+    inline void SetEntryPoint(uint32_t p) { header.entry_point = p; }
+
+    void AddTextReloc(string const& symbol_name);
+    void AddSymbol(SectionType section, string const& symbol_name, Symbol::Scope scope);
 
     Header header;
     vector<uint8_t> text, bss, data, rodata;
@@ -58,6 +72,7 @@ public:
 
 private:
     array<Section, 16> BuildSections() const;
+    void ResolveSymbols();
 };
 
 #endif

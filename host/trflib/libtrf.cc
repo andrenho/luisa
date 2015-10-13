@@ -3,17 +3,19 @@
 #include <cstring>
 
 TRFFile::TRFFile()
-    : header({ { 0x7F, 'T', 'R', 'F' }, 0x1, 0x1, FileType::OBJECT, 0, 0x0, 0 })
+    : header({ { 0x7F, 'T', 'R', 'F' }, 0x1, 0x1, ObjectType::OBJECT, 0, 0x0, 0 })
 {
 }
 
     
 vector<uint8_t> 
-TRFFile::GenerateBinary() const
+TRFFile::GenerateBinary()
 {
     static_assert(is_pod<Header>::value, "Header must be POD");
     static_assert(is_pod<Section>::value, "Section must be POD");
     static_assert(sizeof(Section) == 8, "Invalid section size");
+
+    ResolveSymbols();
 
     vector<uint8_t> d;
 
@@ -49,6 +51,22 @@ TRFFile::GenerateBinary() const
     return d;
 }
 
+
+void 
+TRFFile::AddTextReloc(string const& symbol_name)
+{
+}
+
+
+void 
+TRFFile::AddSymbol(SectionType section, string const& symbol_name, Symbol::Scope scope)
+{
+}
+
+
+// 
+// PRIVATE
+//
 
 array<TRFFile::Section, 16> 
 TRFFile::BuildSections() const
@@ -113,6 +131,12 @@ TRFFile::BuildSections() const
     }
 
     return sections;
+}
+
+
+void
+TRFFile::ResolveSymbols()
+{
 }
 
 
