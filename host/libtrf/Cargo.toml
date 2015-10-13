@@ -1,0 +1,4 @@
+[package]
+name = "libtrf"
+version = "0.1.0"
+authors = ["André Wagner <andre.nho@gmail.com>"]
