@@ -1,6 +1,8 @@
 #![cfg_attr(test, allow(dead_code))]
 
 use std::vec::Vec;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 // 
 // BINARY FILE
@@ -38,12 +40,15 @@ impl Binary {
 
     pub fn data(&self) -> Vec<u8> { self.data.clone() }
 
+    pub fn len(&self) -> u32 { self.data.len() as u32 }
+
 }
 
 // 
 // STRUCTURES
 //
 
+#[derive(Clone,Copy)]
 pub enum Scope {
     Global = 0, Local = 1, Extern = 2, PendingGlobal = 3, PendingLocal = 4,
 }
@@ -53,13 +58,27 @@ pub enum ObjectType {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Clone,Copy)]
 pub enum Section {
     text = 0, bss = 1, data = 2, rodata = 3, comment = 4, strtab = 5, symtab = 6, reloc = 7, debug = 8
 }
 
+struct Sym {
+    name:    String,
+    scope:   Scope,
+    section: Section,
+    reloc:   Vec<u32>
+}
+
+
 // 
 // TRF file
 //
+
+struct Symbol {
+    scope: Scope,
+    section: Section
+}
 
 pub struct TRFFile {
     pub entry_point: u32,
@@ -70,6 +89,8 @@ pub struct TRFFile {
     pub rodata:  Binary,
     pub comment: Binary,
     pub debug:   Binary,
+    relocations: HashMap<String, Vec<u32>>,
+    symbols:     HashMap<String, Symbol>,
 }
 
 
@@ -79,26 +100,31 @@ impl TRFFile {
         TRFFile {
             entry_point: 0x0,
             object_type: ObjectType::Object,
-            text:    Binary::new(),
-            bss:     Binary::new(),
-            data:    Binary::new(),
-            rodata:  Binary::new(),
-            comment: Binary::new(),
-            debug:   Binary::new(),
+            text:        Binary::new(),
+            bss:         Binary::new(),
+            data:        Binary::new(),
+            rodata:      Binary::new(),
+            comment:     Binary::new(),
+            debug:       Binary::new(),
+            relocations: HashMap::new(),
+            symbols:     HashMap::new(),
         }
     }
 
 
     pub fn add_text_reloc(&mut self, symbol: &str) {
+        let mut v = self.relocations.entry(symbol.to_string()).or_insert(vec![]);
+        v.push(self.text.len());
     }
 
 
     pub fn add_symbol(&mut self, section: Section, symbol: &str, scope: Scope) {
+        let mut v = self.symbols.entry(symbol.to_string())
+                        .or_insert(Symbol { scope: scope, section: section });
     }
 
 
     pub fn generate_binary(&self) -> Vec<u8> {
-        let f = self.resolve_symbols();
         let mut b = Binary::new();
 
         // header
@@ -107,17 +133,17 @@ impl TRFFile {
         b.push8(0x01);      // CPU version
         b.push8(0x00);      // object type (TODO)
         b.push8(0x00);      // reserved
-        b.push32(f.entry_point);
+        b.push32(self.entry_point);
         b.push32(0x00);     // reserved
 
         // crate symbol sections
-        let (strtab, symtab, reloc) = f.create_symbol_tables();
+        let (strtab, symtab, reloc) = self.create_symbol_tables();
 
         let empty = Binary::new();
-        let sections = vec![&f.text,    &f.bss,  &f.data, &f.rodata,
-                            &f.comment, &strtab, &symtab, &reloc,
-                            &f.debug,   &empty,  &empty,  &empty,
-                            &empty,     &empty,  &empty,  &empty];
+        let sections = vec![&self.text,    &self.bss, &self.data, &self.rodata,
+                            &self.comment, &strtab,   &symtab,    &reloc,
+                            &self.debug,   &empty,    &empty,     &empty,
+                            &empty,        &empty,    &empty,     &empty];
 
         // add section index
         let mut pos = 0x74;
@@ -144,13 +170,34 @@ impl TRFFile {
         let strtab = Binary::new();
         let symtab = Binary::new();
         let reloc = Binary::new();
+        
+        let (resolved, unresolved) = self.resolve_symbols();
+
+        // TODO
+        for r in &resolved { println!("resolved: {}", r.name); }
+        for r in &unresolved { println!("unresolved: {}", r.0); }
 
         (strtab, symtab, reloc)
     }
 
 
-    fn resolve_symbols(&self) -> &TRFFile {
-        self.clone()
+    fn resolve_symbols(&self) -> (Vec<Sym>, Vec<(String, Vec<u32>)>) {
+        let mut resolved = vec![];
+        let mut unresolved = vec![];
+        
+        for (name, relocs) in &self.relocations {
+            match self.symbols.get(name) {
+                Some(s) => resolved.push(Sym { 
+                               name: name.clone(), 
+                               scope: s.scope, 
+                               section: s.section, 
+                               reloc: relocs.clone() 
+                            }),
+                None => unresolved.push((name.clone(), relocs.clone())),
+            }
+        }
+
+        (resolved, unresolved)
     }
 
 }
