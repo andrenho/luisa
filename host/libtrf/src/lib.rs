@@ -2,6 +2,7 @@
 
 use std::vec::Vec;
 use std::collections::HashMap;
+use std::mem;
 
 //
 // HELPER FUNCTIONS
@@ -59,17 +60,20 @@ impl Binary {
 //
 
 #[derive(Clone,Copy,PartialEq,Eq,Debug)]
+#[repr(u8)]
 pub enum Scope {
     Global = 0, Local = 1, Extern = 2, PendingGlobal = 3, PendingLocal = 4,
 }
 
 #[derive(Clone,Copy,PartialEq,Eq,Debug)]
+#[repr(u8)]
 pub enum ObjectType {
     Object = 0, Executable = 1, Kernel = 2, Library = 3
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Clone,Copy,PartialEq,Eq,Debug)]
+#[repr(u8)]
 pub enum Section {
     text = 0, bss = 1, data = 2, rodata = 3, comment = 4, strtab = 5, symtab = 6, reloc = 7, debug = 8
 }
@@ -158,15 +162,37 @@ impl TRFFile {
         }
 
         // symbols and relocations
-        let strtab_pos = get32(&d, 0x38);
-        let strtab_sz  = get32(&d, 0x3C);
-        let symtab_pos = get32(&d, 0x40);
-        let symtab_sz  = get32(&d, 0x44);
-        let reloc_pos  = get32(&d, 0x48);
-        let reloc_sz   = get32(&d, 0x4C);
+        let strtab_pos = get32(&d, 0x38) as usize;
+        let strtab_sz  = get32(&d, 0x3C) as usize;
+        let symtab_pos = get32(&d, 0x40) as usize;
+        let symtab_sz  = get32(&d, 0x44) as usize;
+        let reloc_pos  = get32(&d, 0x48) as usize;
+        let reloc_sz   = get32(&d, 0x4C) as usize;
 
         for i in 0..(symtab_sz / 12) {
-            
+            let scope = match d[symtab_pos + (i*12)] {
+                0x0 => Scope::Global,
+                0x1 => Scope::Local,
+                0x2 => Scope::Extern,
+                _   => panic!("Invalid scope")
+            };
+            let section = match d[symtab_pos + (i*12) + 1] {
+                0x0 => Section::text,
+                0x1 => Section::bss,
+                0x2 => Section::data,
+                0x3 => Section::rodata,
+                0x4 => Section::comment,
+                0x5 => Section::strtab,
+                0x6 => Section::symtab,
+                0x7 => Section::reloc,
+                0x8 => Section::debug,
+                _   => panic!("Invalid section")
+            };
+            let str_idx = get32(&d, symtab_pos as u32 + (i as u32 *12) + 4) as usize;
+            let str_len = get32(&d, symtab_pos as u32 + (i as u32 *12) + 8) as usize;
+            let name = String::from_utf8_lossy(&d[(strtab_pos + str_idx)..(strtab_pos + str_idx + str_len)]).into_owned();
+
+            t.symbols.insert(name, Symbol { scope: scope, section: section });
         }
 
         t
