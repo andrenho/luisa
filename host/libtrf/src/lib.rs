@@ -2,7 +2,6 @@
 
 use std::vec::Vec;
 use std::collections::HashMap;
-use std::mem;
 
 //
 // HELPER FUNCTIONS
@@ -163,12 +162,12 @@ impl TRFFile {
 
         // symbols and relocations
         let strtab_pos = get32(&d, 0x38) as usize;
-        let strtab_sz  = get32(&d, 0x3C) as usize;
         let symtab_pos = get32(&d, 0x40) as usize;
         let symtab_sz  = get32(&d, 0x44) as usize;
         let reloc_pos  = get32(&d, 0x48) as usize;
         let reloc_sz   = get32(&d, 0x4C) as usize;
 
+        let mut names : Vec<String> = vec![];
         for i in 0..(symtab_sz / 12) {
             let scope = match d[symtab_pos + (i*12)] {
                 0x0 => Scope::Global,
@@ -188,11 +187,18 @@ impl TRFFile {
                 0x8 => Section::debug,
                 _   => panic!("Invalid section")
             };
-            let str_idx = get32(&d, symtab_pos as u32 + (i as u32 *12) + 4) as usize;
-            let str_len = get32(&d, symtab_pos as u32 + (i as u32 *12) + 8) as usize;
+            let str_idx = get32(&d, symtab_pos as u32 + (i as u32 * 12) + 4) as usize;
+            let str_len = get32(&d, symtab_pos as u32 + (i as u32 * 12) + 8) as usize;
             let name = String::from_utf8_lossy(&d[(strtab_pos + str_idx)..(strtab_pos + str_idx + str_len)]).into_owned();
 
+            names.push(name.clone());
             t.symbols.insert(name, Symbol { scope: scope, section: section });
+        }
+
+        for i in 0..(reloc_sz / 8) {
+            let offset = get32(&d, reloc_pos as u32 + (i as u32 * 8));
+            let index = get32(&d, (reloc_pos as u32 + (i as u32 * 8) + 4)) as usize;
+            t.relocations.entry(names[index].clone()).or_insert(vec![]).push(offset);
         }
 
         t
@@ -343,6 +349,7 @@ impl TRFFile {
 mod tests {
     use super::*;
 
+
     #[test]
     fn binary_file() {
         let mut b = Binary::new();
@@ -358,6 +365,7 @@ mod tests {
         b.push_str("ABC");
         assert_eq!(b.data(), vec!['A' as u8, 'B' as u8, 'C' as u8]);
     }
+
 
     #[test]
     fn empty_file() {
@@ -416,6 +424,7 @@ mod tests {
         ];
         assert_eq!(f.generate_binary(), bin);
     }
+
 
     #[test]
     fn complete_file() {
@@ -499,6 +508,7 @@ mod tests {
         assert_eq!(f.generate_binary(), bin);
     }
 
+
     #[test]
     #[should_panic]
     fn from_invalid_bin() {
@@ -578,10 +588,38 @@ mod tests {
                                    0x22, 0x1A, 0x00, 0x00, 0xF0, 0x01 ]);
         assert_eq!(f.rodata.data, &[ 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x21 ]);
 
+        assert_eq!(f.symbols.len(), 1);
         assert_eq!(f.symbols.get("hello"), Some(&Symbol { scope: Scope::Local, section: Section::rodata }));
+
+        assert_eq!(f.relocations.len(), 1);
         assert_eq!(f.relocations.get("hello"), Some(&vec![ 0x5 ]));
 
         assert_eq!(f.generate_binary(), bin);
+    }
+
+
+    #[test]
+    fn join_binaries() {
+    
+        // create binary 1
+
+        let mut f = TRFFile::new();
+        f.object_type = ObjectType::Object;
+        f.add_text_reloc("hello");
+        f.add_symbol(Section::rodata, "world", Scope::Global);
+        f.rodata.push_vec(vec![ 0x65 ]);
+
+        // create binary 2
+
+        let mut j = TRFFile::new();
+        j.object_type = ObjectType::Object;
+        j.add_text_reloc("world");
+        j.add_symbol(Section::rodata, "hello", Scope::Global);
+        j.rodata.push_vec(vec![ 0xAF ]);
+
+        // join binaries
+        
+        // let mut k = f.join(j);
     }
 }
 
