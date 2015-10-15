@@ -144,6 +144,33 @@ TRFFile::CreateSymbolSections()
             }
         }
     }
+
+    // find pending symbols
+    for(auto const& kv: relocs) {
+        if(symbols.find(kv.first) == end(symbols)) {
+            // not in the symbol table: this means that this symbol is pending
+
+            // strtab
+            uint32_t stridx = sections[STRTAB].size();
+            for(uint8_t c: kv.first) { sections[STRTAB].push_back(c); }
+
+            // symbtab
+            uint32_t symidx = sections[SYMTAB].size() / 12;  // 12 is the size of each symtab record
+            sections[SYMTAB].push_back(3);  /* pending */
+            sections[SYMTAB].push_back(0);
+            sections[SYMTAB].push_back(0);
+            sections[SYMTAB].push_back(0);
+            push32(sections[SYMTAB], stridx);
+            push32(sections[SYMTAB], kv.first.size());
+            
+            // reloc
+            for(auto const& pos: kv.second) {
+                push32(sections[RELOC], pos);
+                push32(sections[RELOC], symidx);
+            }
+
+        }
+    }
 }
 
 void 
