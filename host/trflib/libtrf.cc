@@ -37,6 +37,10 @@ TRFFile::GenerateBinary() const
     d.insert(end(d), begin(rodata), end(rodata));
     d.insert(end(d), begin(comment), end(comment));
     d.insert(end(d), begin(strtab), end(strtab));
+    
+    d.resize(d.
+    pos = d.size(); memcpy(&d.data()[pos], symtab.data(), symtab.size() * sizeof(Symbol));
+    pos = d.size(); memcpy(&d.data()[pos], symtab.data(), symtab.size() * sizeof(Symbol));
 
     // TODO - others...
 
