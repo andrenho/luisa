@@ -38,11 +38,13 @@ TRFFile::GenerateBinary() const
     d.insert(end(d), begin(comment), end(comment));
     d.insert(end(d), begin(strtab), end(strtab));
     
-    d.resize(d.
-    pos = d.size(); memcpy(&d.data()[pos], symtab.data(), symtab.size() * sizeof(Symbol));
-    pos = d.size(); memcpy(&d.data()[pos], symtab.data(), symtab.size() * sizeof(Symbol));
+    pos = d.size();
+    d.resize(d.size() + (symtab.size() * sizeof(Symbol)) + (reloc.size() * sizeof(Reloc)));
+    memcpy(&d.data()[pos], symtab.data(), symtab.size() * sizeof(Symbol));
+    pos += symtab.size() * sizeof(Symbol);
+    memcpy(&d.data()[pos], reloc.data(), reloc.size() * sizeof(Reloc));
 
-    // TODO - others...
+    d.insert(end(d), begin(debug), end(debug));
 
     return d;
 }
