@@ -1,7 +1,8 @@
 {
   "preset": "airbnb",
-  "esnext": true
-  //'requireSpaceAfterKeywords': false,
-  //'validateIndentation': false,
-  //'disallowTrailingWhitespace': false,
+  "esnext": true,
+
+  "disallowMultipleLineBreaks": false,
+  "requirePaddingNewLinesAfterBlocks": false,
+  "requirePaddingNewLinesBeforeLineComments": false,
 }

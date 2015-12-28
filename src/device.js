@@ -1,15 +1,4 @@
-import LSBStorage from 'lsbstorage';
-
-export const DeviceType = {
-  MMU:          0x00,
-  CPU:          0x01,
-  VIDEO:        0x02,
-  DISK:         0x03,
-  KEYBOARD:     0x04,
-  OTHER_INPUT:  0xFE,
-  OTHER_OUTPUT: 0xFF,
-};
-
+import LSBStorage from './lsbstorage';
 
 export default class Device extends LSBStorage {
 
@@ -28,25 +17,27 @@ export default class Device extends LSBStorage {
       throw new Error('Name must not be longer than 13 bytes');
     }
     let found = false;
-    for (let d in DeviceType) {
-      if (DeviceType[d] === this.deviceType()) {
+    for (let d in Device.Type) {
+      if (Device.Type[d] === this.deviceType()) {
         found = true;
       }
     }
     if (!found) {
       throw new Error('Invalid device type "' + this.deviceType() + '"');
     }
-    if(version() > 0xFF) {
+    if (this.version() > 0xFF) {
       throw new Error('Maximum version is 0xFF');
+    }
+    if (this.memorySize() < 16) {
+      throw new Error('Memory must be at least 16 bits.');
     }
   }
 
 
   initializeConstants(addr) {
     const ks = this.constantList();
-    this.constants = {};
-    for(let k in ks) {
-      this.constants[k] = ks[k] + addr;
+    for (let k in ks) {
+      this[k] = ks[k] + addr;
     }
   }
 
@@ -87,15 +78,15 @@ export default class Device extends LSBStorage {
 
 
   get(a) {
-    switch(a) {
+    switch (a) {
       case 0x0:
-        return DeviceType[this.deviceType()];
+        return this.deviceType();
       case 0x1:
         return this.version();
       case 0x2:
         return this.interruptNumber;
     }
-    if(a >= 0x3 && a <= 0xF) {
+    if (a >= 0x3 && a <= 0xF) {
       return this.name().charCodeAt(a - 0x3);
     }
     // this method can be completed by the children
@@ -107,6 +98,18 @@ export default class Device extends LSBStorage {
   }
 
 
+}
+
+
+Device.Type = {
+  MMU:          0x00,
+  CPU:          0x01,
+  VIDEO:        0x02,
+  DISK:         0x03,
+  KEYBOARD:     0x04,
+  OTHER_INPUT:  0xFE,
+  OTHER_OUTPUT: 0xFF,
 };
+
 
 // vim: ts=2:sw=2:sts=2:expandtab

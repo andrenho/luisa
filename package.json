@@ -6,7 +6,7 @@
   "scripts": {
     "build": "babel src -d lib",
     "lint": "eslint src",
-    "style": "jscs src/*.js",
+    "style": "jscs -v src/*.js",
     "test": "babel-tape-runner test/*.js | faucet"
   },
   "repository": {

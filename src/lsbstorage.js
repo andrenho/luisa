@@ -38,16 +38,16 @@ export default class LSBStorage {
 
   getString(a, sz) {
     let str = [];
-    for(let i=0; i<sz; ++i) {
-      str.push(String.fromCharCode(this.get(a+i)));
+    for (let i = 0; i < sz; ++i) {
+      str.push(String.fromCharCode(this.get(a + i)));
     }
     return str.join('');
   }
 
 
   setString(a, v) {
-    for(let i=0; i<v.length; ++i) {
-      this.set(a+i, v.charCodeAt(i));
+    for (let i = 0; i < v.length; ++i) {
+      this.set(a + i, v.charCodeAt(i));
     }
   }
 
