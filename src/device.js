@@ -108,16 +108,18 @@ export default class Device extends LSBStorage {
 
 
 Device.Type = {
-  MMU:          0x00,
-  CPU:          0x01,
-  VIDEO:        0x02,
-  DISK:         0x03,
-  KEYBOARD:     0x04,
+  MOTHERBOARD:  0x00,
+  MMU:          0x01,
+  CPU:          0x02,
+  VIDEO:        0x03,
+  DISK:         0x04,
+  KEYBOARD:     0x05,
+  // other
+  OTHER_INPUT:  0x80,
+  OTHER_OUTPUT: 0x81,
   // special devices
-  RAM:          0xFB,
-  MOTHERBOARD:  0xFC,
-  OTHER_INPUT:  0xFD,
-  OTHER_OUTPUT: 0xFE,
+  RAM:          0xFD,
+  MOTHERBOARD:  0xFE,
   UNUSED:       0xFF,
 };
 

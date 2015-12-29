@@ -1,3 +1,22 @@
+/* 
+ * MOTHERBOARD
+ * -----------
+ *
+ * Controls all the other devices.
+ *
+ * - Max number of devices: 256
+ * - Expected position: 0xF0000000
+ * - Size: 0x1000 bytes
+ *
+ * - Interrupt: 1
+ *     Fired when invalid memory address (> 0xF0000000) is accessed,
+ *     or tried to be written.
+ *
+ * - Registers:
+ *     0000..03FF  Device address (one device each 4 bytes)
+ *           0400  Interrupt reason: (MB_ERR_UNAUTH_READ, MB_ERR_UNAUTH_WRITE)
+ */
+
 import LSBStorage from './lsbstorage';
 import Device from './device';
 import RAM from './ram';
@@ -8,10 +27,11 @@ export default class Motherboard extends LSBStorage {
     super();
     this._devices = [];
     this._addr = 0xF0001000;
-    this._interruptCount = 0;
+    this._interruptCount = 1;
     this._mmu = null;
     this._cpu = null;
     this._memory = new RAM(4);  // internal memory
+    this._interruptActive = false;
   }
 
 
@@ -38,18 +58,27 @@ export default class Motherboard extends LSBStorage {
 
 
   step() {
-    for(let d of this._devices) {
-      if(d.deviceType() !== Device.Type.CPU) {
+    // fire own interrupt, if aplicable
+    if (this._interruptActive) {
+      this._cpu.pushInterrupt(0x1);
+      this._interruptActive = false;
+    }
+    
+    // fire devices interrupts, and step
+    for (let d of this._devices) {
+      if (d.deviceType() !== Device.Type.CPU) {
         d.step();
-        if(d.interruptActive) {
-          if(this._cpu) {
+        if (d.interruptActive) {
+          if (this._cpu) {
             this._cpu.pushInterrupt(d.interruptNumber);
           }
           d.interruptActive = false;
         }
       }
     }
-    if(this._cpu) {
+
+    // step CPU
+    if (this._cpu) {
       this._cpu.step();
     }
   }
@@ -71,7 +100,7 @@ export default class Motherboard extends LSBStorage {
           return d.get(a - d.addr);
         }
       }
-      // TODO - fire interrupt
+      this._interruptActive = true;  // fire interrupt
       return 0;
     }
   }
@@ -81,7 +110,7 @@ export default class Motherboard extends LSBStorage {
     if (a < 0xF0000000 && this._mmu) {
       this._mmu.set(a, v);
     } else if (a >= 0xF0000000 && a < 0xF0001000) {
-      // TODO - fire interrupt
+      this._interruptActive = true;  // fire interrupt
     } else {
       for (let d of this._devices) {
         if (a >= d.addr && a < (d.addr + d.memorySize())) {
@@ -89,7 +118,7 @@ export default class Motherboard extends LSBStorage {
           return;
         }
       }
-      // TODO - fire interrupt
+      this._interruptActive = true;  // fire interrupt
     }
   }
 
