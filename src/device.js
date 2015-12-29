@@ -6,6 +6,7 @@ export default class Device extends LSBStorage {
     super();
 
     this.interruptNumber = 0;   // set externally
+    this.interruptActive = false;
 
     // abstract class
     if (this.constructor === LSBStorage) {
@@ -69,6 +70,11 @@ export default class Device extends LSBStorage {
 
   constantList() {
     return {};   // this method can be implement by the children
+  }
+
+
+  fireInterrupt() {
+    this.interruptActive = true;
   }
 
 

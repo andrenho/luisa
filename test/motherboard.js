@@ -76,8 +76,11 @@ test('Motherboard: memory map', t => {
 });
 
 
-test('Motherboard: interrupts', t => {
-  t.skip();
+test('Motherboard: step', t => {
+  let m = new Motherboard();
+  m.addDevice(new MockMMU());
+  m.addDevice(new MockDevice());
+  m.step();
   t.end();
 });
 

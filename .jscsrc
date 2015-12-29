@@ -5,4 +5,5 @@
   "disallowMultipleLineBreaks": false,
   "requirePaddingNewLinesAfterBlocks": false,
   "requirePaddingNewLinesBeforeLineComments": false,
+  "disallowTrailingWhitespace": false,
 }

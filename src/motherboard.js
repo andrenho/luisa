@@ -8,7 +8,9 @@ export default class Motherboard extends LSBStorage {
     super();
     this._devices = [];
     this._addr = 0xF0001000;
+    this._interruptCount = 0;
     this._mmu = null;
+    this._cpu = null;
     this._memory = new RAM(4);  // internal memory
   }
 
@@ -21,12 +23,35 @@ export default class Motherboard extends LSBStorage {
     this._memory.set32((this._devices.length - 1) * 4, this._addr);
     this._addr += dev.memorySize();
 
+    // add interrupt
+    if (dev.hasInterrupt()) {
+      dev.interruptNumber = ++this._interruptCount;
+    }
+
     // is it MMU?
     if (dev.deviceType() === Device.Type.MMU) {
       this._mmu = dev;
+    } else if (dev.deviceType() === Device.Type.CPU) {
+      this._cpu = dev;
     }
+  }
 
-    // TODO - set interrupt
+
+  step() {
+    for(let d of this._devices) {
+      if(d.deviceType() !== Device.Type.CPU) {
+        d.step();
+        if(d.interruptActive) {
+          if(this._cpu) {
+            this._cpu.pushInterrupt(d.interruptNumber);
+          }
+          d.interruptActive = false;
+        }
+      }
+    }
+    if(this._cpu) {
+      this._cpu.step();
+    }
   }
   
 
@@ -71,23 +96,23 @@ export default class Motherboard extends LSBStorage {
 
   memoryMap() {
     let map = [];
-    if(this._mmu) {
+    if (this._mmu) {
       map.push({ 
         addr: 0,
         deviceType: Device.Type.RAM, 
         size: this._mmu.active() ? 0xF0000000 : this._mmu.ramSize(),
       });
     }
-    if(this._mmu.ramSize() < 0xF0000000 && !this._mmu.active()) {
+    if (this._mmu.ramSize() < 0xF0000000 && !this._mmu.active()) {
       map.push({ 
         addr: this._mmu.ramSize(), 
         deviceType: Device.Type.UNUSED, 
-        size: 0xF0000000 - this._mmu.ramSize() 
+        size: 0xF0000000 - this._mmu.ramSize(),
       });
     }
     map.push({ addr: 0xF0000000, deviceType: Device.Type.MOTHERBOARD, size: 0x1000 });
     let addr = 0xF0001000;
-    for(let d of this._devices) {
+    for (let d of this._devices) {
       map.push({ addr, deviceType: d.deviceType(), size: d.memorySize() });
       addr += d.memorySize();
     }
