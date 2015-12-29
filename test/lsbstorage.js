@@ -22,12 +22,12 @@ test('LSBStorage: 16 bits', t => {
 
 test('LSBStorage: 32 bits', t => {
   let m = new MockStorage();
-  m.set32(4, 0xABCDEF01);
+  m.set32(4, 0xFBCDEF01);
   t.equal(m.z[4], 0x01);
   t.equal(m.z[5], 0xEF);
   t.equal(m.z[6], 0xCD);
-  t.equal(m.z[7], 0xAB);
-  t.deepEqual(m.get32(4), 0xABCDEF01);
+  t.equal(m.z[7], 0xFB);
+  t.deepEqual(m.get32(4), 0xFBCDEF01);
   t.end();
 });
 

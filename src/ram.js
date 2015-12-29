@@ -1,6 +1,9 @@
-export default class RAM {
+import LSBStorage from './lsbstorage';
+
+export default class RAM extends LSBStorage {
 
   constructor(_sizeKb) {
+    super();
     this._size = _sizeKb * 1024;
     this._data = new Uint8Array(this._size);
   }
@@ -29,7 +32,7 @@ export default class RAM {
       throw e;
     } else if (v < 0 || v > 0xFF) {
       let e = new Error();
-      e.name = 'invalid data';
+      e.name = 'invalid data (' + v + ')';
       throw e;
     } else {
       this._data[a] = v;

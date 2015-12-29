@@ -30,9 +30,9 @@ export default class LSBStorage {
 
   set32(a, v) {
     this.set(a, v & 0xff);
-    this.set(a + 1, (v >> 8) & 0xff);
-    this.set(a + 2, (v >> 16) & 0xff);
-    this.set(a + 3, v >> 24);
+    this.set(a + 1, (v >>> 8) & 0xff);
+    this.set(a + 2, (v >>> 16) & 0xff);
+    this.set(a + 3, v >>> 24);
   }
 
 

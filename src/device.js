@@ -107,8 +107,12 @@ Device.Type = {
   VIDEO:        0x02,
   DISK:         0x03,
   KEYBOARD:     0x04,
-  OTHER_INPUT:  0xFE,
-  OTHER_OUTPUT: 0xFF,
+  // special devices
+  RAM:          0xFB,
+  MOTHERBOARD:  0xFC,
+  OTHER_INPUT:  0xFD,
+  OTHER_OUTPUT: 0xFE,
+  UNUSED:       0xFF,
 };
 
 
