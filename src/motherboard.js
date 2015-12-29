@@ -79,7 +79,11 @@ export default class Motherboard extends LSBStorage {
       });
     }
     if(this._mmu.ramSize() < 0xF0000000 && !this._mmu.active()) {
-      map.push({ addr: 0, deviceType: Device.Type.UNUSED, size: 0xF0000000 - this._mmu.ramSize() });
+      map.push({ 
+        addr: this._mmu.ramSize(), 
+        deviceType: Device.Type.UNUSED, 
+        size: 0xF0000000 - this._mmu.ramSize() 
+      });
     }
     map.push({ addr: 0xF0000000, deviceType: Device.Type.MOTHERBOARD, size: 0x1000 });
     let addr = 0xF0001000;
