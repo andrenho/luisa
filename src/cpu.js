@@ -7,7 +7,7 @@
  * - Expected position: 0xF0001020
  * - Size: 64 bytes
  *
- * - Interrupt: no
+ * - Interrupt: 3 (invalid opcode)
  *
  * - Registers:
  *           0000  Device type
@@ -52,13 +52,24 @@ export default class CPU extends Device {
   constructor(motherboard) {
     super();
     this._mb = motherboard;
+    this.reset();
+    this._step_function = this._init_step_functions();
+  }
+
+
+  reset() {
     this._reg = new Uint32Array(16);
-    this.PC = motherboard.get32(motherboard.MB_CPU_INIT);
+    this.PC = this._mb.get32(this._mb.MB_CPU_INIT);
   }
 
   
   name() {
     return 'TinyCPU';
+  }
+
+
+  hasInterrupt() {
+    return true;
   }
 
 
@@ -139,7 +150,48 @@ export default class CPU extends Device {
   //
   // STEPPING THROUGH
   //
+  
 
+  _init_step_functions() {
+
+    let f = [];
+
+    // add invalid opcodes
+    for (let i = 0; i < 256; ++i) {
+      f.push((pos) => {
+        this.fireInterrupt();
+        return 0;
+      });
+    }
+
+    //
+    // MOV
+    //
+    f[0x01] = pos => {  
+      this._reg[this._mb.get(pos)] = this._reg[this._mb.get(pos+1)];
+      return 2;
+    };
+    f[0x02] = pos => {  // mov R, 0xFF
+      this._reg[this._mb.get(pos)] = this._mb.get(pos+1);
+      return 2;
+    };
+    f[0x03] = pos => {  // mov R, 0xFFFF
+      this._reg[this._mb.get(pos)] = this._mb.get16(pos+1);
+      return 3;
+    };
+    f[0x04] = pos => {  // mov R, 0xFFFF
+      this._reg[this._mb.get(pos)] = this._mb.get32(pos+1);
+      return 5;
+    };
+
+
+    return f;
+  }
+
+
+  step() {
+    this.PC += this._step_function[this._mb.get(this.PC)](this.PC+1) + 1;
+  }
 
   //
   // GETTERS / SETTERS
@@ -195,94 +247,6 @@ export default class CPU extends Device {
   set LZ(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
   // jscs:enable validateIndentation
 
-  //
-  // encode/decode
-  //
-
-  static encode(s) {
-
-    function registerValue(r) {
-      switch (r) {
-        case 'a': return 0;
-        case 'b': return 1;
-        case 'c': return 2;
-        case 'd': return 3;
-        case 'e': return 4;
-        case 'f': return 5;
-        case 'g': return 6;
-        case 'h': return 7;
-        case 'i': return 8;
-        case 'j': return 9;
-        case 'k': return 10;
-        case 'l': return 11;
-        case 'fp': return 12;
-        case 'sp': return 13;
-        case 'pc': return 14;
-        case 'fl': return 15;
-        default: throw new Error('Invalid register ' + r);
-      }
-    }
-
-    // understand command
-    // TODO - not working with one single parameter
-    const m = s.match(/^\s*([a-z]+)\s+(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|[0-9]+)\]?)\s*,\s*(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|[0-9]+)\]?)\s*$/i); // https://regex101.com/r/pV1pA9/2
-    if (!m) {
-      throw new Error('Invalid command `' + s + '`');
-    } 
-
-    let cmd = { opcode: m[1], pars: [] };
-    for (let i = 2; i < m.length; ++i) {
-      let type;
-      let value;
-      if (m[i][0] == '[') {
-        if (m[i][0].slice(-1) !== ']') {
-          throw new Error('Unbalanced bracket');
-        }
-        if (m[i][1].charCodeAt(0) > '9'.charCodeAt(0)) {
-          type = 'indirect register';
-          value = registerValue(m[i].slice(1, -1).toLowerCase());
-        } else {
-          type = 'indirect value';
-          value = parseInt(m[i].slice(1, -1));  // TODO - doesn't work with binary
-        }
-      }
-      if (m[i].charCodeAt(0) > '9'.charCodeAt(0)) {
-        type = 'register';
-        value = registerValue(m[i].toLowerCase());
-      } else {
-        type = 'value';
-        value = parseInt(m[i]);
-      }
-      cmd.pars.push({ type, value });
-    }
-
-    // parse command (TODO)
-    const [t0, v0] = [cmd.pars[0].type, cmd.pars[0].value];
-    const [t1, v1] = [(cmd.pars.length === 2) ? cmd.pars[1].type : 'none', (cmd.pars.length === 2) ? cmd.pars[1].value : 0];
-
-    console.log(cmd);
-    console.log(`t0: ${t0}   v0: ${v0}   t1: ${t1}   v1: ${v1}`);
-
-    switch (cmd.opcode) {
-      case 'mov':
-        if (t0 === 'register' && t1 !== 'none') {  // only valid condition
-          if (t1 === 'register') {
-            return [0x01, v0, v1];
-          } else if (t1 === 'value') {
-            if (v1 <= 0xFF) {
-              return [0x02, v0, v1];
-            } else if(cmd.pars[1].value <= 0xFFFF) {
-              return [0x03, v0, v1 & 0xFF, v1 >> 8];
-            } else {
-              return [0x04, v0, v1 & 0xFF, (v1 >> 8) & 0xFF, (v1 >> 16) & 0xFF, (v1 >> 24) & 0xFF];
-            }
-          }
-        }
-        break;
-    }
-
-    throw new Error(`Invalid command '${s}'`);
-  }
 }
 
 

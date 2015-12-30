@@ -39,4 +39,12 @@ test('LSBStorage: string', t => {
   t.end();
 });
 
+test('LSBStorage: array', t => {
+  let m = new MockStorage();
+  m.setArray(2, [0x1, 0x2, 0x3]);
+  t.equal(m.z[3], 0x2, '2nd byte');
+  t.deepEqual(m.getArray(2, 3), [0x1, 0x2, 0x3], 'full read');
+  t.end();
+});
+
 // vim: ts=2:sw=2:sts=2:expandtab

@@ -48,6 +48,15 @@ export default class Motherboard extends LSBStorage {
   }
 
 
+  reset() {
+    this._memory.reset();
+    this.interruptActive = false;
+    for (let d of this.devices) {
+      d.reset();
+    }
+  }
+
+
   addDevice(dev) {
     // add device
     this._devices.push(dev);

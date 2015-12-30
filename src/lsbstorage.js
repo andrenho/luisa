@@ -51,6 +51,22 @@ export default class LSBStorage {
     }
   }
 
+
+  getArray(pos, sz) {
+    let a = [];
+    for(let i = pos; i < (pos + sz); ++i) {
+      a.push(this.get(i));
+    }
+    return a;
+  }
+
+
+  setArray(pos, array) {
+    for(let i = 0; i < array.length; ++i) {
+      this.set(i + pos, array[i]);
+    }
+  }
+
 }
 
 // vim: ts=2:sw=2:sts=2:expandtab

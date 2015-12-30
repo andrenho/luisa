@@ -4,6 +4,7 @@ import Motherboard from '../src/motherboard';
 import RAM from '../src/ram';
 import MMU from '../src/mmu';
 import CPU from '../src/cpu';
+import cpuEncode from '../src/cpuencode';
 
 function makeCPU() {
   const m = new Motherboard();
@@ -38,8 +39,46 @@ test('CPU: Get register contents from memory', t => {
 });
 
 
-test('CPU: encoder', t => {
-  t.same(CPU.encode('mov A, 0xABCD'), [0x03, 0x00, 0xCD, 0xAB]);
+test('CPU: Execute valid basic commands', t => {
+  let [mb, cpu] = makeCPU();
+
+  function opc(s, pre) {
+    mb.reset();
+    if(pre) { 
+      pre(); 
+    }
+    mb.setArray(0, cpuEncode(s));
+    let r = `[0x${mb.get(0).toString(16)}] ` + s;
+    mb.step();
+    return r;
+  }
+
+  let s;
+
+  // 
+  // MOV
+  //
+  s = opc('mov A, B', () => cpu.B = 0x42); 
+  t.equals(cpu.A, 0x42, s);
+  t.equals(cpu.PC, 3, 'checking PC position');
+
+  s = opc('mov A, 0x34'); 
+  t.equals(cpu.A, 0x34, s);
+  
+  s = opc('mov A, 0x1234'); 
+  t.equals(cpu.A, 0x1234, s);
+  
+  s = opc('mov A, 0xFABC1234'); 
+  t.equals(cpu.A, 0xFABC1234, s);
+
+  // 
+  // MOVB
+  //
+  s = opc('mov A, [B]', () => { cpu.B = 0x1000; mb.set32(cpu.B, 0xABCDEF01); }); 
+  t.equals(cpu.A, 0xABCDEF01);
+  
+
+
   t.end();
 });
 

@@ -83,6 +83,11 @@ export default class Device extends LSBStorage {
   }
 
 
+  reset() {
+    this.interruptActive = false;
+  }
+
+
   get(a) {
     switch (a) {
       case 0x0:

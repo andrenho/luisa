@@ -5,6 +5,11 @@ export default class RAM extends LSBStorage {
   constructor(_sizeKb) {
     super();
     this._size = _sizeKb * 1024;
+    this.reset();
+  }
+
+
+  reset() {
     this._data = new Uint8Array(this._size);
   }
 

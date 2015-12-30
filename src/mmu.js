@@ -70,17 +70,20 @@ export default class MMU extends Device {
   constructor(ram) {
     super();
     this._ram = ram;
-    this._active = false;
-
-    this._lastError = 0;
-    this._vmem = {
-      active: false,
-      page: 0,
-    };
+    this.reset();
 
     this.MMU_ERR_NONE =          0x0;
     this.MMU_ERR_OUT_OF_BOUNDS = 0x1;
     this.MMU_PAGE_FAULT        = 0x2;
+  }
+
+  reset() {
+    this._active = false;
+    this._last_error = 0;
+    this._vmem = {
+      active: false,
+      page: 0,
+    };
   }
 
   name() { return 'TinyMMU'; }
