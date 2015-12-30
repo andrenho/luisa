@@ -26,9 +26,9 @@ class MockDevice extends Device {
 test('Motherboard: add devices', t => {
   let m = new Motherboard();
   m.addDevice(new MockDevice());
-  t.equals(m.devices.length, 1);
-  t.equals(m.devices[0].CONST, 0xF0001123);
-  t.equals(m.get(0xF0001001), 1);  // get version
+  t.equals(m.devices.length, 1, 'one device added');
+  t.equals(m.devices[0].CONST, 0xF0001123, 'device constant set');
+  t.equals(m.get(0xF0001001), 1, 'device version is ok');
   t.end();
 });
 
@@ -37,8 +37,8 @@ test('Motherboard: devices addresses', t => {
   let m = new Motherboard();
   m.addDevice(new MockDevice());
   m.addDevice(new MockDevice());
-  t.equals(m.get32(0xF0000000), 0xF0001000);  // get device 0 address
-  t.equals(m.get32(0xF0000004), 0xF0001400);  // get device 1 address
+  t.equals(m.get32(0xF0000000), 0xF0001000, 'device 0 address');
+  t.equals(m.get32(0xF0000004), 0xF0001400, 'device 1 address');
   t.end();
 });
 
@@ -46,9 +46,9 @@ test('Motherboard: devices addresses', t => {
 test('Motherboard: mmu access', t => {
   let m = new Motherboard();
   m.addDevice(new MockMMU());
-  t.ok(m._mmu);
+  t.ok(m._mmu, '_mmu is set');
   m.set(0x5, 0x42);
-  t.equals(m.get(0x5), 0x42);
+  t.equals(m.get(0x5), 0x42, 'mmu is working');
   t.end();
 });
 
@@ -66,11 +66,11 @@ test('Motherboard: memory map', t => {
     { addr: 0xF0001410, deviceType: Device.Type.UNUSED,       size: 0xFFFEBF0  }
   ];
   const memoryMap = m.memoryMap();
-  t.equals(memoryMap.length, expectedMemoryMap.length);
+  t.equals(memoryMap.length, expectedMemoryMap.length, '# of entries in memoryMap is correct');
   for(let i = 0; i < memoryMap.length; ++i) {
-    t.equals(memoryMap[i].addr, expectedMemoryMap[i].addr);
-    t.equals(memoryMap[i].deviceType, expectedMemoryMap[i].deviceType);
-    t.equals(memoryMap[i].size, expectedMemoryMap[i].size);
+    t.equals(memoryMap[i].addr, expectedMemoryMap[i].addr, 'memoryMap.address is correct (record ' + i + ')');
+    t.equals(memoryMap[i].deviceType, expectedMemoryMap[i].deviceType, 'memoryMap.deviceType is correct (record ' + i + ')');
+    t.equals(memoryMap[i].size, expectedMemoryMap[i].size, 'memoryMap.size is correct (record ' + i + ')');
   }
   t.end();
 });
@@ -80,7 +80,32 @@ test('Motherboard: step', t => {
   let m = new Motherboard();
   m.addDevice(new MockMMU());
   m.addDevice(new MockDevice());
-  m.step();
+  try {
+    m.step();
+    t.pass('step has succeded');
+  } catch(e) {
+    t.fail('step has failed');
+  }
+  t.end();
+});
+
+
+test('Motherbaord: unauthorized read', t => {
+  let m = new Motherboard();
+  m.addDevice(new MockMMU());
+  m.get(0xFF000000);
+  t.ok(m.interruptActive, 'interrupt is active');
+  t.equals(m.get(m.MB_ERR), m.MB_ERR_UNAUTH_READ, 'MB_ERR_UNAUTH_WRITE is set');
+  t.end();
+});
+
+
+test('Motherbaord: unauthorized write', t => {
+  let m = new Motherboard();
+  m.addDevice(new MockMMU());
+  m.set(0xFF000000, 1);
+  t.ok(m.interruptActive, 'interrupt is active');
+  t.equals(m.get(m.MB_ERR), m.MB_ERR_UNAUTH_WRITE, 'MB_ERR_UNAUTH_WRITE is set');
   t.end();
 });
 

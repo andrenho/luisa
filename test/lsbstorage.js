@@ -14,28 +14,28 @@ class MockStorage extends LSBStorage {
 test('LSBStorage: 16 bits', t => {
   let m = new MockStorage();
   m.set16(2, 0xABCD);
-  t.equal(m.z[2], 0xCD);
-  t.equal(m.z[3], 0xAB);
-  t.deepEqual(m.get16(2), 0xABCD);
+  t.equal(m.z[2], 0xCD, '1st byte');
+  t.equal(m.z[3], 0xAB, '2nd byte');
+  t.deepEqual(m.get16(2), 0xABCD, 'LSB read');
   t.end();
 });
 
 test('LSBStorage: 32 bits', t => {
   let m = new MockStorage();
   m.set32(4, 0xFBCDEF01);
-  t.equal(m.z[4], 0x01);
-  t.equal(m.z[5], 0xEF);
-  t.equal(m.z[6], 0xCD);
-  t.equal(m.z[7], 0xFB);
-  t.deepEqual(m.get32(4), 0xFBCDEF01);
+  t.equal(m.z[4], 0x01, '1st byte');
+  t.equal(m.z[5], 0xEF, '2nd byte');
+  t.equal(m.z[6], 0xCD, '3rd byte');
+  t.equal(m.z[7], 0xFB, '4th byte');
+  t.deepEqual(m.get32(4), 0xFBCDEF01, 'LSB read');
   t.end();
 });
 
 test('LSBStorage: string', t => {
   let m = new MockStorage();
   m.setString(0, 'abcd');
-  t.equal(m.z[1], 'b'.charCodeAt(0));
-  t.equal(m.getString(0, 4), 'abcd');
+  t.equal(m.z[1], 'b'.charCodeAt(0), '1st byte');
+  t.equal(m.getString(0, 4), 'abcd', 'full read');
   t.end();
 });
 

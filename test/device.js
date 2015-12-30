@@ -12,9 +12,9 @@ class MockDevice extends Device {
 
 test('Device: registers', t => {
   let d = new MockDevice();
-  t.equal(d.get(0), Device.Type.OTHER_OUTPUT);
-  t.equal(d.get(1), 0);  // version
-  t.equal(d.get(3), 'M'.charCodeAt(0));
+  t.equal(d.get(0), Device.Type.OTHER_OUTPUT, 'device type register');
+  t.equal(d.get(1), 0, 'device version register');
+  t.equal(d.get(3), 'M'.charCodeAt(0), 'device name register');
   t.end();
 });
 
@@ -22,7 +22,7 @@ test('Device: registers', t => {
 test('Device: constants', t => {
   let d = new MockDevice();
   d.initializeConstants(0xF0000000);
-  t.equal(d.CONST, 0xF0000123);
+  t.equal(d.CONST, 0xF0000123, 'constants are set');
   t.end();
 });
 

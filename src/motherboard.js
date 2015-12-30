@@ -31,7 +31,14 @@ export default class Motherboard extends LSBStorage {
     this._mmu = null;
     this._cpu = null;
     this._memory = new RAM(4);  // internal memory
-    this._interruptActive = false;
+    this.interruptActive = false;
+    
+    // constants
+    this.MB_DEV_ADDR         = 0xF0000000;
+    this.MB_ERR              = 0xF0000400;
+    this.MB_ERR_NONE         = 0x0;
+    this.MB_ERR_UNAUTH_READ  = 0x1;
+    this.MB_ERR_UNAUTH_WRITE = 0x2;
   }
 
 
@@ -59,9 +66,9 @@ export default class Motherboard extends LSBStorage {
 
   step() {
     // fire own interrupt, if aplicable
-    if (this._interruptActive) {
+    if (this.interruptActive) {
       this._cpu.pushInterrupt(0x1);
-      this._interruptActive = false;
+      this.interruptActive = false;
     }
     
     // fire devices interrupts, and step
@@ -100,7 +107,9 @@ export default class Motherboard extends LSBStorage {
           return d.get(a - d.addr);
         }
       }
-      this._interruptActive = true;  // fire interrupt
+      // fire interrupt
+      this._memory.set(0x400, this.MB_ERR_UNAUTH_READ);
+      this.interruptActive = true;  
       return 0;
     }
   }
@@ -109,8 +118,12 @@ export default class Motherboard extends LSBStorage {
   set(a, v) {
     if (a < 0xF0000000 && this._mmu) {
       this._mmu.set(a, v);
+    } else if (a == 0xF0000400) {
+      this._memory[0x400] = v;
     } else if (a >= 0xF0000000 && a < 0xF0001000) {
-      this._interruptActive = true;  // fire interrupt
+      // fire interrupt
+      this._memory.set(0x400, this.MB_ERR_UNAUTH_WRITE);
+      this.interruptActive = true;  
     } else {
       for (let d of this._devices) {
         if (a >= d.addr && a < (d.addr + d.memorySize())) {
@@ -118,7 +131,9 @@ export default class Motherboard extends LSBStorage {
           return;
         }
       }
-      this._interruptActive = true;  // fire interrupt
+      // fire interrupt
+      this._memory.set(0x400, this.MB_ERR_UNAUTH_WRITE);
+      this.interruptActive = true;  // fire interrupt
     }
   }
 

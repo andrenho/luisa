@@ -1,0 +1,52 @@
+@startuml
+
+abstract class LSBStorage {
+  {abstract} +get(a)
+  {abstract} +set(a, v)
+  +get16(a)
+  +set16(a, v)
+  +get32(a)
+  +set16(a, v)
+  +getString(a, sz)
+  +setString(a, s)
+}
+
+abstract class Device {
+  +interruptNumber
+  +interruptActive
+  {abstract} +name()
+  {abstract} +deviceType()
+  {abstract} +version()
+  +memorySize()
+  +hasInterrupt()
+  +constantList()
+  ..
+  +initializeConstants(addr)
+  +fireInterrupt()
+  +step(cycles)
+  +get(a)
+  +set(a, v)
+}
+LSBStorage <|-- Device
+
+class Motherboard {
+  +interruptActive
+  +memoryMap()
+  ..
+  +addDevice(dev)
+  +step()
+  +get(a)
+  +set(a, v)
+}
+LSBStorage <|-- Motherboard
+Motherboard "1" -left-* "n" Device : devices
+
+class RAM {
+  +constructor(sizeKb)
+  +size
+  +get(a)
+  +set(a, v)
+}
+Device <|-- RAM
+
+@enduml

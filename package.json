@@ -5,9 +5,10 @@
   "main": "main.js",
   "scripts": {
     "build": "babel src -d lib",
+    "doc": "java -jar doc/plantuml.jar doc/classes.uml",
     "lint": "eslint src",
     "style": "jscs -v src/*.js",
-    "test": "babel-tape-runner test/*.js | faucet"
+    "test": "babel-tape-runner test/*.js | tap-spec"
   },
   "repository": {
     "type": "git",
