@@ -8,7 +8,7 @@ import cpuEncode from '../src/cpuencode';
 
 function makeCPU() {
   const m = new Motherboard();
-  m.addDevice(new MMU(new RAM(16)));
+  m.addDevice(new MMU(new RAM(256)));
   const c = new CPU(m);
   m.addDevice(c);
   return [m, c];
@@ -89,8 +89,23 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('movb [A], [B]', () => { cpu.A = 0x32; cpu.B = 0x64; mb.set(0x64, 0xFF); });
   t.equals(mb.get(0x32), 0xFF, s);
 
-  s = opc('movb [A], [0x64]', () => { cpu.A = 0x32; mb.set(0x64, 0xFF); });
+  s = opc('movb [A], [0x6420]', () => { cpu.A = 0x32; mb.set32(0x6420, 0xFF); });
   t.equals(mb.get(0x32), 0xFF, s);
+
+  s = opc('movb [0x64], A', () => { cpu.A = 0x32; mb.set32(0x64, 0xFF); });
+  t.equals(mb.get(0xFF), 0x32, s);
+
+  s = opc('movb [0x64], 0xF0', () => { mb.set32(0x64, 0xFF); });
+  t.equals(mb.get(0xFF), 0xF0, s);
+  
+  s = opc('movb [0x64], [A]', () => { cpu.A = 0xF000; mb.set(0xF000, 0x42); mb.set32(0x64, 0xFFAB); });
+  t.equals(mb.get(0xFFAB), 0x42, s);
+  
+  s = opc('movb [0x64], [0xF0]', () => { 
+    mb.set32(0x64, 0xFF);
+    mb.set32(0xF0, 0x1234); mb.set(0x1234, 0x3F);
+  });
+  t.equals(mb.get(0xFF), 0x3F, s);
 
   t.end();
 });

@@ -203,6 +203,56 @@ export default class CPU extends Device {
       return 5;
     };
 
+    f[0x0b] = pos => {  // movb [R], R
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(reg[mb.get(pos)], reg[mb.get(pos+1)]);
+      return 2;
+    };
+
+    f[0x0c] = pos => {  // movb [R], v8
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(reg[mb.get(pos)], mb.get(pos+1));
+      return 2;
+    };
+
+    f[0x0d] = pos => {  // movb [R], [R]
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(reg[mb.get(pos)], mb.get(reg[mb.get(pos+1)]));
+      return 2;
+    };
+
+    f[0x0e] = pos => {  // movb [R], [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(reg[mb.get(pos)], mb.get(mb.get32(pos+1)));
+      return 5;
+    };
+
+    f[0x21] = pos => {  // movb [v32], R
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(mb.get32(mb.get32(pos)), reg[mb.get(pos+4)]);
+      return 5;
+    };
+
+    f[0x22] = pos => {  // movb [v32], v8
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(mb.get32(mb.get32(pos)), mb.get(pos+4));
+      return 5;
+    };
+
+    f[0x23] = pos => {  // movb [v32], [R]
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(mb.get32(mb.get32(pos)), mb.get32(reg[mb.get(pos+4)]));
+      return 5;
+    };
+
+    f[0x24] = pos => {  // movb [v32], [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      mb.set(mb.get32(mb.get32(pos)), mb.get(mb.get32(pos+4)));
+      return 8;
+    };
+
+
+
     return f;
   }
 
