@@ -211,7 +211,68 @@ test('CPU: Execute valid basic commands', t => {
   });
   t.equals(mb.get32(0xFF00), 0x3F54FABC, s);
 
+  //
+  // LOGIC OPERATIONS
+  //
 
+  t.comment('Logic operations');
+
+  s = opc('or A, B', () => { cpu.A = 0b1010; cpu.B = 0b1100; });
+  t.equals(cpu.A, 0b1110, s);
+  t.false(cpu.S, "cpu.S == 0");
+  t.true(cpu.P, "cpu.P == 1");
+  t.false(cpu.Z, "cpu.Z == 0");
+  t.false(cpu.Y, "cpu.Y == 0");
+  t.false(cpu.V, "cpu.V == 0");
+
+  s = opc('or A, 0x4', () => { cpu.A = 0b11; });
+  t.equals(cpu.A, 0b111, s);
+
+  s = opc('or A, 0x4000', () => { cpu.A = 0b111; });
+  t.equals(cpu.A, 0x4007, s);
+
+  s = opc('or A, 0x2A426653', () => { cpu.A = 0x10800000; });
+  t.equals(cpu.A, 0x3AC26653, s);
+
+  s = opc('xor A, B', () => { cpu.A = 0b1010; cpu.B = 0b1100; });
+  t.equals(cpu.A, 0b110, s);
+
+  s = opc('xor A, 0x4', () => { cpu.A = 0b11; });
+  t.equals(cpu.A, 0b111, s);
+
+  s = opc('xor A, 0xFF00', () => { cpu.A = 0xFF0; });
+  t.equals(cpu.A, 0xF0F0, s);
+
+  s = opc('xor A, 0x2A426653', () => { cpu.A = 0x148ABD12; });
+  t.equals(cpu.A, 0x3EC8DB41, s);
+
+  s = opc('and A, B', () => { cpu.A = 0b11; cpu.B = 0b1100; });
+  t.equals(cpu.A, 0, s);
+  t.true(cpu.Z, "cpu.Z == 1");
+
+  s = opc('and A, 0x7', () => { cpu.A = 0b11; });
+  t.equals(cpu.A, 0b11, s);
+
+  s = opc('and A, 0xFF00', () => { cpu.A = 0xFF0; });
+  t.equals(cpu.A, 0xF00, s);
+
+  s = opc('and A, 0x2A426653', () => { cpu.A = 0x148ABD12; });
+  t.equals(cpu.A, 0x22412, s);
+
+  s = opc('shl A, B', () => { cpu.A = 0b10101010; cpu.B = 4; });
+  t.equals(cpu.A, 0b101010100000, s);
+
+  s = opc('shl A, 4', () => { cpu.A = 0b10101010;});
+  t.equals(cpu.A, 0b101010100000, s);
+
+  s = opc('shr A, B', () => { cpu.A = 0b10101010; cpu.B = 4; });
+  t.equals(cpu.A, 0b1010, s);
+
+  s = opc('shr A, 4', () => { cpu.A = 0b10101010; });
+  t.equals(cpu.A, 0b1010, s);
+
+  s = opc('not A', () => { cpu.A = 0b11001010; });
+  t.equals(cpu.A, 0b11111111111111111111111100110101, s);
 
   t.end();
 });
