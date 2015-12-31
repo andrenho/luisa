@@ -68,7 +68,6 @@ test('Motherboard: memory map', t => {
     { addr: 0xF0004000, deviceType: Device.Type.UNUSED,       size: 0xFFFC000  }
   ];
   const memoryMap = m.memoryMap();
-  console.log(memoryMap[1].addr);
   t.equals(memoryMap.length, expectedMemoryMap.length, '# of entries in memoryMap is correct');
   for(let i = 0; i < memoryMap.length; ++i) {
     t.equals(memoryMap[i].addr, expectedMemoryMap[i].addr, 'memoryMap.address is correct (record ' + i + ')');

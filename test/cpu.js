@@ -73,6 +73,18 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('mov A, 0xFABC1234'); 
   t.equals(cpu.A, 0xFABC1234, s);
 
+  t.comment('Test movement flags');
+  
+  s = opc('mov A, 0');
+  t.true(cpu.Z, 'cpu.Z = 1');
+  t.true(cpu.P, 'cpu.P = 1');
+  t.false(cpu.S, 'cpu.S = 0');
+
+  s = opc('mov A, 0xF0000001');
+  t.false(cpu.Z, 'cpu.Z = 0');
+  t.false(cpu.P, 'cpu.P = 0');
+  t.true(cpu.S, 'cpu.S = 1');
+
   // 
   // MOVB
   //
@@ -198,6 +210,8 @@ test('CPU: Execute valid basic commands', t => {
     mb.set32(0xABF0, 0x1234); mb.set32(0x1234, 0x3F54FABC);
   });
   t.equals(mb.get32(0xFF00), 0x3F54FABC, s);
+
+
 
   t.end();
 });
