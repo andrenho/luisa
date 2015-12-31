@@ -48,7 +48,7 @@ test('CPU: Execute valid basic commands', t => {
       pre(); 
     }
     mb.setArray(0, cpuEncode(s));
-    let r = `[0x${mb.get(0).toString(16)}] ` + s;
+    let r = `[0x${mb.get(0) < 0x10 ? '0' : ''}${mb.get(0).toString(16)}] ` + s;
     mb.step();
     return r;
   }
@@ -58,6 +58,8 @@ test('CPU: Execute valid basic commands', t => {
   // 
   // MOV
   //
+  t.comment('Register movement (mov)');
+
   s = opc('mov A, B', () => cpu.B = 0x42); 
   t.equals(cpu.A, 0x42, s);
   t.equals(cpu.PC, 3, 'checking PC position');
@@ -74,11 +76,14 @@ test('CPU: Execute valid basic commands', t => {
   // 
   // MOVB
   //
-  s = opc('movb A, [B]', () => { cpu.B = 0x1000; mb.set32(cpu.B, 0xABCDEF01); }); 
-  t.equals(cpu.A, 0xABCDEF01, s);
   
-  s = opc('movb A, [0x1000]', () => mb.set32(0x1000, 0xABCDEF01));
-  t.equals(cpu.A, 0xABCDEF01, s);
+  t.comment('8-bit movement (movb)');
+
+  s = opc('movb A, [B]', () => { cpu.B = 0x1000; mb.set(cpu.B, 0xAB); }); 
+  t.equals(cpu.A, 0xAB, s);
+  
+  s = opc('movb A, [0x1000]', () => mb.set(0x1000, 0xAB));
+  t.equals(cpu.A, 0xAB, s);
 
   s = opc('movb [A], A', () => cpu.A = 0x64);
   t.equals(mb.get(0x64), 0x64, s);
@@ -89,23 +94,110 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('movb [A], [B]', () => { cpu.A = 0x32; cpu.B = 0x64; mb.set(0x64, 0xFF); });
   t.equals(mb.get(0x32), 0xFF, s);
 
-  s = opc('movb [A], [0x6420]', () => { cpu.A = 0x32; mb.set32(0x6420, 0xFF); });
+  s = opc('movb [A], [0x6420]', () => { cpu.A = 0x32; mb.set(0x6420, 0xFF); });
   t.equals(mb.get(0x32), 0xFF, s);
 
-  s = opc('movb [0x64], A', () => { cpu.A = 0x32; mb.set32(0x64, 0xFF); });
+  s = opc('movb [0x64], A', () => { cpu.A = 0xAC32; mb.set32(0x64, 0xFF); });
   t.equals(mb.get(0xFF), 0x32, s);
 
   s = opc('movb [0x64], 0xF0', () => { mb.set32(0x64, 0xFF); });
   t.equals(mb.get(0xFF), 0xF0, s);
   
-  s = opc('movb [0x64], [A]', () => { cpu.A = 0xF000; mb.set(0xF000, 0x42); mb.set32(0x64, 0xFFAB); });
+  s = opc('movb [0xCC64], [A]', () => { 
+    cpu.A = 0xF000; mb.set(0xF000, 0x42); 
+    mb.set32(0xCC64, 0xFFAB); 
+  });
   t.equals(mb.get(0xFFAB), 0x42, s);
   
-  s = opc('movb [0x64], [0xF0]', () => { 
-    mb.set32(0x64, 0xFF);
-    mb.set32(0xF0, 0x1234); mb.set(0x1234, 0x3F);
+  s = opc('movb [0x64], [0xABF0]', () => { 
+    mb.set32(0x64, 0xFF00);
+    mb.set32(0xABF0, 0x1234); mb.set(0x1234, 0x3F);
   });
-  t.equals(mb.get(0xFF), 0x3F, s);
+  t.equals(mb.get(0xFF00), 0x3F, s);
+
+  // 
+  // MOVW
+  //
+  
+  t.comment('16-bit movement (movw)');
+  
+  s = opc('movw A, [B]', () => { cpu.B = 0x1000; mb.set16(cpu.B, 0xABCD); }); 
+  t.equals(cpu.A, 0xABCD, s);
+  
+  s = opc('movw A, [0x1000]', () => mb.set16(0x1000, 0xABCD));
+  t.equals(cpu.A, 0xABCD, s);
+
+  s = opc('movw [A], A', () => cpu.A = 0x6402);
+  t.equals(mb.get16(0x6402), 0x6402, s);
+
+  s = opc('movw [A], 0xFABA', () => cpu.A = 0x64);
+  t.equals(mb.get16(0x64), 0xFABA, s);
+
+  s = opc('movw [A], [B]', () => { cpu.A = 0x32CC; cpu.B = 0x64; mb.set16(0x64, 0xFFAB); });
+  t.equals(mb.get16(0x32CC), 0xFFAB, s);
+
+  s = opc('movw [A], [0x6420]', () => { cpu.A = 0x32; mb.set16(0x6420, 0xFFAC); });
+  t.equals(mb.get16(0x32), 0xFFAC, s);
+
+  s = opc('movw [0x64], A', () => { cpu.A = 0xAB32AC; mb.set32(0x64, 0xFF); });
+  t.equals(mb.get16(0xFF), 0x32AC, s);
+
+  s = opc('movw [0x64], 0xF0FA', () => { mb.set32(0x64, 0xFF); });
+  t.equals(mb.get16(0xFF), 0xF0FA, s);
+  
+  s = opc('movw [0xCC64], [A]', () => { 
+    cpu.A = 0xF000; mb.set16(0xF000, 0x4245); 
+    mb.set32(0xCC64, 0xFFAB); 
+  });
+  t.equals(mb.get16(0xFFAB), 0x4245, s);
+  
+  s = opc('movw [0x64], [0xABF0]', () => { 
+    mb.set32(0x64, 0xFF00);
+    mb.set32(0xABF0, 0x1234); mb.set16(0x1234, 0x3F54);
+  });
+  t.equals(mb.get16(0xFF00), 0x3F54, s);
+
+  // 
+  // MOVD
+  //
+
+  t.comment('32-bit movement (movd)');
+  
+  s = opc('movd A, [B]', () => { cpu.B = 0x1000; mb.set32(cpu.B, 0xABCDEF01); }); 
+  t.equals(cpu.A, 0xABCDEF01, s);
+  
+  s = opc('movd A, [0x1000]', () => mb.set32(0x1000, 0xABCDEF01));
+  t.equals(cpu.A, 0xABCDEF01, s);
+
+  s = opc('movd [A], A', () => cpu.A = 0x16402);
+  t.equals(mb.get32(0x16402), 0x16402, s);
+
+  s = opc('movd [A], 0xFABA1122', () => cpu.A = 0x64);
+  t.equals(mb.get32(0x64), 0xFABA1122, s);
+
+  s = opc('movd [A], [B]', () => { cpu.A = 0x32CC; cpu.B = 0x64; mb.set32(0x64, 0xFFAB5678); });
+  t.equals(mb.get32(0x32CC), 0xFFAB5678, s);
+
+  s = opc('movd [A], [0x6420]', () => { cpu.A = 0x32; mb.set32(0x6420, 0xFFAC9876); });
+  t.equals(mb.get32(0x32), 0xFFAC9876, s);
+
+  s = opc('movd [0x64], A', () => { cpu.A = 0xAB32AC44; mb.set32(0x64, 0xFFAC); });
+  t.equals(mb.get32(0xFFAC), 0xAB32AC44, s);
+
+  s = opc('movd [0x64], 0xF0FA1234', () => { mb.set32(0x64, 0xFF); });
+  t.equals(mb.get32(0xFF), 0xF0FA1234, s);
+  
+  s = opc('movd [0xCC64], [A]', () => { 
+    cpu.A = 0xF000; mb.set32(0xF000, 0x4245AABB); 
+    mb.set32(0xCC64, 0xFFAB); 
+  });
+  t.equals(mb.get32(0xFFAB), 0x4245AABB, s);
+  
+  s = opc('movd [0x64], [0xABF0]', () => { 
+    mb.set32(0x64, 0xFF00);
+    mb.set32(0xABF0, 0x1234); mb.set32(0x1234, 0x3F54FABC);
+  });
+  t.equals(mb.get32(0xFF00), 0x3F54FABC, s);
 
   t.end();
 });

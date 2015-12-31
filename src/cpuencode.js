@@ -88,7 +88,7 @@ export default function cpuEncode(s) {
   //
   try {
     var [t0, v0, a0, s0] = [cmd.pars[0].type, cmd.pars[0].value, cmd.pars[0].valArray, cmd.pars[0].size];
-  } catch(e) {
+  } catch (e) {
     if (e instanceof TypeError) {
       var [t0, v0, a0, s0] = ['none', 0, [], 0];
     } else {
@@ -97,7 +97,7 @@ export default function cpuEncode(s) {
   }
   try {
     var [t1, v1, a1, s1] = [cmd.pars[1].type, cmd.pars[1].value, cmd.pars[1].valArray, cmd.pars[1].size];
-  } catch(e) {
+  } catch (e) {
     if (e instanceof TypeError) {
       var [t1, v1, a1, s1] = ['none', 0, [], 0];
     } else {
@@ -118,7 +118,7 @@ export default function cpuEncode(s) {
           opcode = 0x01;
         } else if (t1 === 'value') {
           switch (s1) {
-            case  8: opcode = 0x02; break;
+            case 8:  opcode = 0x02; break;
             case 16: opcode = 0x03; break;
             case 32: opcode = 0x04; break;
           }
@@ -564,7 +564,7 @@ export default function cpuEncode(s) {
     case 'pushb':
       if (t0 === 'register' && t1 === 'none') {
         return [0x74].concat(a0);
-      } else if(t0 === value && size <= 8 && t1 === 'none') {
+      } else if (t0 === value && size <= 8 && t1 === 'none') {
         return [0x75].concat(a0);
       }
       break;
@@ -572,7 +572,7 @@ export default function cpuEncode(s) {
     case 'pushw':
       if (t0 === 'register' && t1 === 'none') {
         return [0x76].concat(a0);
-      } else if(t0 === value && size <= 16 && t1 === 'none') {
+      } else if (t0 === value && size <= 16 && t1 === 'none') {
         return [0x77].concat([v0 & 0xFF, v0 >> 8]);
       }
       break;
@@ -580,7 +580,7 @@ export default function cpuEncode(s) {
     case 'pushd':
       if (t0 === 'register' && t1 === 'none') {
         return [0x78].concat(a0);
-      } else if(t0 === value && size <= 16 && t1 === 'none') {
+      } else if (t0 === value && size <= 16 && t1 === 'none') {
         return [0x79].concat([v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF]);
       }
       break;

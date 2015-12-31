@@ -35,6 +35,7 @@
  *                    bit 3 - S (sign)
  *                    bit 4 - GZ (greater than zero)
  *                    bit 5 - LZ (less than zero)
+ *                    bit 6 - P (parity)
  *
  * - Instruction set:
  *     (for now, see https://github.com/andrenho/tinyvm/wiki/CPU)
@@ -53,7 +54,7 @@ export default class CPU extends Device {
     super();
     this._mb = motherboard;
     this.reset();
-    this._step_function = this._init_step_functions();
+    this._stepFunction = this.initStepFunctions();
   }
 
 
@@ -152,7 +153,7 @@ export default class CPU extends Device {
   //
   
 
-  _init_step_functions() {
+  initStepFunctions() {
 
     let f = [];
 
@@ -169,96 +170,255 @@ export default class CPU extends Device {
     //
     f[0x01] = pos => {  // mov R, R
       let [reg, mb] = [this._reg, this._mb];
-      reg[mb.get(pos)] = reg[mb.get(pos+1)];
+      reg[mb.get(pos)] = reg[mb.get(pos + 1)];
       return 2;
     };
     f[0x02] = pos => {  // mov R, v8
       let [reg, mb] = [this._reg, this._mb];
-      reg[mb.get(pos)] = mb.get(pos+1);
+      reg[mb.get(pos)] = mb.get(pos + 1);
       return 2;
     };
     f[0x03] = pos => {  // mov R, v16
       let [reg, mb] = [this._reg, this._mb];
-      reg[mb.get(pos)] = mb.get16(pos+1);
+      reg[mb.get(pos)] = mb.get16(pos + 1);
       return 3;
     };
     f[0x04] = pos => {  // mov R, v32
       let [reg, mb] = [this._reg, this._mb];
-      reg[mb.get(pos)] = mb.get32(pos+1);
+      reg[mb.get(pos)] = mb.get32(pos + 1);
       return 5;
     };
 
     //
     // MOVB
     //
+
     f[0x05] = pos => {  // movb R, [R]
       let [reg, mb] = [this._reg, this._mb];
-      reg[mb.get(pos)] = mb.get32(reg[mb.get(pos+1)]);
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      reg[p1] = mb.get(reg[p2]);
       return 2;
     };
 
     f[0x06] = pos => {  // movb R, [v32]
       let [reg, mb] = [this._reg, this._mb];
-      reg[mb.get(pos)] = mb.get32(mb.get32(pos+1));
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      reg[p1] = mb.get(p2);
       return 5;
     };
 
-    f[0x0b] = pos => {  // movb [R], R
+    f[0x0B] = pos => {  // movb [R], R
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(reg[mb.get(pos)], reg[mb.get(pos+1)]);
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set(reg[p1], reg[p2] & 0xFF);
       return 2;
     };
 
-    f[0x0c] = pos => {  // movb [R], v8
+    f[0x0C] = pos => {  // movb [R], v8
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(reg[mb.get(pos)], mb.get(pos+1));
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set(reg[p1], p2);
       return 2;
     };
 
-    f[0x0d] = pos => {  // movb [R], [R]
+    f[0x0D] = pos => {  // movb [R], [R]
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(reg[mb.get(pos)], mb.get(reg[mb.get(pos+1)]));
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set(reg[p1], mb.get(reg[p2]));
       return 2;
     };
 
-    f[0x0e] = pos => {  // movb [R], [v32]
+    f[0x0E] = pos => {  // movb [R], [v32]
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(reg[mb.get(pos)], mb.get(mb.get32(pos+1)));
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      mb.set(reg[p1], mb.get(p2));
       return 5;
     };
 
     f[0x21] = pos => {  // movb [v32], R
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(mb.get32(mb.get32(pos)), reg[mb.get(pos+4)]);
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set(mb.get32(p1), reg[p2] & 0xFF);
       return 5;
     };
 
     f[0x22] = pos => {  // movb [v32], v8
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(mb.get32(mb.get32(pos)), mb.get(pos+4));
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set(mb.get32(p1), p2);
       return 5;
     };
 
     f[0x23] = pos => {  // movb [v32], [R]
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(mb.get32(mb.get32(pos)), mb.get32(reg[mb.get(pos+4)]));
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set(mb.get32(p1), mb.get(reg[p2]));
       return 5;
     };
 
     f[0x24] = pos => {  // movb [v32], [v32]
       let [reg, mb] = [this._reg, this._mb];
-      mb.set(mb.get32(mb.get32(pos)), mb.get(mb.get32(pos+4)));
+      let [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
+      mb.set(mb.get32(p1), mb.get(mb.get32(p2)));
+      return 8;
+    };
+
+    //
+    // MOVW
+    //
+
+    f[0x07] = pos => {  // movw R, [R]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      reg[p1] = mb.get16(reg[p2]);
+      return 2;
+    };
+
+    f[0x08] = pos => {  // movw R, [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      reg[p1] = mb.get16(p2);
+      return 5;
+    };
+
+    f[0x0F] = pos => {  // movw [R], R
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set16(reg[p1], reg[p2] & 0xFFFF);
+      return 2;
+    };
+
+    f[0x1A] = pos => {  // movw [R], v16
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      mb.set16(reg[p1], p2);
+      return 3;
+    };
+
+    f[0x1B] = pos => {  // movw [R], [R]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set16(reg[p1], mb.get16(reg[p2]));
+      return 2;
+    };
+
+    f[0x1C] = pos => {  // movw [R], [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      mb.set16(reg[p1], mb.get16(p2));
+      return 5;
+    };
+
+    f[0x25] = pos => {  // movw [v32], R
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set16(mb.get32(p1), reg[p2] & 0xFFFF);
+      return 5;
+    };
+
+    f[0x26] = pos => {  // movw [v32], v16
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get16(pos + 4)];
+      mb.set16(mb.get32(p1), p2);
+      return 6;
+    };
+
+    f[0x27] = pos => {  // movw [v32], [R]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set16(mb.get32(p1), mb.get16(reg[p2]));
+      return 5;
+    };
+
+    f[0x28] = pos => {  // movw [v32], [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
+      mb.set16(mb.get32(p1), mb.get16(mb.get32(p2)));
       return 8;
     };
 
 
+    //
+    // MOVD
+    //
 
+    f[0x09] = pos => {  // movd R, [R]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      reg[p1] = mb.get32(reg[p2]);
+      return 2;
+    };
+
+    f[0x0A] = pos => {  // movd R, [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      reg[p1] = mb.get32(p2);
+      return 5;
+    };
+
+    f[0x1D] = pos => {  // movd [R], R
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set32(reg[p1], reg[p2]);
+      return 2;
+    };
+
+    f[0x1E] = pos => {  // movd [R], v32
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      mb.set32(reg[p1], p2);
+      return 5;
+    };
+
+    f[0x1F] = pos => {  // movd [R], [R]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      mb.set32(reg[p1], mb.get32(reg[p2]));
+      return 2;
+    };
+
+    f[0x20] = pos => {  // movd [R], [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      mb.set32(reg[p1], mb.get32(p2));
+      return 5;
+    };
+
+    f[0x29] = pos => {  // movd [v32], R
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set32(mb.get32(p1), reg[p2]);
+      return 5;
+    };
+
+    f[0x2A] = pos => {  // movd [v32], v32
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
+      mb.set32(mb.get32(p1), p2);
+      return 8;
+    };
+
+    f[0x2B] = pos => {  // movd [v32], [R]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
+      mb.set32(mb.get32(p1), mb.get32(reg[p2]));
+      return 5;
+    };
+
+    f[0x2C] = pos => {  // movd [v32], [v32]
+      let [reg, mb] = [this._reg, this._mb];
+      let [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
+      mb.set32(mb.get32(p1), mb.get32(mb.get32(p2)));
+      return 8;
+    };
+
+    
     return f;
   }
 
 
   step() {
-    this.PC += this._step_function[this._mb.get(this.PC)](this.PC+1) + 1;
+    this.PC += this._stepFunction[this._mb.get(this.PC)](this.PC + 1) + 1;
   }
 
   //
@@ -305,6 +465,7 @@ export default class CPU extends Device {
   get S() { return ((this._reg[15] >> 3) & 0x1) ? true : false; }
   get GZ() { return ((this._reg[15] >> 4) & 0x1) ? true : false; }
   get LZ() { return ((this._reg[15] >> 5) & 0x1) ? true : false; }
+  get P() { return ((this._reg[15] >> 6) & 0x1) ? true : false; }
 
   // jscs:disable validateIndentation
   set Y(v) { if (v) this._reg[15] |= (1 << 0); else this._reg[15] &= ~(1 << 0); }
@@ -313,6 +474,7 @@ export default class CPU extends Device {
   set S(v) { if (v) this._reg[15] |= (1 << 3); else this._reg[15] &= ~(1 << 3); }
   set GZ(v) { if (v) this._reg[15] |= (1 << 4); else this._reg[15] &= ~(1 << 4); }
   set LZ(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
+  set LZ(v) { if (v) { this._reg[15] |= (1 << 6); } else { this._reg[15] &= ~(1 << 6); } }
   // jscs:enable validateIndentation
 
 }

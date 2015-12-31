@@ -79,7 +79,7 @@ export default class MMU extends Device {
 
   reset() {
     this._active = false;
-    this._last_error = 0;
+    this._lastError = 0;
     this._vmem = {
       active: false,
       page: 0,

@@ -54,7 +54,7 @@ export default class LSBStorage {
 
   getArray(pos, sz) {
     let a = [];
-    for(let i = pos; i < (pos + sz); ++i) {
+    for (let i = pos; i < (pos + sz); ++i) {
       a.push(this.get(i));
     }
     return a;
@@ -62,7 +62,7 @@ export default class LSBStorage {
 
 
   setArray(pos, array) {
-    for(let i = 0; i < array.length; ++i) {
+    for (let i = 0; i < array.length; ++i) {
       this.set(i + pos, array[i]);
     }
   }
