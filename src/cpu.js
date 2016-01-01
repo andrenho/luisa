@@ -175,25 +175,25 @@ export default class CPU extends Device {
     f[0x01] = pos => {  // mov R, R
       let [reg, mb] = [this._reg, this._mb];
       const r = reg[mb.get(pos + 1)];
-      reg[mb.get(pos)] = this.affectLogicFlags(r, 32);
+      reg[mb.get(pos)] = this._affectFlags(r);
       return 2;
     };
     f[0x02] = pos => {  // mov R, v8
       let [reg, mb] = [this._reg, this._mb];
       const r = mb.get(pos + 1);
-      reg[mb.get(pos)] = this.affectLogicFlags(r, 8);
+      reg[mb.get(pos)] = this._affectFlags(r);
       return 2;
     };
     f[0x03] = pos => {  // mov R, v16
       let [reg, mb] = [this._reg, this._mb];
       const r = mb.get16(pos + 1);
-      reg[mb.get(pos)] = this.affectLogicFlags(r, 16);
+      reg[mb.get(pos)] = this._affectFlags(r);
       return 3;
     };
     f[0x04] = pos => {  // mov R, v32
       let [reg, mb] = [this._reg, this._mb];
       const r = mb.get32(pos + 1);
-      reg[mb.get(pos)] = this.affectLogicFlags(r, 32);
+      reg[mb.get(pos)] = this._affectFlags(r);
       return 5;
     };
 
@@ -205,7 +205,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = mb.get(reg[p2]);
-      reg[p1] = this.affectLogicFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
 
@@ -213,7 +213,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = mb.get(p2);
-      reg[p1] = this.affectLogicFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
 
@@ -221,7 +221,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p2] & 0xFF;
-      mb.set(reg[p1], this.affectLogicFlags(r, 8));
+      mb.set(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -229,7 +229,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = p2;
-      mb.set(reg[p1], this.affectLogicFlags(r, 8));
+      mb.set(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -237,7 +237,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = mb.get(reg[p2]);
-      mb.set(reg[p1], this.affectLogicFlags(r, 8));
+      mb.set(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -245,7 +245,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = mb.get(p2);
-      mb.set(reg[p1], this.affectLogicFlags(r, 8));
+      mb.set(reg[p1], this._affectFlags(r));
       return 5;
     };
 
@@ -253,7 +253,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = reg[p2] & 0xFF;
-      mb.set(mb.get32(p1), this.affectLogicFlags(r, 8));
+      mb.set(mb.get32(p1), this._affectFlags(r));
       return 5;
     };
 
@@ -261,7 +261,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = p2;
-      mb.set(mb.get32(p1), this.affectLogicFlags(r, 8));
+      mb.set(mb.get32(p1), this._affectFlags(r));
       return 5;
     };
 
@@ -269,7 +269,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = mb.get(reg[p2]);
-      mb.set(mb.get32(p1), this.affectLogicFlags(r, 8));
+      mb.set(mb.get32(p1), this._affectFlags(r));
       return 5;
     };
 
@@ -277,7 +277,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = mb.get(mb.get32(p2));
-      mb.set(mb.get32(p1), this.affectLogicFlags(r, 8));
+      mb.set(mb.get32(p1), this._affectFlags(r));
       return 8;
     };
 
@@ -289,7 +289,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = mb.get16(reg[p2]);
-      reg[p1] = this.affectLogicFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
 
@@ -297,7 +297,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r =  mb.get16(p2);
-      reg[p1] = this.affectLogicFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
 
@@ -305,7 +305,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p2] & 0xFFFF;
-      mb.set16(reg[p1], this.affectLogicFlags(r, 16));
+      mb.set16(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -313,7 +313,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = p2;
-      mb.set16(reg[p1], this.affectLogicFlags(r, 16));
+      mb.set16(reg[p1], this._affectFlags(r));
       return 3;
     };
 
@@ -321,7 +321,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = mb.get16(reg[p2]);
-      mb.set16(reg[p1], this.affectLogicFlags(r, 16));
+      mb.set16(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -329,7 +329,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = mb.get16(p2);
-      mb.set16(reg[p1], this.affectLogicFlags(r, 16));
+      mb.set16(reg[p1], this._affectFlags(r));
       return 5;
     };
 
@@ -337,7 +337,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = reg[p2] & 0xFFFF;
-      mb.set16(mb.get32(p1), this.affectLogicFlags(r, 16));
+      mb.set16(mb.get32(p1), this._affectFlags(r));
       return 5;
     };
 
@@ -345,7 +345,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get16(pos + 4)];
       const r = p2;
-      mb.set16(mb.get32(p1), this.affectLogicFlags(r, 16));
+      mb.set16(mb.get32(p1), this._affectFlags(r));
       return 6;
     };
 
@@ -372,7 +372,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r =  mb.get32(reg[p2]);
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
 
@@ -380,7 +380,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r =  mb.get32(p2);
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
 
@@ -388,7 +388,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p2];
-      mb.set32(reg[p1], this.affectLogicFlags(r, 32));
+      mb.set32(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -396,7 +396,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = p2;
-      mb.set32(reg[p1], this.affectLogicFlags(r, 32));
+      mb.set32(reg[p1], this._affectFlags(r));
       return 5;
     };
 
@@ -404,7 +404,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = mb.get32(reg[p2]);
-      mb.set32(reg[p1], this.affectLogicFlags(r, 32));
+      mb.set32(reg[p1], this._affectFlags(r));
       return 2;
     };
 
@@ -412,7 +412,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = mb.get32(p2);
-      mb.set32(reg[p1], this.affectLogicFlags(r, 32));
+      mb.set32(reg[p1], this._affectFlags(r));
       return 5;
     };
 
@@ -420,7 +420,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = reg[p2];
-      mb.set32(mb.get32(p1), this.affectLogicFlags(r, 32));
+      mb.set32(mb.get32(p1), this._affectFlags(r));
       return 5;
     };
 
@@ -428,7 +428,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = p2;
-      mb.set32(mb.get32(p1), this.affectLogicFlags(r, 32));
+      mb.set32(mb.get32(p1), this._affectFlags(r));
       return 8;
     };
 
@@ -436,7 +436,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = mb.get32(reg[p2]);
-      mb.set32(mb.get32(p1), this.affectLogicFlags(r, 32));
+      mb.set32(mb.get32(p1), this._affectFlags(r));
       return 5;
     };
 
@@ -444,7 +444,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = mb.get32(mb.get32(p2));
-      mb.set32(mb.get32(p1), this.affectLogicFlags(r, 32));
+      mb.set32(mb.get32(p1), this._affectFlags(r));
       return 8;
     };
 
@@ -456,7 +456,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] | reg[p2];
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -464,7 +464,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] | p2;
-      reg[p1] = this.affectLogicFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -472,7 +472,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = reg[p1] | p2;
-      reg[p1] = this.affectLogicFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 3;
     };
     
@@ -480,7 +480,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = reg[p1] | p2;
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
     
@@ -492,7 +492,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] ^ reg[p2];
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -500,7 +500,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] ^ p2;
-      reg[p1] = this.affectLogicFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -508,7 +508,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = reg[p1] ^ p2;
-      reg[p1] = this.affectLogicFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 3;
     };
     
@@ -516,7 +516,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = reg[p1] ^ p2;
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
     
@@ -528,7 +528,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] & reg[p2];
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -536,7 +536,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] & p2;
-      reg[p1] = this.affectLogicFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -544,7 +544,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = reg[p1] & p2;
-      reg[p1] = this.affectLogicFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 3;
     };
     
@@ -552,7 +552,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = reg[p1] & p2;
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
 
@@ -564,7 +564,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] << reg[p2];
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.Y = ((reg[p1] >> 31) & 1) == 1;
       return 2;
     };
 
@@ -572,7 +573,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] << p2;
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.Y = ((reg[p1] >> 31) & 1) == 1;
       return 2;
     };
 
@@ -580,7 +582,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] >> reg[p2];
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (reg[p1] & 1) == 1;
       return 2;
     };
 
@@ -588,7 +591,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] >> p2;
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (reg[p1] & 1) == 1;
       return 2;
     };
 
@@ -600,7 +604,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1] = [mb.get(pos)];
       const r = ~reg[p1];
-      reg[p1] = this.affectLogicFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 1;
     };
 
@@ -611,100 +615,111 @@ export default class CPU extends Device {
     f[0x42] = pos => {  // add R, R
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] + reg[p2];
-      reg[p1] = this.affectMathFlags(r, 32);
+      const r = reg[p1] + reg[p2] + (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
     f[0x43] = pos => {  // add R, v8
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] + p2;
-      reg[p1] = this.affectMathFlags(r, 8);
+      const r = reg[p1] + p2 + (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r > 0xFFFFFFFF);
       return 2;
     };
     
     f[0x44] = pos => {  // add R, v16
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = reg[p1] + p2;
-      reg[p1] = this.affectMathFlags(r, 16);
+      const r = reg[p1] + p2 + (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r > 0xFFFFFFFF);
       return 3;
     };
     
     f[0x45] = pos => {  // add R, v32
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = reg[p1] + p2;
-      reg[p1] = this.affectMathFlags(r, 32);
+      const r = reg[p1] + p2 + (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r > 0xFFFFFFFF);
       return 5;
     };
     
     f[0x46] = pos => {  // sub R, R
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] - reg[p2];
-      reg[p1] = this.affectMathFlags(r, 32);
+      const r = reg[p1] - reg[p2] - (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r < 0);
       return 2;
     };
     
     f[0x47] = pos => {  // sub R, v8
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] - p2;
-      reg[p1] = this.affectMathFlags(r, 8);
+      const r = reg[p1] - p2 - (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r < 0);
       return 2;
     };
     
     f[0x48] = pos => {  // sub R, v16
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = reg[p1] - p2;
-      reg[p1] = this.affectMathFlags(r, 16);
+      const r = reg[p1] - p2 - (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r < 0);
       return 3;
     };
     
     f[0x49] = pos => {  // sub R, v32
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = reg[p1] - p2;
-      reg[p1] = this.affectMathFlags(r, 32);
+      const r = reg[p1] - p2 - (this.Y ? 1 : 0);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r < 0);
       return 5;
     };
     
     f[0x4A] = pos => {  // cmp R, R
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      this.affectMathFlags(reg[p1] - reg[p2], 32);
+      this._affectFlags(reg[p1] - reg[p2], 32);
       this.LT = reg[p1] < reg[p2];
       this.GT = reg[p1] > reg[p2];
+      this.Y = (reg[p1] - reg[p2]) < 0;
       return 2;
     };
     
     f[0x4B] = pos => {  // cmp R, v8
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      this.affectMathFlags(reg[p1] - p2, 8);
+      this._affectFlags(reg[p1] - p2, 8);
       this.LT = reg[p1] < p2;
       this.GT = reg[p1] > p2;
+      this.Y = (reg[p1] - p2) < 0;
       return 2;
     };
     
     f[0x4C] = pos => {  // cmp R, v16
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      this.affectMathFlags(reg[p1] - p2, 16);
+      this._affectFlags(reg[p1] - p2, 16);
       this.LT = reg[p1] < p2;
       this.GT = reg[p1] > p2;
+      this.Y = (reg[p1] - p2) < 0;
       return 3;
     };
     
     f[0x4D] = pos => {  // cmp R, v32
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      this.affectMathFlags(reg[p1] - p2, 32);
+      this._affectFlags(reg[p1] - p2, 32);
       this.LT = reg[p1] < p2;
       this.GT = reg[p1] > p2;
+      this.Y = (reg[p1] - p2) < 0;
       return 5;
     };
 
@@ -712,7 +727,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] * reg[p2];
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.V = (r > 0xFFFFFFFF);
       return 2;
     };
     
@@ -720,7 +736,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] * p2;
-      reg[p1] = this.affectMathFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
+      this.V = (r > 0xFFFFFFFF);
       return 2;
     };
     
@@ -728,7 +745,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = reg[p1] * p2;
-      reg[p1] = this.affectMathFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
+      this.V = (r > 0xFFFFFFFF);
       return 3;
     };
     
@@ -736,7 +754,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = reg[p1] * p2;
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.V = (r > 0xFFFFFFFF);
       return 5;
     };
     
@@ -744,7 +763,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = Math.floor(reg[p1] / reg[p2]);
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -752,7 +771,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = Math.floor(reg[p1] / p2);
-      reg[p1] = this.affectMathFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -760,7 +779,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = Math.floor(reg[p1] / p2);
-      reg[p1] = this.affectMathFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 3;
     };
     
@@ -768,7 +787,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = Math.floor(reg[p1] / p2);
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
     
@@ -776,7 +795,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] % reg[p2];
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -784,7 +803,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
       const r = reg[p1] % p2;
-      reg[p1] = this.affectMathFlags(r, 8);
+      reg[p1] = this._affectFlags(r);
       return 2;
     };
     
@@ -792,7 +811,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
       const r = reg[p1] % p2;
-      reg[p1] = this.affectMathFlags(r, 16);
+      reg[p1] = this._affectFlags(r);
       return 3;
     };
     
@@ -800,7 +819,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
       const r = reg[p1] % p2;
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
       return 5;
     };
 
@@ -808,7 +827,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get(pos);
       const r = reg[p1] + 1;
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r > 0xFFFFFFFF);
       return 1;
     };
     
@@ -816,26 +836,288 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get(pos);
       const r = reg[p1] - 1;
-      reg[p1] = this.affectMathFlags(r, 32);
+      reg[p1] = this._affectFlags(r);
+      this.Y = (r < 0);
       return 1;
     };
-    
+
+    //
+    // BRANCHES
+    //
+
+    f[0x5C] = pos => {  // bz A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.Z) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x5D] = pos => {  // bz v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.Z) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x5E] = pos => {  // bz A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (!this.Z) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x5F] = pos => {  // bz v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (!this.Z) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x60] = pos => {  // bneg A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.S) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x61] = pos => {  // bneg v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.S) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x62] = pos => {  // bpos A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (!this.S) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x63] = pos => {  // bpos v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (!this.S) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x64] = pos => {  // bgt A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.GT) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x65] = pos => {  // bgt v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.GT) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x66] = pos => {  // bgte A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.GT && this.Z) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x67] = pos => {  // bgte v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.GT && this.Z) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x68] = pos => {  // blt A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.LT) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x69] = pos => {  // blt v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.LT) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x6A] = pos => {  // blte A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.LT && this.Z) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x6B] = pos => {  // blte v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.LT && this.Z) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x6C] = pos => {  // bv A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (this.V) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x6D] = pos => {  // bv v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (this.V) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x6E] = pos => {  // bv A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      if (!this.V) {
+        this.PC = reg[p1];
+        return 0;
+      }
+      return 1;
+    };
+
+
+    f[0x6F] = pos => {  // bv v32
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get32(pos);
+      if (!this.V) {
+        this.PC = p1;
+        return 0;
+      }
+      return 4;
+    };
+
+
+    f[0x70] = pos => {  // jmp A
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = this._mb.get(pos);
+      this.PC = this._reg[p1];
+      return 0;
+    };
+
+
+    f[0x71] = pos => {  // jmp v32
+      const p1 = this._mb.get32(pos);
+      this.PC = p1;
+      return 0;
+    };
+
+
+    f[0x72] = pos => {  // jsr A
+      const p1 = this._mb.get(pos);
+      this._push32(this.PC + 2);
+      this.PC = this._reg[p1];
+      return 0;
+    };
+
+
+    f[0x73] = pos => {  // jsr v32
+      const p1 = this._mb.get32(pos);
+      this._push32(this.PC + 5);
+      this.PC = p1;
+      return 0;
+    };
+
+
+    f[0x74] = pos => {  // ret
+      this.PC = this._pop32();
+      return 0;
+    }
+
+
     return f;
   }
 
 
   step() {
-    this.PC += this._stepFunction[this._mb.get(this.PC)](this.PC + 1) + 1;
+    const n = this._stepFunction[this._mb.get(this.PC)](this.PC + 1);
+    if (n) {
+      this.PC += n + 1;
+    }
   }
 
 
-  affectLogicFlags(value, size) {
-    if (size !== 8 && size !== 16 && size !== 32) {
-      throw new Error('Invalid size');
-    }
+  _affectFlags(value) {
     this.Z = ((value & 0xFFFFFFFF) === 0);
     this.P = ((value % 2) === 0);
-    this.S = ((value >> (size-1)) & 0x1 ? true : false);
+    this.S = ((value >> 31) & 0x1 ? true : false);
     this.V = false;
     this.Y = false;
     this.GT = false;
@@ -844,9 +1126,48 @@ export default class CPU extends Device {
   }
 
 
-  affectMathFlags(value, size) {
-    const r = this.affectLogicFlags(value, size);
-    this.Y = (value !== (value & 0xFFFFFFFF)); //(value > 0xFFFFFFFF);
+  // 
+  // STACK
+  //
+
+  _push(value) {
+    this._mb.set(this.SP, value);
+    this.SP -= 1;
+  }
+
+
+  _push16(value) {
+    this.SP -= 1;
+    this._mb.set16(this.SP, value);
+    this.SP -= 1;
+  }
+
+
+  _push32(value) {
+    this.SP -= 3;
+    this._mb.set32(this.SP, value);
+    this.SP -= 1;
+  }
+  
+
+  _pop() {
+    this.SP += 1;
+    return this._mb.get(this.SP);
+  }
+
+
+  _pop16() {
+    this.SP += 1;
+    const r = this._mb.get16(this.SP);
+    this.SP += 1;
+    return r;
+  }
+
+
+  _pop32() {
+    this.SP += 1;
+    const r = this._mb.get32(this.SP);
+    this.SP += 3;
     return r;
   }
 
@@ -885,7 +1206,7 @@ export default class CPU extends Device {
   set K(v) { this._reg[10] = v; }
   set L(v) { this._reg[11] = v; }
   set FP(v) { this._reg[12] = v; }
-  set SP(v) { this._reg[13] = v; }
+  set SP(v) { this._reg[13] = v & 0xFFFFFFFF; }
   set PC(v) { this._reg[14] = v; }
   set FL(v) { this._reg[15] = v; }
 

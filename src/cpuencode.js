@@ -389,6 +389,7 @@ export default function cpuEncode(s) {
       }
       break;
 
+    /*
     case 'fadd':
       if (t0 === 'register') {
         if (t1 === 'register') {
@@ -458,6 +459,7 @@ export default function cpuEncode(s) {
         }
       }
       break;
+    */
 
     case 'bz':
     case 'beq':
@@ -479,139 +481,155 @@ export default function cpuEncode(s) {
 
     case 'bneg':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
+        return [0x60].concat(a0);
       } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+        return [0x61, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
       }
       break;
 
     case 'bpos':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
+        return [0x62].concat(a0);
       } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+        return [0x63, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+      }
+      break;
+
+    case 'bgt':
+      if (t0 === 'register' && t1 === 'none') {
+        return [0x64].concat(a0);
+      } else if (t0 === 'value' && t1 === 'none') {
+        return [0x65, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+      }
+      break;
+
+    case 'bgte':
+      if (t0 === 'register' && t1 === 'none') {
+        return [0x66].concat(a0);
+      } else if (t0 === 'value' && t1 === 'none') {
+        return [0x67, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+      }
+      break;
+
+    case 'blt':
+      if (t0 === 'register' && t1 === 'none') {
+        return [0x68].concat(a0);
+      } else if (t0 === 'value' && t1 === 'none') {
+        return [0x69, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+      }
+      break;
+
+    case 'blte':
+      if (t0 === 'register' && t1 === 'none') {
+        return [0x6A].concat(a0);
+      } else if (t0 === 'value' && t1 === 'none') {
+        return [0x6B, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
       }
       break;
 
     case 'bv':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
+        return [0x6C].concat(a0);
       } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+        return [0x6D, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
       }
       break;
 
     case 'bnv':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
+        return [0x6E].concat(a0);
       } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
-      }
-      break;
-
-    case 'by':
-      if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
-      } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
-      }
-      break;
-
-    case 'bny':
-      if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
-      } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+        return [0x6F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
       }
       break;
 
     case 'jmp':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
+        return [0x70].concat(a0);
       } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+        return [0x71, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
       }
       break;
 
     case 'jsr':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x5E].concat(a0);
+        return [0x72].concat(a0);
       } else if (t0 === 'value' && t1 === 'none') {
-        return [0x5F, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
+        return [0x73, v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF];
       }
       break;
 
     case 'ret':
       if (t0 === 'none' && t1 === 'none') {
-        return [0x70];
+        return [0x74];
       }
       break;
 
     case 'jsr':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x71].concat(a0);
+        return [0x75].concat(a0);
       } else if (t0 === 'value' && s0 === 8 && t1 === 'none') {
-        return [0x72, v0];
+        return [0x76, v0];
       }
       break;
 
     case 'iret':
       if (t0 === 'none' && t1 === 'none') {
-        return [0x73];
+        return [0x77];
       }
       break;
 
     case 'pushb':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x74].concat(a0);
+        return [0x78].concat(a0);
       } else if (t0 === value && size <= 8 && t1 === 'none') {
-        return [0x75].concat(a0);
+        return [0x79].concat(a0);
       }
       break;
 
     case 'pushw':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x76].concat(a0);
+        return [0x7A].concat(a0);
       } else if (t0 === value && size <= 16 && t1 === 'none') {
-        return [0x77].concat([v0 & 0xFF, v0 >> 8]);
+        return [0x7B].concat([v0 & 0xFF, v0 >> 8]);
       }
       break;
 
     case 'pushd':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x78].concat(a0);
+        return [0x7C].concat(a0);
       } else if (t0 === value && size <= 16 && t1 === 'none') {
-        return [0x79].concat([v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF]);
+        return [0x7D].concat([v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF]);
       }
       break;
 
     case 'push.a':
       if (t0 === 'none' && t1 === 'none') {
-        return [0x7A];
+        return [0x7E];
       }
       break;
 
     case 'popb':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x7B].concat(a0);
+        return [0x7F].concat(a0);
       }
       break;
 
     case 'popw':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x7C].concat(a0);
+        return [0x80].concat(a0);
       }
       break;
 
     case 'popd':
       if (t0 === 'register' && t1 === 'none') {
-        return [0x7D].concat(a0);
+        return [0x81].concat(a0);
       }
       break;
 
     case 'pop.a':
       if (t0 === 'none' && t1 === 'none') {
-        return [0x7A];
+        return [0x82];
       }
       break;
 

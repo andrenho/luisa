@@ -286,6 +286,9 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('add A, 0x20', () => cpu.A = 0x12);
   t.equals(cpu.A, 0x32, s);
 
+  s = opc('add A, 0x20', () => { cpu.A = 0x12, cpu.Y = true; });
+  t.equals(cpu.A, 0x33, 'add A, 0x20 (with carry)');
+
   s = opc('add A, 0x2000', () => cpu.A = 0x12);
   t.equals(cpu.A, 0x2012, s);
 
@@ -304,10 +307,13 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('sub A, 0x20', () => cpu.A = 0x22);
   t.equals(cpu.A, 0x2, s);
 
+  s = opc('sub A, 0x20', () => { cpu.A = 0x22; cpu.Y = true; });
+  t.equals(cpu.A, 0x1, 'sub A, 0x20 (with carry)');
+
   s = opc('sub A, 0x2000', () => cpu.A = 0x12);
   t.equals(cpu.A, 0xFFFFE012, s);
   t.true(cpu.S, 'cpu.S == 1');
-  t.false(cpu.Y, 'cpu.Y == 0');
+  t.true(cpu.Y, 'cpu.Y == 1');
 
   s = opc('sub A, 0xF0000000', () => cpu.A = 0x10000012);
   t.equals(cpu.A, 0x20000012, s);
@@ -333,11 +339,11 @@ test('CPU: Execute valid basic commands', t => {
 
   s = opc('mul A, 0x12AF', () => cpu.A = 0x1234);
   t.equals(cpu.A, 0x154198C, s);
-  t.false(cpu.Y, 'cpu.Y == 0');
+  t.false(cpu.V, 'cpu.V == 0');
 
   s = opc('mul A, 0x12AF87AB', () => cpu.A = 0x1234);
   t.equals(cpu.A, 0x233194BC, s);
-  t.true(cpu.Y, 'cpu.Y == 1');
+  t.true(cpu.V, 'cpu.V == 1');
 
   s = opc('idiv A, B', () => { cpu.A = 0xF000; cpu.B = 0xF0; });
   t.equals(cpu.A, 0x100, s);
@@ -378,6 +384,61 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('dec A', () => cpu.A = 0x0);
   t.equals(cpu.A, 0xFFFFFFFF, 'dec A (underflow)');
   t.false(cpu.Z, 'cpu.Z == 0');
+
+  // 
+  // branches
+  //
+
+  t.comment('Branch operations');
+
+  s = opc('bz A', () => { cpu.Z = true; cpu.A = 0x1000; });
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bz A', () => { cpu.A = 0x1000; });
+  t.equals(cpu.PC, 0x2, 'bz A (false)');
+
+  s = opc('bz 0x1000', () => cpu.Z = true);
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bnz A', () => cpu.A = 0x1000);
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bnz 0x1000');
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bneg A', () => { cpu.S = true; cpu.A = 0x1000; });
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bneg A', () => { cpu.A = 0x1000; });
+  t.equals(cpu.PC, 0x2, 'bneg A (false)');
+
+  s = opc('bneg 0x1000', () => cpu.S = true);
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bpos A', () => cpu.A = 0x1000);
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('bpos 0x1000');
+  t.equals(cpu.PC, 0x1000, s);
+
+  s = opc('jmp 0x12345678');
+  t.equals(cpu.PC, 0x12345678, s);
+  
+  mb.reset();
+  mb.setArray(0x200, cpuEncode('jsr 0x1234'));
+  mb.setArray(0x1234, cpuEncode('ret'));
+  cpu.PC = 0x200;
+  cpu.SP = 0xFFF;
+  mb.step();
+  t.equals(cpu.PC, 0x1234, 'jsr 0x1234');
+  t.equals(mb.get(0xFFC), 0x5, '[FFC] = 0x5');
+  t.equals(mb.get(0xFFD), 0x2, '[FFD] = 0x2');
+  t.equals(cpu.SP, 0xFFB, 'SP = 0xFFB');
+  t.equals(mb.get32(0xFFC), 0x200 + 5, 'address in stack'); 
+
+  mb.step();
+  t.equals(cpu.PC, 0x205, 'ret');
+  t.equals(cpu.SP, 0xFFF, 'SP = 0xFFF');
 
   t.end();
 });
