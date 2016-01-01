@@ -582,7 +582,7 @@ export default function cpuEncode(s) {
     case 'pushb':
       if (t0 === 'register' && t1 === 'none') {
         return [0x78].concat(a0);
-      } else if (t0 === value && size <= 8 && t1 === 'none') {
+      } else if (t0 === 'value' && size <= 8 && t1 === 'none') {
         return [0x79].concat(a0);
       }
       break;
@@ -598,7 +598,7 @@ export default function cpuEncode(s) {
     case 'pushd':
       if (t0 === 'register' && t1 === 'none') {
         return [0x7C].concat(a0);
-      } else if (t0 === value && size <= 16 && t1 === 'none') {
+      } else if (t0 === 'value' && size <= 16 && t1 === 'none') {
         return [0x7D].concat([v0 & 0xFF, (v0 >> 8) & 0xFF, (v0 >> 16) & 0xFF, (v0 >> 24) & 0xFF]);
       }
       break;
@@ -630,6 +630,16 @@ export default function cpuEncode(s) {
     case 'pop.a':
       if (t0 === 'none' && t1 === 'none') {
         return [0x82];
+      }
+      break;
+
+    case 'popx':
+      if (t0 === 'register' && t1 === 'none') {
+        return [0x83].concat(a0);
+      } else if (t0 === 'value' && size <= 8 && t1 === 'none') {
+        return [0x84].concat(a0);
+      } else if (t0 === 'value' && size <= 16 && t1 === 'none') {
+        return [0x85].concat(a0);
       }
       break;
 
