@@ -41,6 +41,11 @@
  *     (for now, see https://github.com/andrenho/tinyvm/wiki/CPU)
  */
 
+/*
+ * TODO: 
+ *   - improve overflow/carry support (arithmetic)
+ *   - improve signedness
+ */
 
 import Device from '../src/device';
 
@@ -667,6 +672,154 @@ export default class CPU extends Device {
       return 5;
     };
     
+    f[0x4A] = pos => {  // cmp R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      this.affectMathFlags(reg[p1] - reg[p2], 32);
+      this.LT = reg[p1] < reg[p2];
+      this.GT = reg[p1] > reg[p2];
+      return 2;
+    };
+    
+    f[0x4B] = pos => {  // cmp R, v8
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      this.affectMathFlags(reg[p1] - p2, 8);
+      this.LT = reg[p1] < p2;
+      this.GT = reg[p1] > p2;
+      return 2;
+    };
+    
+    f[0x4C] = pos => {  // cmp R, v16
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      this.affectMathFlags(reg[p1] - p2, 16);
+      this.LT = reg[p1] < p2;
+      this.GT = reg[p1] > p2;
+      return 3;
+    };
+    
+    f[0x4D] = pos => {  // cmp R, v32
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      this.affectMathFlags(reg[p1] - p2, 32);
+      this.LT = reg[p1] < p2;
+      this.GT = reg[p1] > p2;
+      return 5;
+    };
+
+    f[0x4E] = pos => {  // mul R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] * reg[p2];
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 2;
+    };
+    
+    f[0x4F] = pos => {  // mul R, v8
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] * p2;
+      reg[p1] = this.affectMathFlags(r, 8);
+      return 2;
+    };
+    
+    f[0x50] = pos => {  // mul R, v16
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      const r = reg[p1] * p2;
+      reg[p1] = this.affectMathFlags(r, 16);
+      return 3;
+    };
+    
+    f[0x51] = pos => {  // mul R, v32
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      const r = reg[p1] * p2;
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 5;
+    };
+    
+    f[0x52] = pos => {  // idiv R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = Math.floor(reg[p1] / reg[p2]);
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 2;
+    };
+    
+    f[0x53] = pos => {  // idiv R, v8
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = Math.floor(reg[p1] / p2);
+      reg[p1] = this.affectMathFlags(r, 8);
+      return 2;
+    };
+    
+    f[0x54] = pos => {  // idiv R, v16
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      const r = Math.floor(reg[p1] / p2);
+      reg[p1] = this.affectMathFlags(r, 16);
+      return 3;
+    };
+    
+    f[0x55] = pos => {  // idiv R, v32
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      const r = Math.floor(reg[p1] / p2);
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 5;
+    };
+    
+    f[0x56] = pos => {  // mod R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] % reg[p2];
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 2;
+    };
+    
+    f[0x57] = pos => {  // mod R, v8
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] % p2;
+      reg[p1] = this.affectMathFlags(r, 8);
+      return 2;
+    };
+    
+    f[0x58] = pos => {  // mod R, v16
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      const r = reg[p1] % p2;
+      reg[p1] = this.affectMathFlags(r, 16);
+      return 3;
+    };
+    
+    f[0x59] = pos => {  // mod R, v32
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      const r = reg[p1] % p2;
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 5;
+    };
+
+    f[0x5A] = pos => {  // inc R
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      const r = reg[p1] + 1;
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 1;
+    };
+    
+    f[0x5B] = pos => {  // dec R
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      const r = reg[p1] - 1;
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 1;
+    };
+    
     return f;
   }
 
@@ -680,7 +833,7 @@ export default class CPU extends Device {
     if (size !== 8 && size !== 16 && size !== 32) {
       throw new Error('Invalid size');
     }
-    this.Z = (value === 0);
+    this.Z = ((value & 0xFFFFFFFF) === 0);
     this.P = ((value % 2) === 0);
     this.S = ((value >> (size-1)) & 0x1 ? true : false);
     this.V = false;
@@ -693,7 +846,7 @@ export default class CPU extends Device {
 
   affectMathFlags(value, size) {
     const r = this.affectLogicFlags(value, size);
-    this.Y = (value > 0xFFFFFFFF);
+    this.Y = (value !== (value & 0xFFFFFFFF)); //(value > 0xFFFFFFFF);
     return r;
   }
 

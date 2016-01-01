@@ -305,11 +305,79 @@ test('CPU: Execute valid basic commands', t => {
   t.equals(cpu.A, 0x2, s);
 
   s = opc('sub A, 0x2000', () => cpu.A = 0x12);
-  t.equals(cpu.A, 0xFFFFDFED, s);
+  t.equals(cpu.A, 0xFFFFE012, s);
+  t.true(cpu.S, 'cpu.S == 1');
+  t.false(cpu.Y, 'cpu.Y == 0');
 
-  s = opc('add A, 0xF0000000', () => cpu.A = 0x10000012);
-  t.equals(cpu.A, 0x12, s);
-  t.true(cpu.Y, "cpu.Y == 1");
+  s = opc('sub A, 0xF0000000', () => cpu.A = 0x10000012);
+  t.equals(cpu.A, 0x20000012, s);
+  t.true(cpu.Y, 'cpu.Y == 1');
+
+  s = opc('cmp A, B');
+  t.true(cpu.Z, s);
+
+  s = opc('cmp A, 0x12');
+  t.true(cpu.LT && !cpu.GT, s);
+
+  s = opc('cmp A, 0x1234', () => cpu.A = 0x6000);
+  t.true(!cpu.LT && cpu.GT, s);
+
+  s = opc('cmp A, 0x12345678', () => cpu.A = 0xF0000000);
+  t.true(!cpu.LT && cpu.GT, s);  // because of the signal!
+
+  s = opc('mul A, B', () => { cpu.A = 0xF0; cpu.B = 0xF000; });
+  t.equals(cpu.A, 0xE10000, s);
+
+  s = opc('mul A, 0x12', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x147A8, s);
+
+  s = opc('mul A, 0x12AF', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x154198C, s);
+  t.false(cpu.Y, 'cpu.Y == 0');
+
+  s = opc('mul A, 0x12AF87AB', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x233194BC, s);
+  t.true(cpu.Y, 'cpu.Y == 1');
+
+  s = opc('idiv A, B', () => { cpu.A = 0xF000; cpu.B = 0xF0; });
+  t.equals(cpu.A, 0x100, s);
+
+  s = opc('idiv A, 0x12', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x102, s);
+
+  s = opc('idiv A, 0x2AF', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x6, s);
+
+  s = opc('idiv A, 0x12AF', () => cpu.A = 0x123487AB);
+  t.equals(cpu.A, 0xF971, s);
+
+  s = opc('mod A, B', () => { cpu.A = 0xF000; cpu.B = 0xF0; });
+  t.equals(cpu.A, 0x0, s);
+  t.true(cpu.Z, 'cpu.Z == 1');
+
+  s = opc('mod A, 0x12', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x10, s);
+
+  s = opc('mod A, 0x2AF', () => cpu.A = 0x1234);
+  t.equals(cpu.A, 0x21A, s);
+
+  s = opc('mod A, 0x12AF', () => cpu.A = 0x123487AB);
+  t.equals(cpu.A, 0x116C, s);
+
+  s = opc('inc A', () => cpu.A = 0x42);
+  t.equals(cpu.A, 0x43, s);
+
+  s = opc('inc A', () => cpu.A = 0xFFFFFFFF);
+  t.equals(cpu.A, 0x0, 'inc A (overflow)');
+  t.true(cpu.Y, 'cpu.Y == 1');
+  t.true(cpu.Z, 'cpu.Z == 1');
+
+  s = opc('dec A', () => cpu.A = 0x42);
+  t.equals(cpu.A, 0x41, s);
+
+  s = opc('dec A', () => cpu.A = 0x0);
+  t.equals(cpu.A, 0xFFFFFFFF, 'dec A (underflow)');
+  t.false(cpu.Z, 'cpu.Z == 0');
 
   t.end();
 });
