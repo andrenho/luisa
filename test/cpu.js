@@ -424,6 +424,87 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('jmp 0x12345678');
   t.equals(cpu.PC, 0x12345678, s);
   
+
+  // 
+  // stack
+  //
+
+  t.comment('Stack operations');
+
+  mb.reset();
+  cpu.SP = 0xFFF; 
+  cpu.A = 0xABCDEF12;
+
+  mb.setArray(0x0, cpuEncode('pushb A'));
+  mb.setArray(0x2, cpuEncode('pushb 0x12'));
+  mb.setArray(0x4, cpuEncode('pushw A'));
+  mb.setArray(0x6, cpuEncode('pushd A'));
+
+  mb.setArray(0x8, cpuEncode('popd B'));
+  mb.setArray(0xA, cpuEncode('popw B'));
+  mb.setArray(0xC, cpuEncode('popb B'));
+
+  mb.setArray(0xE, cpuEncode('popx 1'));
+
+  mb.step();
+  t.equals(mb.get(0xFFF), 0x12, 'pushb A');
+  t.equals(cpu.SP, 0xFFE, 'SP = 0xFFE');
+
+  mb.step();
+  t.equals(mb.get(0xFFE), 0x12, 'pushb 0x12');
+  t.equals(cpu.SP, 0xFFD, 'SP = 0xFFD');
+
+  mb.step();
+  t.equals(mb.get16(0xFFC), 0xEF12, s);
+  t.equals(mb.get(0xFFD), 0xEF, s);
+  t.equals(mb.get(0xFFC), 0x12, s);
+  t.equals(cpu.SP, 0xFFB, 'SP = 0xFFB');
+
+  mb.step();
+  t.equals(mb.get32(0xFF8), 0xABCDEF12);
+  t.equals(cpu.SP, 0xFF7, 'SP = 0xFF7');
+
+  mb.step();
+  t.equals(cpu.B, 0xABCDEF12, 'popd B');
+
+  mb.step();
+  t.equals(cpu.B, 0xEF12, 'popw B');
+
+  mb.step();
+  t.equals(cpu.B, 0x12, 'popb B');
+
+  mb.step();
+  t.equals(cpu.SP, 0xFFF, 'popx 1');
+
+  // all registers
+  s = opc('push.a', () => {
+    cpu.SP = 0xFFF;
+    cpu.A = 0xA1B2C3E4;
+    cpu.B = 0xFFFFFFFF;
+  });
+  t.equals(cpu.SP, 0xFD3, s);
+  t.equals(mb.get32(0xFFC), 0xA1B2C3E4, 'A is saved');
+  t.equals(mb.get32(0xFF9), 0xFFFFFFFF, 'B is saved');
+  
+  s = opc('pop.a', () => {
+    cpu.SP = 0xFD3;
+    mb.set32(0xFFC, 0xA1B2C3E4);
+    mb.set32(0xFF9, 0xFFFFFFFF);
+  });
+  t.equals(cpu.SP, 0xFFF, s);
+  t.equals(cpu.A, 0xA1B2C3E4, 'A is restored');
+  t.equals(cpu.B, 0xFFFFFFFF, 'B is restored');
+
+  t.end();
+
+});
+
+
+test('CPU: subroutines and system calls', t => {
+
+  let [mb, cpu] = makeCPU();
+
+  // jsr
   mb.reset();
   mb.setArray(0x200, cpuEncode('jsr 0x1234'));
   mb.setArray(0x1234, cpuEncode('ret'));
@@ -440,19 +521,57 @@ test('CPU: Execute valid basic commands', t => {
   t.equals(cpu.PC, 0x205, 'ret');
   t.equals(cpu.SP, 0xFFF, 'SP = 0xFFF');
 
+  // sys
+  mb.reset();
+  cpu.SP = 0x1000;
+  mb.setArray(0, cpuEncode('sys 2'));
+  mb.set32(cpu.CPU_SYSCALL_VECTOR + 8, 0x1000);
+  mb.setArray(0x1000, cpuEncode('sret'));
+
+  mb.step();
+  t.equals(cpu.PC, 0x1000, 'sys 2');
+  t.equals(cpu.SP, 0xFFD, 'SP = 0xFFD');
+  mb.step();
+  t.equals(cpu.PC, 0x2, 'sret');
+  t.equals(cpu.SP, 0xFFF, 'SP = 0xFFF');
+
   t.end();
+
 });
 
 
 test('CPU: interrupts', t => {
+
   let [mb, cpu] = makeCPU();
+  cpu.T = true;
   mb.set32(cpu.CPU_INTERRUPT_VECT + 8, 0x1000);
   mb.setArray(0x0, cpuEncode('mov A, 0xE0000000'));
-  mb.step();
-  mb.step();
-  t.equals(cpu.PC, 0x1000);
-  t.true(cpu.T, 'interrupt disabled');
+  mb.setArray(0x1000, cpuEncode('iret'));
+
+  mb.step();  // cause the exception
+  t.equals(cpu.PC, 0x1000, 'interrupt called');
+  t.true(cpu.T, 'interrupts disabled');
+
+  mb.step();  // iret
+  t.equals(cpu.PC, 0x6, 'iret');
+  t.true(cpu.T, 'interrupts enabled');
+
   t.end();
+
+});
+
+
+test('CPU: invalid opcode', t => {
+
+  let [mb, cpu] = makeCPU();
+  cpu.T = true;
+  mb.set32(cpu.CPU_INTERRUPT_VECT + 12, 0x1000);
+  mb.set(0x0, 0xFF);
+  mb.step();
+  t.equals(cpu.PC, 0x1000, 'interrupt called');
+
+  t.end();
+
 });
 
 // vim: ts=2:sw=2:sts=2:expandtab
