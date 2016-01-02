@@ -890,7 +890,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x5D] = pos => {  // bz v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -900,7 +899,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x5E] = pos => {  // bz A
       let [reg, mb] = [this._reg, this._mb];
@@ -912,7 +910,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x5F] = pos => {  // bz v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -922,7 +919,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x60] = pos => {  // bneg A
       let [reg, mb] = [this._reg, this._mb];
@@ -934,7 +930,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x61] = pos => {  // bneg v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -944,7 +939,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x62] = pos => {  // bpos A
       let [reg, mb] = [this._reg, this._mb];
@@ -956,7 +950,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x63] = pos => {  // bpos v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -966,7 +959,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x64] = pos => {  // bgt A
       let [reg, mb] = [this._reg, this._mb];
@@ -978,7 +970,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x65] = pos => {  // bgt v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -988,7 +979,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x66] = pos => {  // bgte A
       let [reg, mb] = [this._reg, this._mb];
@@ -1000,7 +990,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x67] = pos => {  // bgte v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -1010,7 +999,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x68] = pos => {  // blt A
       let [reg, mb] = [this._reg, this._mb];
@@ -1022,7 +1010,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x69] = pos => {  // blt v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -1032,7 +1019,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x6A] = pos => {  // blte A
       let [reg, mb] = [this._reg, this._mb];
@@ -1044,7 +1030,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x6B] = pos => {  // blte v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -1054,7 +1039,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x6C] = pos => {  // bv A
       let [reg, mb] = [this._reg, this._mb];
@@ -1066,7 +1050,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x6D] = pos => {  // bv v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -1076,7 +1059,6 @@ export default class CPU extends Device {
       }
       return 4;
     };
-
 
     f[0x6E] = pos => {  // bv A
       let [reg, mb] = [this._reg, this._mb];
@@ -1088,7 +1070,6 @@ export default class CPU extends Device {
       return 1;
     };
 
-
     f[0x6F] = pos => {  // bv v32
       let [reg, mb] = [this._reg, this._mb];
       const p1 = mb.get32(pos);
@@ -1099,7 +1080,6 @@ export default class CPU extends Device {
       return 4;
     };
 
-
     f[0x70] = pos => {  // jmp A
       let [reg, mb] = [this._reg, this._mb];
       const p1 = this._mb.get(pos);
@@ -1107,13 +1087,11 @@ export default class CPU extends Device {
       return 0;
     };
 
-
     f[0x71] = pos => {  // jmp v32
       const p1 = this._mb.get32(pos);
       this.PC = p1;
       return 0;
     };
-
 
     f[0x72] = pos => {  // jsr A
       const p1 = this._mb.get(pos);
@@ -1121,7 +1099,6 @@ export default class CPU extends Device {
       this.PC = this._reg[p1];
       return 0;
     };
-
 
     f[0x73] = pos => {  // jsr v32
       const p1 = this._mb.get32(pos);
@@ -1157,7 +1134,103 @@ export default class CPU extends Device {
       return 0;
     };
 
+    f[0x86] = pos => {  // sret
+      this.PC = this._pop32();
+      // TODO - leave supervisor mode
+      return 0;
+    };
 
+    f[0x78] = pos => {  // pushb R
+      const p1 = this._mb.get(pos);
+      this._push(this._reg[p1] & 0xFF);
+      return 1;
+    };
+
+    f[0x79] = pos => {  // pushb v8
+      const p1 = this._mb.get(pos);
+      this._push(p1);
+      return 1;
+    };
+
+    f[0x7A] = pos => {  // pushw R
+      const p1 = this._mb.get(pos);
+      this._push16(this._reg[p1] & 0xFFFF);
+      return 1;
+    };
+
+    f[0x7B] = pos => {  // pushw v16
+      const p1 = this._mb.get16(pos);
+      this._push16(p1);
+      return 2;
+    };
+
+    f[0x7C] = pos => {  // pushw R
+      const p1 = this._mb.get(pos);
+      this._push32(this._reg[p1]);
+      return 1;
+    };
+
+    f[0x7D] = pos => {  // pushw v16
+      const p1 = this._mb.get32(pos);
+      this._push32(p1);
+      return 4;
+    };
+
+    f[0x7E] = pos => {  // push.a
+      for (let i = 0x0; i <= 0xB; ++i) {
+        this._push32(this._reg[i]);
+      }
+      return 0;
+    };
+
+    f[0x7F] = pos => {  // popb R
+      const p1 = this._mb.get(pos);
+      this._reg[p1] = this._pop();
+      return 1;
+    };
+
+    f[0x80] = pos => {  // popw R
+      const p1 = this._mb.get(pos);
+      this._reg[p1] = this._pop16();
+      return 1;
+    };
+
+    f[0x81] = pos => {  // popw R
+      const p1 = this._mb.get(pos);
+      this._reg[p1] = this._pop32();
+      return 1;
+    };
+
+    f[0x82] = pos => {  // pop.a
+      for (let i = 0xB; i >= 0x0; --i) {
+        this._reg[i] = this._pop32();
+      }
+      return 0;
+    };
+
+    f[0x83] = pos => {  // popx R
+      const p1 = this._mb.get(pos);
+      for(let i = 0; i < this._reg[p1]; ++i) {
+        this._pop();
+      }
+      return 1;
+    };
+      
+    f[0x84] = pos => {  // popx v8
+      const p1 = this._mb.get(pos);
+      for(let i = 0; i < p1; ++i) {
+        this._pop();
+      }
+      return 1;
+    };
+      
+    f[0x85] = pos => {  // popx v16
+      const p1 = this._mb.get16(pos);
+      for(let i = 0; i < p1; ++i) {
+        this._pop();
+      }
+      return 2;
+    };
 
     return f;
   }
