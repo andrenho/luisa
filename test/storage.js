@@ -71,6 +71,7 @@ test.only('Storage: read (poll)', t => {
 
   mb.set(0x0, 0x86);  // nop
   stg.setString(0x100, 'abcdefghijklm');  // 13 bytes
+  t.equals(stg.get(0x100), 'a', 'everything is right');
 
   // read data
 
