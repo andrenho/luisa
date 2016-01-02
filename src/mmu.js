@@ -72,7 +72,7 @@ export default class MMU extends Device {
     this._ram = ram;
     this.reset();
 
-    this.MMU_ERR_NONE =          0x0;
+    this.MMU_ERR_NONE          = 0x0;
     this.MMU_ERR_OUT_OF_BOUNDS = 0x1;
     this.MMU_PAGE_FAULT        = 0x2;
   }
@@ -96,9 +96,13 @@ export default class MMU extends Device {
 
   constantList() {
     return {
-      MMU_RAM_SZ: 0x10,
-      MMU_VMEM:   0x14,
-      MMU_ERR:    0x18,
+      MMU_TYPE:      0x00,
+      MMU_VERSION:   0x01,
+      MMU_INTERRUPT: 0x02,
+      MMU_NAME:      0x03,
+      MMU_RAM_SZ:    0x10,
+      MMU_VMEM:      0x14,
+      MMU_ERR:       0x18,
     };
   }
 

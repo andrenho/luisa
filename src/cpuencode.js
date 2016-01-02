@@ -579,6 +579,12 @@ export default function cpuEncode(s) {
       }
       break;
 
+    case 'sret':
+      if (t0 === 'none' && t1 === 'none') {
+        return [0x86];
+      }
+      break;
+
     case 'pushb':
       if (t0 === 'register' && t1 === 'none') {
         return [0x78].concat(a0);
