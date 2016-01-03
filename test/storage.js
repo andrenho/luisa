@@ -122,7 +122,7 @@ test('Storage: write (poll)', t => {
 });
 
 
-test.only('Storage: read (interrupt)', t => {
+test('Storage: read (interrupt)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
@@ -132,7 +132,7 @@ test.only('Storage: read (interrupt)', t => {
 
   // preapre interrupt
   mb.set(stg.STG_MODE, stg.STG_MODE_INTERRUPT);
-  mb.set32(cpu.CPU_INTERRUPT_VECT + 12, 0x1000);
+  mb.set32(cpu.CPU_INTERRUPT_VECT + (4 * mb.get(stg.STG_INTERRUPT)), 0x1000);
   cpu.T = true;
 
   // read data
