@@ -78,7 +78,5 @@ test('Timer: interrupt', t => {
   t.end();
 });
 
-//test('Timer: single timer', t => {
-
 
 // vim: ts=2:sw=2:sts=2:expandtab

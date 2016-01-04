@@ -2,7 +2,7 @@ import Device from './device';
 
 export default class Timer extends Device {
 
-  constructor(units) {
+  constructor() {
     super();
 
     this._const = this.constantList();

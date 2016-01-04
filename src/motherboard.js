@@ -69,14 +69,14 @@ export default class Motherboard extends LSBStorage {
       dev.interruptNumber = ++this._interruptCount;
     }
 
-    // is it MMU?
+    // device specific actions
     if (dev.deviceType() === Device.Type.MMU) {
       this._mmu = dev;
     } else if (dev.deviceType() === Device.Type.CPU) {
       this._cpu = dev;
+    } else if (dev.deviceType() === Device.Type.BIOS) {
+      this._cpu.PC = dev.BIOS_CODE;
     }
-
-    // TODO - is it a BIOS? set initial address
   }
 
 

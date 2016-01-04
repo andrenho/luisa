@@ -122,7 +122,8 @@ Device.Type = {
   STORAGE:      0x03,
   KEYBOARD:     0x04,
   TIMER:        0x05,
-  VIDEO:        0x06,
+  BIOS:         0x06,
+  VIDEO:        0x07,
   // other
   OTHER_INPUT:  0x80,
   OTHER_OUTPUT: 0x81,
