@@ -30,7 +30,7 @@ export default class Keyboard extends Device {
       KBD_MODE:       0x10,
       KBD_QUEUE_FULL: 0x11,
       KBD_DEQUEUE:    0x12,
-      KBD_EOQ:        0x14,
+      KBD_FRONT:        0x14,
     };
   }
   
@@ -70,7 +70,7 @@ export default class Keyboard extends Device {
       return (this._queue.length === Keyboard.QUEUE_SIZE ? 1 : 0);
     } else if (a === this._const.KBD_DEQUEUE) {
       this._queue.shift();
-    } else if (a >= this._const.KBD_EOQ || a < (this._const.KBD_EOQ + 4)) {
+    } else if (a >= this._const.KBD_FRONT || a < (this._const.KBD_FRONT + 4)) {
       const v = (this._queue.length === 0 ? 0 : this._queue[0]);
       switch (a % 4) {
         case 0: return v & 0xFF;
