@@ -19,7 +19,22 @@ export default class Video extends Device {
       VID_VERSION:    0x01,
       VID_INTERRUPT:  0x02,
       VID_NAME:       0x03,
-      VID_CODE:       0x10,
+      VID_WIDTH:      0x10,
+      VID_HEIGHT:     0x11,
+      VID_OP:         0x12,
+      VID_P0:         0x14,
+      VID_P1:         0x18,
+      VID_P2:         0x1C,
+      VID_P3:         0x20,
+      VID_P4:         0x24,
+      VID_P5:         0x28,
+      VID_P6:         0x2C,
+      VID_P7:         0x30,
+      VID_R0:         0x34,
+      VID_R1:         0x38,
+      VID_PALETTE:   0x100,
+      VID_PIXELS:  0x10000,
+      VID_DATA:   0x210000,
     };
   }
 
