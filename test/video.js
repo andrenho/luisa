@@ -7,11 +7,7 @@ import CPU from '../src/cpu';
 
 import Video from '../src/video';
 
-var Canvas = require('canvas')
-
-
-function loader_function(file) {
-}
+var Canvas = require('canvas');
 
 
 function makeVideo() {
@@ -20,7 +16,7 @@ function makeVideo() {
   const cpu = new CPU(mb);
   mb.addDevice(cpu);
   const canvas = new Canvas(500,560);
-  const video = new Video(loader_function, canvas);
+  const video = new Video(canvas);
   mb.addDevice(video);
   return [mb, cpu, video, canvas];
 }

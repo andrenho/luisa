@@ -2,10 +2,13 @@ import Device from './device';
 
 export default class BIOS extends Device {
 
-  constructor(loaderFunction) {
+  constructor(binaryCode) {
     super();
     this._const = this.constantList();
-    this._code = loaderFunction('bios.rom');
+    if (!binaryCode instanceof Uint8Array) {
+      throw new Error('Uint8Array expected');
+    }
+    this._code = binaryCode;
   }
 
   name() { return 'TinyBIOS'; }

@@ -42,16 +42,17 @@ fs.readFile(filename, (err, data) => {
     const ox = Math.floor(i / 16) * 6;
     const oy = (i % 16) * 9;
     
+    let ns = [];
     for (let y = oy; y < (oy + 9); ++y) {
       let b = 0b0;
       for (let x = ox; x < (ox + 6); ++x) {
         b <<= 1;
         b |= (ctx.getImageData(x, y, 1, 1).data[0] == 0) ? 0 : 1;
       }
-      process.stdout.write(`0x${b.toString(16)}, `);
+      ns.push('0x' + b.toString(16));
     }
 
-    process.stdout.write('],\n\n');
+    process.stdout.write(ns.join(', ') + '],\n\n');
   }
 
   process.stdout.write('];\n\nexport default chars;\n');

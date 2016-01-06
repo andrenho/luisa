@@ -2,7 +2,7 @@ import Device from './device';
 
 export default class Keyboard extends Device {
 
-  constructor(units) {
+  constructor() {
     super();
     
     // initialize constants

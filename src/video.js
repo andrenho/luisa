@@ -4,7 +4,7 @@ import chars from './chars';
 
 export default class Video extends Device {
 
-  constructor(loaderFunction, canvas) {
+  constructor(canvas) {
     super();
 
     // constants
@@ -15,7 +15,6 @@ export default class Video extends Device {
 
     // initialize
     this._const = this.constantList();
-    this._loader = loaderFunction;
     this._width = 500; // border of 10
     this._height = 560;
     this._canvas = canvas;
@@ -65,9 +64,9 @@ export default class Video extends Device {
       return this._height;
     } else {
       let v;
-      if (a >= this._const.VID_P0 && a < (this._const.VID_P7 + 4)) {
+      if (a >= this._const.VID_P0 && a < (this._const.VID_P7  +  4)) {
         v = this._p[Math.floor((a - this._const.VID_P0) / 4)];
-      } else if (a >= this._const.VID_R0 && (a < this._const.VID_R1 + 4)) {
+      } else if (a >= this._const.VID_R0 && (a < this._const.VID_R1  +  4)) {
         v = this._r[Math.floor((a - this._const.VID_R0) / 4)];
       }
       if (v !== undefined) {
@@ -90,10 +89,10 @@ export default class Video extends Device {
       this._r = this._execute(v);
     } else {
       let r, arr;
-      if (a >= this._const.VID_P0 && a < (this._const.VID_P7 + 4)) {
+      if (a >= this._const.VID_P0 && a < (this._const.VID_P7  +  4)) {
         r = Math.floor((a - this._const.VID_P0) / 4);
         arr = this._p;
-      } else if (a >= this._const.VID_R0 && a < (this._const.VID_R1 + 4)) {
+      } else if (a >= this._const.VID_R0 && a < (this._const.VID_R1  +  4)) {
         r = Math.floor((a - this._const.VID_R0) / 4);
         arr = this._p;
       }
@@ -124,11 +123,11 @@ export default class Video extends Device {
         this._ctx.fillRect(0, 0, this._width, this._height);
         break;
       case this.VID_OP_DRAW_PX:
-        let px = (this._p[0] + (this._p[1] * this._width)) * 4;
-        this._data.data[px+3] = 0xFF;
-        this._data.data[px+0] = (this._p[2] >> 16) & 0xFF;
-        this._data.data[px+1] = (this._p[2] >> 8) & 0xFF;
-        this._data.data[px+2] = this._p[2] & 0xFF;
+        let px = (this._p[0]  +  (this._p[1] * this._width)) * 4;
+        this._data.data[px + 3] = 0xFF;
+        this._data.data[px + 0] = (this._p[2] >> 16) & 0xFF;
+        this._data.data[px + 1] = (this._p[2] >> 8) & 0xFF;
+        this._data.data[px + 2] = this._p[2] & 0xFF;
         this._ctx.putImageData(this._data, 0, 0, this._p[0], this._p[1], 1, 1);
         break;
       case this.VID_OP_GET_PX:
@@ -144,8 +143,8 @@ export default class Video extends Device {
 
   _drawChar(c, x, y, bg, fg, offx, offy) {
     const image = this._charImage(c, bg, fg);
-    const px = 10 + (x * 6) + offx;
-    const py = 10 + (y * 9) + offy;
+    const px = 10  +  (x * 6)  +  offx;
+    const py = 10  +  (y * 9)  +  offy;
     this._ctx.putImageData(image, px, py);
   }
   
@@ -167,12 +166,12 @@ export default class Video extends Device {
     let img = this._ctx.createImageData(6, 9);
     for (let y = 0; y < 9; ++y) {
       for (let x = 0; x < 6; ++x) {
-        const p = (x + (y * 6)) * 4;
+        const p = (x  +  (y * 6)) * 4;
         const v = (chars[c][y] >> x) & 1;
-        img.data[p+3] = 0xFF;
+        img.data[p + 3] = 0xFF;
         img.data[p] = ((v ? bg : fg) >> 16) & 0xFF;
-        img.data[p+1] = ((v ? bg : fg) >> 8) & 0xFF;
-        img.data[p+2] = (v ? bg : fg) & 0xFF;
+        img.data[p + 1] = ((v ? bg : fg) >> 8) & 0xFF;
+        img.data[p + 2] = (v ? bg : fg) & 0xFF;
       }
     }
     return img;
