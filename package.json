@@ -8,6 +8,7 @@
     "doc": "java -jar doc/plantuml.jar doc/classes.uml",
     "lint": "eslint src",
     "style": "jscs -v src/*.js",
+    "genchars": "utils/genchars data/font.png 127 > src/chars.js",
     "test": "babel-tape-runner test/*.js | tap-spec"
   },
   "repository": {

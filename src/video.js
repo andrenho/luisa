@@ -1,5 +1,7 @@
 import Device from './device';
 
+import chars from './chars';
+
 export default class Video extends Device {
 
   constructor(loaderFunction, canvas) {
@@ -21,6 +23,7 @@ export default class Video extends Device {
     this._data = this._ctx.getImageData(0, 0, this._width, this._height);
     this._p = new Uint32Array(8);
     this._r = new Uint32Array(2);
+    this._charCache = {};
   }
 
   name() { return 'TinyVideo'; }
@@ -132,9 +135,23 @@ export default class Video extends Device {
         const d = this._ctx.getImageData(this._p[0], this._p[1], 1, 1).data;
         return [(d[0] << 16) | (d[1] << 8) | d[2], 0];
       case this.VID_OP_WRITE:
+        this._drawChar.apply(this, this._p.slice(0, 7));
         break; // TODO
     }
     return [0, 0];
+  }
+
+
+  _drawChar(c, x, y, bg, fg, offx, offy) {
+    const image = this._charImage(c, bg, fg);
+    const px = 10 + (x * 6) + offx;
+    const py = 10 + (y * 9) + offy;
+    this._ctx.putImageData(image, px, py);
+  }
+  
+
+  _charImage(c, x, y) {
+
   }
 
 
