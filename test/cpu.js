@@ -109,23 +109,21 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('movb [A], [0x6420]', () => { cpu.A = 0x32; mb.set(0x6420, 0xFF); });
   t.equals(mb.get(0x32), 0xFF, s);
 
-  s = opc('movb [0x64], A', () => { cpu.A = 0xAC32; mb.set32(0x64, 0xFF); });
-  t.equals(mb.get(0xFF), 0x32, s);
+  s = opc('movb [0x64], A', () => cpu.A = 0xAC32);
+  t.equals(mb.get(0x64), 0x32, s);
 
-  s = opc('movb [0x64], 0xF0', () => { mb.set32(0x64, 0xFF); });
-  t.equals(mb.get(0xFF), 0xF0, s);
+  s = opc('movb [0x64], 0xF0');
+  t.equals(mb.get(0x64), 0xF0, s);
   
   s = opc('movb [0xCC64], [A]', () => { 
     cpu.A = 0xF000; mb.set(0xF000, 0x42); 
-    mb.set32(0xCC64, 0xFFAB); 
   });
-  t.equals(mb.get(0xFFAB), 0x42, s);
+  t.equals(mb.get(0xCC64), 0x42, s);
   
   s = opc('movb [0x64], [0xABF0]', () => { 
-    mb.set32(0x64, 0xFF00);
     mb.set32(0xABF0, 0x1234); mb.set(0x1234, 0x3F);
   });
-  t.equals(mb.get(0xFF00), 0x3F, s);
+  t.equals(mb.get(0x64), 0x3F, s);
 
   // 
   // MOVW
@@ -151,23 +149,21 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('movw [A], [0x6420]', () => { cpu.A = 0x32; mb.set16(0x6420, 0xFFAC); });
   t.equals(mb.get16(0x32), 0xFFAC, s);
 
-  s = opc('movw [0x64], A', () => { cpu.A = 0xAB32AC; mb.set32(0x64, 0xFF); });
-  t.equals(mb.get16(0xFF), 0x32AC, s);
+  s = opc('movw [0x64], A', () => cpu.A = 0xAB32AC);
+  t.equals(mb.get16(0x64), 0x32AC, s);
 
-  s = opc('movw [0x64], 0xF0FA', () => { mb.set32(0x64, 0xFF); });
-  t.equals(mb.get16(0xFF), 0xF0FA, s);
+  s = opc('movw [0x64], 0xF0FA');
+  t.equals(mb.get16(0x64), 0xF0FA, s);
   
   s = opc('movw [0xCC64], [A]', () => { 
     cpu.A = 0xF000; mb.set16(0xF000, 0x4245); 
-    mb.set32(0xCC64, 0xFFAB); 
   });
-  t.equals(mb.get16(0xFFAB), 0x4245, s);
+  t.equals(mb.get16(0xCC64), 0x4245, s);
   
   s = opc('movw [0x64], [0xABF0]', () => { 
-    mb.set32(0x64, 0xFF00);
     mb.set32(0xABF0, 0x1234); mb.set16(0x1234, 0x3F54);
   });
-  t.equals(mb.get16(0xFF00), 0x3F54, s);
+  t.equals(mb.get16(0x64), 0x3F54, s);
 
   // 
   // MOVD
@@ -193,23 +189,21 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('movd [A], [0x6420]', () => { cpu.A = 0x32; mb.set32(0x6420, 0xFFAC9876); });
   t.equals(mb.get32(0x32), 0xFFAC9876, s);
 
-  s = opc('movd [0x64], A', () => { cpu.A = 0xAB32AC44; mb.set32(0x64, 0xFFAC); });
-  t.equals(mb.get32(0xFFAC), 0xAB32AC44, s);
+  s = opc('movd [0x64], A', () => cpu.A = 0xAB32AC44);
+  t.equals(mb.get32(0x64), 0xAB32AC44, s);
 
-  s = opc('movd [0x64], 0xF0FA1234', () => { mb.set32(0x64, 0xFF); });
-  t.equals(mb.get32(0xFF), 0xF0FA1234, s);
+  s = opc('movd [0x64], 0xF0FA1234');
+  t.equals(mb.get32(0x64), 0xF0FA1234, s);
   
   s = opc('movd [0xCC64], [A]', () => { 
     cpu.A = 0xF000; mb.set32(0xF000, 0x4245AABB); 
-    mb.set32(0xCC64, 0xFFAB); 
   });
-  t.equals(mb.get32(0xFFAB), 0x4245AABB, s);
+  t.equals(mb.get32(0xCC64), 0x4245AABB, s);
   
   s = opc('movd [0x64], [0xABF0]', () => { 
-    mb.set32(0x64, 0xFF00);
     mb.set32(0xABF0, 0x1234); mb.set32(0x1234, 0x3F54FABC);
   });
-  t.equals(mb.get32(0xFF00), 0x3F54FABC, s);
+  t.equals(mb.get32(0x64), 0x3F54FABC, s);
 
   //
   // LOGIC OPERATIONS

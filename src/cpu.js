@@ -288,7 +288,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = reg[p2] & 0xFF;
-      mb.set(mb.get32(p1), this._affectFlags(r));
+      mb.set(p1, this._affectFlags(r));
       return 5;
     };
 
@@ -296,7 +296,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = p2;
-      mb.set(mb.get32(p1), this._affectFlags(r));
+      mb.set(p1, this._affectFlags(r));
       return 5;
     };
 
@@ -304,7 +304,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = mb.get(reg[p2]);
-      mb.set(mb.get32(p1), this._affectFlags(r));
+      mb.set(p1, this._affectFlags(r));
       return 5;
     };
 
@@ -312,7 +312,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = mb.get(mb.get32(p2));
-      mb.set(mb.get32(p1), this._affectFlags(r));
+      mb.set(p1, this._affectFlags(r));
       return 8;
     };
 
@@ -372,7 +372,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = reg[p2] & 0xFFFF;
-      mb.set16(mb.get32(p1), this._affectFlags(r));
+      mb.set16(p1, this._affectFlags(r));
       return 5;
     };
 
@@ -380,21 +380,21 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get16(pos + 4)];
       const r = p2;
-      mb.set16(mb.get32(p1), this._affectFlags(r));
+      mb.set16(p1, this._affectFlags(r));
       return 6;
     };
 
     f[0x27] = pos => {  // movw [v32], [R]
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
-      mb.set16(mb.get32(p1), mb.get16(reg[p2]));
+      mb.set16(p1, mb.get16(reg[p2]));
       return 5;
     };
 
     f[0x28] = pos => {  // movw [v32], [v32]
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
-      mb.set16(mb.get32(p1), mb.get16(mb.get32(p2)));
+      mb.set16(p1, mb.get16(mb.get32(p2)));
       return 8;
     };
 
@@ -455,7 +455,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = reg[p2];
-      mb.set32(mb.get32(p1), this._affectFlags(r));
+      mb.set32(p1, this._affectFlags(r));
       return 5;
     };
 
@@ -463,7 +463,8 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = p2;
-      mb.set32(mb.get32(p1), this._affectFlags(r));
+      debugger;
+      mb.set32(p1, this._affectFlags(r));
       return 8;
     };
 
@@ -471,7 +472,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
       const r = mb.get32(reg[p2]);
-      mb.set32(mb.get32(p1), this._affectFlags(r));
+      mb.set32(p1, this._affectFlags(r));
       return 5;
     };
 
@@ -479,7 +480,7 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = mb.get32(mb.get32(p2));
-      mb.set32(mb.get32(p1), this._affectFlags(r));
+      mb.set32(p1, this._affectFlags(r));
       return 8;
     };
 
