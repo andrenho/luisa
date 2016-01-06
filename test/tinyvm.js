@@ -21,7 +21,7 @@ test('TinyVM: step', t => {
 });
 
 
-test.only('TinyVM: full example', t => {
+test('TinyVM: full example', t => {
   let b = [];
   b = b.concat(cpuEncode('movd [0xF0016014], 64'));        // movd [VID_P0], '@'
   b = b.concat(cpuEncode('movd [0xF0016018], 5'));         // movd [VID_P1], 5
