@@ -67,7 +67,7 @@ test('Draw one single pixel', t => {
 });
 
 
-test.only('Draw character', t => {
+test('Draw character', t => {
   const [mb, cpu, video, canvas] = makeVideo();
   let c = canvas.getContext('2d');
 
@@ -81,12 +81,28 @@ test.only('Draw character', t => {
   mb.set(video.VID_OP, video.VID_OP_WRITE);
 
   // check if pixels were set correctly
-  const px = 42; // 10 [border] + 6*5 [x=5] + 1 [offset] + 1 [first pixel]
+  let px = 42; // 10 [border] + 6*5 [x=5] + 1 [offset] + 1 [first pixel]
   const py = 57; // 10 [border] + 9*5 [x=5] + 1 [offset] + 1 [first pixel]
   mb.set32(video.VID_P0, px);
   mb.set32(video.VID_P1, py);
   mb.set(video.VID_OP, video.VID_OP_GET_PX);
-  t.equals(mb.get32(video.VID_R0), 0xFF0000);
+  t.equals(mb.get32(video.VID_R0), 0xFF0000, 'character set correctly');
+
+  mb.set32(video.VID_P0, '@'.charCodeAt(0));
+  mb.set32(video.VID_P1, 6);
+  mb.set32(video.VID_P2, 5);
+  mb.set32(video.VID_P3, 0x0);
+  mb.set32(video.VID_P4, 0xFF0000);
+  mb.set32(video.VID_P5, 1);
+  mb.set32(video.VID_P6, 1);
+  mb.set(video.VID_OP, video.VID_OP_WRITE);
+
+  // check if pixels were set correctly
+  px += 6;
+  mb.set32(video.VID_P0, px);
+  mb.set32(video.VID_P1, py);
+  mb.set(video.VID_OP, video.VID_OP_GET_PX);
+  t.equals(mb.get32(video.VID_R0), 0xFF0000, 'character cache working correcly');
 
   t.end();
 });

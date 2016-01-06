@@ -150,8 +150,32 @@ export default class Video extends Device {
   }
   
 
-  _charImage(c, x, y) {
+  _charImage(c, bg, fg) {
+    const idx = `${c.toString(16)}_${bg.toString(16)}${fg.toString(16)}`;
+    const value = this._charCache[idx];
+    if (value) {
+      return value;
+    } else {
+      const chr = this._createCharImage(c, bg, fg);
+      this._charCache[idx] = chr;
+      return chr;
+    }
+  }
 
+
+  _createCharImage(c, bg, fg) {
+    let img = this._ctx.createImageData(6, 9);
+    for (let y = 0; y < 9; ++y) {
+      for (let x = 0; x < 6; ++x) {
+        const p = (x + (y * 6)) * 4;
+        const v = (chars[c][y] >> x) & 1;
+        img.data[p+3] = 0xFF;
+        img.data[p] = ((v ? bg : fg) >> 16) & 0xFF;
+        img.data[p+1] = ((v ? bg : fg) >> 8) & 0xFF;
+        img.data[p+2] = (v ? bg : fg) & 0xFF;
+      }
+    }
+    return img;
   }
 
 
