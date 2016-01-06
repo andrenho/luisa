@@ -56,7 +56,7 @@ test('Draw one single pixel', t => {
 
   // read pixel in 5, 5
   mb.set(video.VID_OP, video.VID_OP_GET_PX);
-  t.equals(mb.get(video.VID_R0), 0xFF0000, 'read pixel from memory');
+  t.equals(mb.get32(video.VID_R0), 0xFF0000, 'read pixel from memory');
 
   // clear screen
   mb.set32(video.VID_P0, 0);

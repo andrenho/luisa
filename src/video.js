@@ -117,17 +117,20 @@ export default class Video extends Device {
   _execute(op) {
     switch (op) {
       case this.VID_OP_CLRSCR:
-        break;  // TODO
+        this._ctx.fillStyle = `rgb(${(this._p[0] >> 16) & 0xFF},${(this._p[0] >> 8) & 0xFF},${this._p[0] & 0xFF})`;
+        this._ctx.fillRect(0, 0, this._width, this._height);
+        break;
       case this.VID_OP_DRAW_PX:
         let px = (this._p[0] + (this._p[1] * this._width)) * 4;
         this._data.data[px+3] = 0xFF;
         this._data.data[px+0] = (this._p[2] >> 16) & 0xFF;
         this._data.data[px+1] = (this._p[2] >> 8) & 0xFF;
         this._data.data[px+2] = this._p[2] & 0xFF;
-        this._ctx.putImageData(this._data, 0, 0);  // dirty
+        this._ctx.putImageData(this._data, 0, 0, this._p[0], this._p[1], 1, 1);
         break;
       case this.VID_OP_GET_PX:
-        return 0;  // TODO
+        const d = this._ctx.getImageData(this._p[0], this._p[1], 1, 1).data;
+        return [(d[0] << 16) | (d[1] << 8) | d[2], 0];
       case this.VID_OP_WRITE:
         break; // TODO
     }
