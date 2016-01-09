@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import LSBStorage from '../src/lsbstorage';
+import LSBStorage from '../emu/lsbstorage';
 
 class MockStorage extends LSBStorage {
   constructor() { 

@@ -1,5 +1,6 @@
 import test from 'tape';
 
+/*
 test.only('TinyAS: simplest file', t => {
 
   const file = `
@@ -15,5 +16,6 @@ test.only('TinyAS: simplest file', t => {
   t.deepEquals(assemble(file), result);
   t.end();
 });
+*/
 
 // vim: ts=2:sw=2:sts=2:expandtab

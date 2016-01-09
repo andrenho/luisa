@@ -1,10 +1,10 @@
 import test from 'tape';
 
-import Motherboard from '../src/motherboard';
-import RAM from '../src/ram';
-import MMU from '../src/mmu';
-import CPU from '../src/cpu';
-import Debugger from '../src/debugger';
+import Motherboard from '../emu/motherboard';
+import RAM from '../emu/ram';
+import MMU from '../emu/mmu';
+import CPU from '../emu/cpu';
+import Debugger from '../emu/debugger';
 
 
 function makeCPU() {

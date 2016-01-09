@@ -1,7 +1,7 @@
 import test from 'tape-catch';
 
-import Motherboard from '../src/motherboard';
-import Device from '../src/device';
+import Motherboard from '../emu/motherboard';
+import Device from '../emu/device';
 
 class MockMMU extends Device {
   constructor() { super(); this.x = {}; this.y = {}; }

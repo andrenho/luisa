@@ -50,7 +50,7 @@
  *   - improve signedness
  */
 
-import Device from '../src/device';
+import Device from './device';
 
 export default class CPU extends Device {
 

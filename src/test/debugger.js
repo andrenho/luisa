@@ -1,7 +1,7 @@
 import test from 'tape';
 
-import TinyVM from '../src/tinyvm';
-import Debugger from '../src/debugger';
+import TinyVM from '../emu/tinyvm';
+import Debugger from '../emu/debugger';
 
 var Canvas = require('canvas');
 

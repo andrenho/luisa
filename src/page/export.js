@@ -1,5 +1,5 @@
-import TinyVM from './tinyvm';
-import Debugger from './debugger';
+import TinyVM from '../emu/tinyvm';
+import Debugger from '../emu/debugger';
 
 if (typeof window !== 'undefined') {
   window.TinyVM = TinyVM;

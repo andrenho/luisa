@@ -1,11 +1,11 @@
 import test from 'tape';
 
-import Motherboard from '../src/motherboard';
-import RAM from '../src/ram';
-import MMU from '../src/mmu';
-import CPU from '../src/cpu';
-import LSBStorage from '../src/lsbstorage';
-import Storage from '../src/storage';
+import Motherboard from '../emu/motherboard';
+import RAM from '../emu/ram';
+import MMU from '../emu/mmu';
+import CPU from '../emu/cpu';
+import LSBStorage from '../emu/lsbstorage';
+import Storage from '../emu/storage';
 
 class FakeDisk extends LSBStorage {
   constructor() { super(); this._data = new Uint8Array(1024); }

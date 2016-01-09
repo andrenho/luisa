@@ -2,19 +2,18 @@
   "name": "tinyvm",
   "version": "0.0.1",
   "description": "An emulator for a 32-bit new computer.",
-  "main": "main.js",
   "scripts": {
-    "build": "browserify src/export.js -t [ babelify --presets es2015 ] -o temp/tinyvm.js && babel page --out-dir temp && uglifyjs temp/tinyvm.js temp/startup.js --screw-ie8 -c -m -o lib/tinyvm.js",
+    "build": "browserify src/page/export.js src/page/page.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -c -m -o web/tinyvm.js",
     "doc": "java -jar doc/plantuml.jar doc/classes.uml",
-    "lint": "eslint src",
-    "style": "jscs -v src/*.js",
-    "genchars": "utils/genchars data/font.png 127 > src/chars.js",
-    "test": "babel-tape-runner test/*.js | tap-spec",
-    "clean": "rm -r lib/*"
+    "lint": "eslint src/emu/*.js src/tools/*.js",
+    "style": "jscs -v src/emu/*.js src/tools/*",
+    "genchars": "src/emu/genchars src/emu/font.png 127 > src/emu/chars.js",
+    "test": "babel-tape-runner src/test/*.js | tap-spec",
+    "clean": "rm -f tinyvm.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://andrenho:9abm8vzu@github.com/andrenho/tinyvm.git"
+    "url": "https://github.com/andrenho/tinyvm.git"
   },
   "keywords": [
     "emulator"
@@ -24,7 +23,7 @@
   "bugs": {
     "url": "https://github.com/andrenho/tinyvm/issues"
   },
-  "homepage": "https://github.com/andrenho/tinyvm#readme",
+  "homepage": "https://andrenho.github.com/tinyvm",
   "devDependencies": {
     "babel-cli": "^6.5.1",
     "babel-eslint": "^5.0.0",

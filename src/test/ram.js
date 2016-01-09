@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import RAM from '../src/ram';
+import RAM from '../emu/ram';
 
 test('RAM: Get/set', t => {
   let r = new RAM(4);

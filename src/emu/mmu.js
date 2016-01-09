@@ -63,7 +63,7 @@
  *     P = page index (24 bits)
  */
 
-import Device from '../src/device';
+import Device from './device';
 
 export default class MMU extends Device {
 

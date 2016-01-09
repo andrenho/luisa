@@ -1,7 +1,7 @@
 import test from 'tape';
 
-import RAM from '../src/ram';
-import MMU from '../src/mmu';
+import RAM from '../emu/ram';
+import MMU from '../emu/mmu';
 
 // 
 // VMEM disabled

@@ -1,11 +1,11 @@
 import test from 'tape';
 
-import Motherboard from '../src/motherboard';
-import RAM from '../src/ram';
-import MMU from '../src/mmu';
-import CPU from '../src/cpu';
+import Motherboard from '../emu/motherboard';
+import RAM from '../emu/ram';
+import MMU from '../emu/mmu';
+import CPU from '../emu/cpu';
 
-import Timer from '../src/timer';
+import Timer from '../emu/timer';
 
 function makeTimer() {
   const m = new Motherboard();
