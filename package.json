@@ -4,10 +4,7 @@
   "description": "An emulator for a 32-bit new computer.",
   "main": "main.js",
   "scripts": {
-    "build": "npm run build-tinyvm && npm run build-page",
-    "build-tinyvm": "browserify src/export.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -c -m -o lib/tinyvm.js",
-    "build-page": "babel page | uglifyjs - --screw-ie8 -o lib/page.js",
-    "build-sm": "browserify src/tinyvm.js -o lib/tinyvm.js -t [ babelify --presets es2015 ] -d",
+    "build": "browserify src/export.js -t [ babelify --presets es2015 ] -o temp/tinyvm.js && babel page --out-dir temp && uglifyjs temp/tinyvm.js temp/startup.js --screw-ie8 -c -m -o lib/tinyvm.js",
     "doc": "java -jar doc/plantuml.jar doc/classes.uml",
     "lint": "eslint src",
     "style": "jscs -v src/*.js",
