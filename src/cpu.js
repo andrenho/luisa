@@ -63,6 +63,7 @@ export default class CPU extends Device {
     this._mb = motherboard;
     this.reset();
     this._stepFunction = this.initStepFunctions();
+    this.invalidOpcode = false;   // this is meant for the debugger
   }
 
 
@@ -339,6 +340,7 @@ export default class CPU extends Device {
     for (let i = 0; i < 256; ++i) {
       f.push((pos) => {
         this.fireInterrupt();
+        this.invalidUpcode = true;
         return 0;
       });
     }

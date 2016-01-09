@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "An emulator for a 32-bit new computer.",
   "main": "main.js",
-  "scripts": { 
+  "scripts": {
     "build": "npm run build-tinyvm && npm run build-page",
     "build-tinyvm": "browserify src/export.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -c -m -o lib/tinyvm.js",
     "build-page": "babel page | uglifyjs - --screw-ie8 -o lib/page.js",

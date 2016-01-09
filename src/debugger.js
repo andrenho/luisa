@@ -16,7 +16,7 @@ export default class Debugger {
 
   parse(s) {
     let [cmd, ...pars] = s.split(' ');
-    pars = pars.map(i => parseInt('0x' + i));
+    pars = pars.map(i => this._translate(i));
 
     if (cmd === '') {
       if (this._last === 's' || this._last ==='n' || this._last === 'l') {
@@ -39,6 +39,15 @@ export default class Debugger {
       case 'b': return this._setBreakpoint(pars[0]);
       case 'd': return this._unsetBreakpoint(pars[0]);
       case 'm': return this._dumpMemory(pars[0], pars[1]);
+      case 'p': case 'pb': return this._printMemory(8, pars[0]);
+      case 'pw': return this._printMemory(16, pars[0]);
+      case 'pd': return this._printMemory(32, pars[0]);
+      case 'e': case 'eb': return this._enterMemory(8, pars[0], pars[1]);
+      case 'ew': return this._enterMemory(16, pars[0], pars[1]);
+      case 'ed': return this._enterMemory(32, pars[0], pars[1]);
+      case 'f': return this._fillMemory(pars[0], pars[1], pars[2]);
+      case 'x': return this._copyMemory(pars[0], pars[1], pars[2]);
+      case 'v': return 'Not implemented yet (sorry).';
       default: return 'syntax error (use [?] for help)';
     }
   }
@@ -71,11 +80,10 @@ export default class Debugger {
 
 Memory:
   [m] dump memory block       (address [size=0x100])
-  [w/ww/wd] show memory data  (address)
+  [p/pw/pd] print memory data (address)
   [e/ew/ed] enter memory data (address value)
   [f] fill memory with data   (address size value)
-  [c] copy memory block       (origin destination size)
-  [p] search for pattern      (pattern [beginning [end]])
+  [x] copy memory block       (origin destination size)
   [v] virtual memory info`;
   }
 
@@ -119,6 +127,10 @@ ${this._instruction()}`;
   _continue() {
     do {
       this._vm.step();
+      if (this._vm.cpu.invalidUpcode) {
+        this._vm.cpu.invalidUpcode = false;
+        return 'Invalid opcode detected!\n' + this._instruction();
+      }
     } while (!(this._vm.cpu.PC in this._breakpoints));
     return this._instruction();
   }
@@ -178,6 +190,10 @@ ${this._instruction()}`;
 
 
   _dumpMemory(addr, sz) {
+    if (addr === undefined) {
+      return 'Syntax: m address [size]';
+    }
+
     sz = sz || 0x100;
     
     addr = Math.floor(addr / 0x10) * 0x10;
@@ -205,6 +221,73 @@ ${this._instruction()}`;
     }
 
     return ret.join('\n');
+  }
+
+
+  _printMemory(sz, addr) {
+    if (addr === undefined) {
+      return 'Syntax: p[b/w/d] address';
+    }
+    if (sz === 8) {
+      return `[${h(addr, 8)}] = 0x${h(this._vm.mb.get(addr), 2)}`;
+    } else if (sz === 16) {
+      return `[${h(addr, 8)}] = 0x${h(this._vm.mb.get16(addr), 4)}`;
+    } else if (sz === 32) {
+      return `[${h(addr, 8)}] = 0x${h(this._vm.mb.get32(addr), 8)}`;
+    }
+  }
+
+
+  _enterMemory(sz, addr, value) {
+    if (addr === undefined || value === undefined) {
+      return 'Syntax: e[b/w/d] address value';
+    }
+    if (value >= Math.pow(2, sz)) {
+      return 'Value too large.'
+    }
+    if (sz === 8) {
+      this._vm.mb.set(addr, value);
+    } else if (sz === 16) {
+      this._vm.mb.set16(addr, value);
+    } else if (sz === 32) {
+      this._vm.mb.set32(addr, value);
+    }
+    return 'Memory set.';
+  }
+
+
+  _fillMemory(addr, sz, value) {
+    if (addr === undefined || sz === undefined || value === undefined) {
+      return 'Syntax: f address size value';
+    }
+    for (let a = addr; a < (addr + sz); ++a) {
+      this._vm.mb.set(a, value);
+    }
+    return 'Memory filled.';
+  }
+
+
+  _copyMemory(origin, dest, sz) {
+    if (origin === undefined || dest === undefined || sz === undefined) {
+      return 'Syntax: c origin destination size';
+    }
+    for (let i = 0; i < sz; ++i) {
+      this._vm.mb.set(dest + i, this._vm.mb.get(origin + i));
+    }
+    return 'Memory copied.';
+  }
+
+
+  _translate(addr) {
+    if (addr.startsWith('0x')) {
+      addr = addr.slice(2);
+    }
+    for (let k of Object.keys(this._const)) {
+      if (addr === this._const[k]) {
+        return parseInt(k);
+      }
+    }
+    return parseInt('0x' + addr);
   }
 
 

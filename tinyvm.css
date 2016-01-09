@@ -27,6 +27,7 @@ canvas {
   width: 1000px; 
   height: 860px; 
   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
 }
 
 .block {
