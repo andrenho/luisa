@@ -215,6 +215,7 @@ export default class MMU extends Device {
     } catch (e) {
       if (e.name === 'out of bounds') {
         this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
+        return 0;
       } else {
         throw e;
       }

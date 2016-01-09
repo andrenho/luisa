@@ -100,7 +100,11 @@ export default class Device extends LSBStorage {
         return this.interruptNumber;
     }
     if (a >= 0x3 && a <= 0xF) {
-      return this.name().charCodeAt(a - 0x3);
+      if ((a - 0x3) >= this.name().length) {
+        return 0;
+      } else {
+        return this.name().charCodeAt(a - 0x3);
+      }
     }
     return 0;
     // this method can be completed by the children

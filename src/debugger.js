@@ -228,6 +228,8 @@ ${this._instruction()}`;
     if (addr === undefined) {
       return 'Syntax: p[b/w/d] address';
     }
+    console.log(addr, addr.toString(16));
+    console.log(this._vm.mb.get(addr));
     if (sz === 8) {
       return `[${h(addr, 8)}] = 0x${h(this._vm.mb.get(addr), 2)}`;
     } else if (sz === 16) {
