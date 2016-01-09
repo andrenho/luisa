@@ -2,7 +2,61 @@
 <html>
   <meta charset="utf-8">
 
-  <link rel="stylesheet" href="tinyvm.css">
+  <style>
+    @font-face { 
+      font-family: 'Sudo'; 
+      src: url('data/Sudo.ttf') format('truetype'); 
+    }
+    @font-face { 
+      font-family: 'Sudo'; 
+      font-weight: bold; 
+      src: url('data/Sudo-Bold.ttf') format('truetype'); 
+    }
+    @font-face { 
+      font-family: 'Sudo'; 
+      font-style: italic; 
+      src: url('data/Sudo-Italic.ttf') format('truetype'); 
+    }
+    @font-face { 
+      font-family: 'Sudo'; 
+      font-weight: bold; 
+      font-style: italic; 
+      src: url('data/Sudo-BoldItalic.ttf') format('truetype'); 
+    }
+
+    body {
+      font-family: Sudo, monospace;
+    }
+
+    canvas {
+      width: 1000px; 
+      height: 860px; 
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+    }
+
+    .block {
+      display: block;
+      float: left;
+      margin: 20px;
+    }
+
+    .debugger_output {
+      width: 600px;
+      height: 830px;
+      max-height: 830px;
+      overflow-y: scroll;
+      margin-bottom: 10px;
+      margin-top: auto;
+      display: flex;
+      flex-flow: column-reverse;
+    }
+
+    #debugger_input {
+      font-family: Sudo, monospace;
+      font-size: 12pt;
+    }
+  </style>
 
   <script src="lib/tinyvm.js"></script>
   <script src="lib/page.js"></script>
