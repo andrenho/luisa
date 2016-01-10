@@ -27,7 +27,7 @@ export default function encode(s) {
   //
 
   // TODO - not working with one single parameter
-  const m = s.match(/^\s*([a-z\.]+)(?:\s+(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|[0-9]+)\]?))?(?:\s*,\s*(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|[0-9]+)\]?))?\s*$/i); // https://regex101.com/r/pV1pA9/2
+  const m = s.match(/^\s*([a-z\.]+)(?:\s+(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|-?[0-9]+|0b[01_]+)\]?))?(?:\s*,\s*(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|-?[0-9]+|0b[01_]+)\]?))?\s*$/i); // https://regex101.com/r/pV1pA9/2
   if (!m) {
     throw new Error('Invalid command `' + s + '`');
   } 

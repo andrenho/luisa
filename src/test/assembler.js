@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import assemblyToTif from '../utils/assembler.js';
+import assemblyToLif from '../utils/assembler.js';
 
 
 test('LuisaVM assembler: valid inputs', t => {
@@ -14,9 +14,8 @@ test('LuisaVM assembler: valid inputs', t => {
   result = {
     text: [0x87],
   };
-  t.deepEquals(assemblyToTif(file), result, 'simplest file');
+  t.deepEquals(assemblyToLif(file), result, 'simplest file');
 
-  /*
   // some useful code
   file = `
 .entry  0x1000
@@ -35,14 +34,15 @@ test('LuisaVM assembler: valid inputs', t => {
            0x05, 0x00, 0x01,
            0x06, 0x00, 0x78, 0x56, 0x34, 0x12,
            0x2C, 0x01, 0xEF, 0xCD, 0xAB, 0x78, 0x56, 0x34, 0x12,
-           0x2F, 0x12, 0x42,
+           0x2F, 0x0A, 0x12, 0x42,
            0x41, 0x05,
-           0x5D, 0x42,
+           0x5D, 0x42, 0x00, 0x00, 0x00,
            0x74],
   };
-  t.deepEquals(assemblyToTif(file), result, 'useful code');
+  t.deepEquals(assemblyToLif(file), result, 'useful code');
 
 
+  /*
   // decimal, binary, hexa, negative numbers
   file = `
 .section text
@@ -51,12 +51,12 @@ test('LuisaVM assembler: valid inputs', t => {
         mov     A, 0b1010_1111
         mov     A, -42`;
   result = {
-    text: [0x02, 0x2A,
-           0x02, 0x42,
-           0x02, 0xAF,
-           0x04, 0xD6, 0xFF, 0xFF, 0xFF],
+    text: [0x02, 0x00, 0x2A,
+           0x02, 0x00, 0x42,
+           0x02, 0x00, 0xAF,
+           0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF],
   };
-  t.deepEquals(assemblyToTif(file), result, 'numeric representation');
+  t.deepEquals(assemblyToLif(file), result, 'numeric representation');
 
 
   // bss section
@@ -72,7 +72,7 @@ test('LuisaVM assembler: valid inputs', t => {
     text: [0x87],
     bss: 26,
   };
-  t.deepEquals(assemblyToTif(file), result, 'bss section');
+  t.deepEquals(assemblyToLif(file), result, 'bss section');
 
 
   // data section
@@ -90,7 +90,7 @@ test('LuisaVM assembler: valid inputs', t => {
     data: [0x12, 0x34, 0x34, 0x12],
     rodata: [0x01, 0xEF, 0xCD, 0xAB],
   };
-  t.deepEquals(assemblyToTif(file), result, 'data section');
+  t.deepEquals(assemblyToLif(file), result, 'data section');
 
 
   // ascii data
@@ -105,7 +105,7 @@ test('LuisaVM assembler: valid inputs', t => {
     text: [0x87],
     data: [65, 98, 99, 13, 65, 98, 99, 0],
   };
-  t.deepEquals(assemblyToTif(file), result, 'ascii data');
+  t.deepEquals(assemblyToLif(file), result, 'ascii data');
 
 
   // resolved labels in code
@@ -128,7 +128,7 @@ fwd_label:
       fwd_label: { section: 'text', addr: 0x06 },
     },
   };
-  t.deepEquals(assemblyToTif(file), result, 'static labels');
+  t.deepEquals(assemblyToLif(file), result, 'static labels');
   
 
   // local labels
@@ -148,7 +148,7 @@ new:    nop
       'new.test1': { section: 'text', addr: 0x07 },
     },
   };
-  t.deepEquals(assemblyToTif(file), result, 'local labels');
+  t.deepEquals(assemblyToLif(file), result, 'local labels');
 
 
   // resolved labels in data
@@ -164,7 +164,7 @@ ldat:   db      0x1`;
       'ldat': { section: 'data', addr: 0x00 },
     },
   };
-  t.deepEquals(assemblyToTif(file), result, 'data labels');
+  t.deepEquals(assemblyToLif(file), result, 'data labels');
 
 
   // exports
@@ -178,7 +178,7 @@ ldat:   db      0x1`;
     },
     exports: ['@test'],
   };
-  t.deepEquals(assemblyToTif(file), result, 'global labels');
+  t.deepEquals(assemblyToLif(file), result, 'global labels');
 
 
   // unresolved symbols
@@ -189,7 +189,7 @@ ldat:   db      0x1`;
     text: [0x71, '@test', 0x00, 0x00, 0x00],
     unresolved: ['@test'],
   };
-  t.deepEquals(assemblyToTif(file), result, 'unresolved symbols');
+  t.deepEquals(assemblyToLif(file), result, 'unresolved symbols');
   
 
   // constants
@@ -200,7 +200,7 @@ ldat:   db      0x1`;
   result = {
     text: [0x71, 0x34, 0x12, 0x00, 0x00],
   };
-  t.deepEquals(assemblyToTif(file), result, 'local constants');
+  t.deepEquals(assemblyToLif(file), result, 'local constants');
 
 
   // include files
@@ -211,7 +211,7 @@ ldat:   db      0x1`;
   result = {
     text: [0x71, 0x34, 0x12, 0x00, 0x00],
   };
-  t.deepEquals(assemblyToTif(file), result, 'include files');
+  t.deepEquals(assemblyToLif(file), result, 'include files');
 
 */
 
@@ -219,9 +219,5 @@ ldat:   db      0x1`;
 
 });
 
-
-test('LuisaAS: multiple sections', t => {
-  t.end(); 
-});
 
 // vim: ts=2:sw=2:sts=2:expandtab

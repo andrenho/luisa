@@ -1,15 +1,29 @@
-// TIF : Luisa Internal Format (acutally a JSON object)
-// TRF : Luisa Relocatable Format (executables, object files and libraries)
+// LIF : Luisa Internal Format (acutally a JSON object)
+// LRF : Luisa Relocatable Format (executables, object files and libraries)
+
+import encode from './encoder';
 
 //
-// CONVERT ASSEMBLY TO TIF
+// CONVERT ASSEMBLY TO LIF
 //
 
-export default function assemblyToTif(code) {
+export default function assemblyToLif(code) {
+
+  function parseEntry(pars, ctx) {
+    if (pars.length !== 1) {
+      throw new Error(`Syntax error in line ${ctx.nline}. [entry]`);
+    }
+    const r = parseInt(pars[0]);
+    if (isNaN(r)) {
+      throw new Error(`Invalid number for entry in line ${ctx.nline}.`);
+    }
+    return r;
+  }
+
 
   function parseSection(pars, ctx) {
     if (pars.length !== 1) {
-      throw new Error(`Syntax error in line ${ctx.nline}.`);
+      throw new Error(`Syntax error in line ${ctx.nline}. [section]`);
     }
     const section = pars[0];
     if (section === 'text' || section === 'bss' || section === 'data' || section === 'rodata') {
@@ -21,7 +35,8 @@ export default function assemblyToTif(code) {
 
 
   function parseText(line, ctx) {
-    return [0x87];
+    let bytes = encode(line);
+    return bytes;
   }
 
   // 
@@ -42,14 +57,15 @@ export default function assemblyToTif(code) {
   for (let line of code.split('\n')) {
 
     // remove comments
-    line.replace(/;.*/, '');
+    line = line.replace(/;.*/, '');
 
     // remove spaces around
     line = line.trim();
-    
+
     if (line.startsWith('.')) {
       // directive
       let [directive, ...pars] = line.split(' ');
+      pars = pars.filter(n => n.trim() !== '');
       switch (directive) {
         case '.entry': ctx.entry = parseEntry(pars, ctx); break;
         case '.section': ctx.currentSection = parseSection(pars, ctx); break;
