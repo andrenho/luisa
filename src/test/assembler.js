@@ -3,7 +3,7 @@ import test from 'tape';
 import assemblyToTif from '../utils/assembler.js';
 
 
-test('TinyVM assembler: valid inputs', t => {
+test('LuisaVM assembler: valid inputs', t => {
 
   let file, result;
 
@@ -220,7 +220,7 @@ ldat:   db      0x1`;
 });
 
 
-test('TinyAS: multiple sections', t => {
+test('LuisaAS: multiple sections', t => {
   t.end(); 
 });
 

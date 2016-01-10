@@ -11,7 +11,7 @@ export default class BIOS extends Device {
     this._code = binaryCode;
   }
 
-  name() { return 'TinyBIOS'; }
+  name() { return 'LuisaBIOS'; }
   deviceType() { return Device.Type.BIOS; }
   version() { return 0x0; }
   hasInterrupt() { return false; }

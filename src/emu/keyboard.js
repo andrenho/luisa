@@ -16,7 +16,7 @@ export default class Keyboard extends Device {
     this._mode = this.KBD_MODE_POLL;
   }
 
-  name() { return 'TinyKeyboard'; }
+  name() { return 'LuisaKeyboard'; }
   deviceType() { return Device.Type.KEYBOARD; }
   version() { return 0x0; }
   hasInterrupt() { return true; }

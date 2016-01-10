@@ -41,7 +41,7 @@
  *     0500..08FF  System call vector (256 system call of 4 bytes each)
  *
  * - Instruction set:
- *     (for now, see https://github.com/andrenho/tinyvm/wiki/CPU)
+ *     (for now, see https://github.com/andrenho/luisa/wiki/CPU)
  */
 
 /*
@@ -78,7 +78,7 @@ export default class CPU extends Device {
 
   
   name() {
-    return 'TinyCPU';
+    return 'LuisaCPU';
   }
 
 

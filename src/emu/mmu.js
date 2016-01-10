@@ -86,7 +86,7 @@ export default class MMU extends Device {
     };
   }
 
-  name() { return 'TinyMMU'; }
+  name() { return 'LuisaMMU'; }
 
   deviceType() { return Device.Type.MMU; }
 

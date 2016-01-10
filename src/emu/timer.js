@@ -14,7 +14,7 @@ export default class Timer extends Device {
     this._interruptCalled = 0;
   }
 
-  name() { return 'TinyTimer'; }
+  name() { return 'LuisaTimer'; }
   deviceType() { return Device.Type.TIMER; }
   version() { return 0x0; }
   hasInterrupt() { return true; }

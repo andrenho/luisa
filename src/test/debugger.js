@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import TinyVM from '../emu/tinyvm';
+import LuisaVM from '../emu/luisavm';
 import Debugger from '../utils/debugger';
 
 var Canvas = require('canvas');
@@ -54,7 +54,7 @@ test('Debugger encoder: invalid commands', t => {
 
 test('Debugger decoder', t => {
 
-  let tm = new TinyVM(256, [], new Canvas(500, 560), Uint8Array.from([]));
+  let tm = new LuisaVM(256, [], new Canvas(500, 560), Uint8Array.from([]));
   let dbg = new Debugger(tm);
 
   function ok(t, a, s) {

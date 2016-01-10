@@ -28,7 +28,7 @@ export default class Video extends Device {
     this._ctx.fillRect(0, 0, this._width, this._height);
   }
 
-  name() { return 'TinyVideo'; }
+  name() { return 'LuisaVideo'; }
   deviceType() { return Device.Type.VIDEO; }
   version() { return 0x0; }
   hasInterrupt() { return false; }

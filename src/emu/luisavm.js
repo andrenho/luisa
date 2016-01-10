@@ -9,7 +9,7 @@ import BIOS from './bios';
 import Video from './video';
 
 
-export default class TinyVM {
+export default class LuisaVM {
 
   constructor(ramSizeKb, storageUnits, canvas, biosCode) {
     this.mb = new Motherboard();

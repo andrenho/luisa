@@ -44,7 +44,7 @@ export default class Storage extends Device {
     this._r = new Uint32Array(2);
   }
 
-  name() { return 'TinyStorage'; }
+  name() { return 'LuisaStorage'; }
   deviceType() { return Device.Type.STORAGE; }
   version() { return 0x0; }
   hasInterrupt() { return true; }

@@ -1,10 +1,10 @@
-var tinyvm;
+var luisavm;
 var dbg;
 
 window.onload = () => {
 
   //
-  // initialize TinyVM and debugger
+  // initialize LuisaVM and debugger
   //
   let b = [];
   b = b.concat(Debugger.encode('movd [0xF0016014], 65'));        // movd [VID_P0], '@'
@@ -13,8 +13,8 @@ window.onload = () => {
   b = b.concat(Debugger.encode('movd [0xF0016020], 0'));         // movd [VID_P2], 0x000000
   b = b.concat(Debugger.encode('movd [0xF0016024], 0x00FFFF'));  // movd [VID_P4], 0xFF0000
   b = b.concat(Debugger.encode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
-  tinyvm = new TinyVM(256, [], document.getElementById('canvas'), new Uint8Array(b));
-  dbg = new Debugger(tinyvm);
+  luisavm = new LuisaVM(256, [], document.getElementById('canvas'), new Uint8Array(b));
+  dbg = new Debugger(luisavm);
 
   const welcome = dbg.welcome().replace(/ /g, '&nbsp;').split('\n').join('<br>');
   document.getElementById('debugger_output').innerHTML = `<div>${welcome}</div>`;

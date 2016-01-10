@@ -7,8 +7,8 @@ function h(n, digits) {
 
 export default class Debugger {
 
-  constructor(tinyvm) {
-    this._vm = tinyvm;
+  constructor(luisavm) {
+    this._vm = luisavm;
     this._const = this._loadConstants();
     this._last = '';
     this._lastAddress = undefined;
@@ -56,7 +56,7 @@ export default class Debugger {
 
 
   welcome() {
-    return 'Welcome to TinyVM debugger. Type \'?\' for help.\n\n' + this._instruction();
+    return 'Welcome to LuisaVM debugger. Type \'?\' for help.\n\n' + this._instruction();
   }
 
 

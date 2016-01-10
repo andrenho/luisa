@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import TinyVM from '../emu/tinyvm';
+import LuisaVM from '../emu/luisavm';
 import Debugger from '../utils/debugger';
 
 var Canvas = require('canvas');
@@ -8,20 +8,20 @@ var Canvas = require('canvas');
 const biosCode = new Uint8Array([0, 1, 2, 3, 4]);
 
 
-test('TinyVM: sanity', t => {
-  t.doesNotThrow(() => new TinyVM(256, [], new Canvas(500, 560), biosCode), null, "TinyVM created");
+test('LuisaVM: sanity', t => {
+  t.doesNotThrow(() => new LuisaVM(256, [], new Canvas(500, 560), biosCode), null, "LuisaVM created");
   t.end();
 });
 
 
-test('TinyVM: step', t => {
-  let tm = new TinyVM(256, [], new Canvas(500, 560), biosCode);
+test('LuisaVM: step', t => {
+  let tm = new LuisaVM(256, [], new Canvas(500, 560), biosCode);
   t.doesNotThrow(() => tm.step(), null, "step");
   t.end();
 });
 
 
-test('TinyVM: full example', t => {
+test('LuisaVM: full example', t => {
   let b = [];
   b = b.concat(Debugger.encode('movd [0xF0016014], 64'));        // movd [VID_P0], '@'
   b = b.concat(Debugger.encode('movd [0xF0016018], 5'));         // movd [VID_P1], 5
@@ -31,7 +31,7 @@ test('TinyVM: full example', t => {
   b = b.concat(Debugger.encode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
 
   let canvas = new Canvas(500, 560);
-  let tm = new TinyVM(256, [], canvas, Uint8Array.from(b));
+  let tm = new LuisaVM(256, [], canvas, Uint8Array.from(b));
 
   t.equals(tm.cpu.PC, 0xF0006010, 'PC is initial position');
   t.equals(tm.mb.get(0xF0006010), 0x2A, 'code loaded into BIOS');

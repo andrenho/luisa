@@ -1,5 +1,5 @@
-// TIF : Tiny Internal Format (acutally a JSON object)
-// TRF : Tiny Relocatable Format (executables, object files and libraries)
+// TIF : Luisa Internal Format (acutally a JSON object)
+// TRF : Luisa Relocatable Format (executables, object files and libraries)
 
 //
 // CONVERT ASSEMBLY TO TIF

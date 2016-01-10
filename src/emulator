@@ -1,6 +1,6 @@
 #!/usr/bin/env babel-node
 
-import TinyVM from './emu/tinyvm';
+import LuisaVM from './emu/luisavm';
 import Debugger from './utils/debugger';
 
 var Canvas = require('canvas');  // TODO - remove this requirement
@@ -19,7 +19,7 @@ let canvas = new Canvas(500, 560);
   b = b.concat(Debugger.encode('movd [0xF0016020], 0'));         // movd [VID_P2], 0x000000
   b = b.concat(Debugger.encode('movd [0xF0016024], 0x00FFFF'));  // movd [VID_P4], 0xFF0000
   b = b.concat(Debugger.encode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
-let vm = new TinyVM(256, [], canvas, new Uint8Array(b));
+let vm = new LuisaVM(256, [], canvas, new Uint8Array(b));
 let dbg = new Debugger(vm);
 
 console.log(dbg.welcome());

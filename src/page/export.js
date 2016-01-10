@@ -1,8 +1,8 @@
-import TinyVM from '../emu/tinyvm';
+import LuisaVM from '../emu/luisavm';
 import Debugger from '../utils/debugger';
 
 if (typeof window !== 'undefined') {
-  window.TinyVM = TinyVM;
+  window.LuisaVM = LuisaVM;
   window.Debugger = Debugger;
 }
 
