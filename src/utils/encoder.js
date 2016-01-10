@@ -64,7 +64,14 @@ export default function encode(s) {
       valArray = [value];
     } else {
       type = 'value';
-      value = parseInt(m[i]);
+      if (m[i].startsWith('0b')) {
+        value = parseInt(m[i].slice(2).replace('_', ''), 2);
+      } else {
+        value = parseInt(m[i]);
+      }
+      if (value < 0) {
+        value = (value >>> 0);
+      }
       if (value <= 0xFF) {
         size = 8;
         valArray = [value];

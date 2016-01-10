@@ -42,7 +42,6 @@ test('LuisaVM assembler: valid inputs', t => {
   t.deepEquals(assemblyToLif(file), result, 'useful code');
 
 
-  /*
   // decimal, binary, hexa, negative numbers
   file = `
 .section text
@@ -75,6 +74,7 @@ test('LuisaVM assembler: valid inputs', t => {
   t.deepEquals(assemblyToLif(file), result, 'bss section');
 
 
+  /*
   // data section
   file = `
 .section text

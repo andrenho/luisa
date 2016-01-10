@@ -27,7 +27,7 @@ test('Encoder: valid commands', t => {
 });
 
 
-test.only('Encoder: number systems', t => {
+test('Encoder: number systems', t => {
 
   function ok(t, s, v) {
     t.same(encode(s), v, s);
