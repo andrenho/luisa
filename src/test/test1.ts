@@ -1,1 +1,1 @@
-TEST @= 0x1234
+.define TEST 0x1234

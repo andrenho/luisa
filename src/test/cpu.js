@@ -4,7 +4,7 @@ import Motherboard from '../emu/motherboard';
 import RAM from '../emu/ram';
 import MMU from '../emu/mmu';
 import CPU from '../emu/cpu';
-import Debugger from '../emu/debugger';
+import Debugger from '../utils/debugger';
 
 
 function makeCPU() {

@@ -3,7 +3,7 @@ import test from 'tape';
 import assemblyToTif from '../utils/assembler.js';
 
 
-test.only('TinyVM assembler: valid inputs', t => {
+test('TinyVM assembler: valid inputs', t => {
 
   let file, result;
 
@@ -16,7 +16,7 @@ test.only('TinyVM assembler: valid inputs', t => {
   };
   t.deepEquals(assemblyToTif(file), result, 'simplest file');
 
-  
+  /*
   // some useful code
   file = `
 .entry  0x1000
@@ -64,9 +64,9 @@ test.only('TinyVM assembler: valid inputs', t => {
 .section text
         nop
 .section bss
-        .resb     2
-        .resw     2
-        .resd     4`;
+        resb      2
+        resw      2
+        resd      4`;
   result = {
     entry: 0,
     text: [0x87],
@@ -80,10 +80,10 @@ test.only('TinyVM assembler: valid inputs', t => {
 .section text
         nop
 .section data
-        .db     0x12, 0x34
-        .dw     0x1234
+        db      0x12, 0x34
+        dw      0x1234
 .section rodata
-        .dd     0xABCDEF01`;
+        dd      0xABCDEF01`;
   result = {
     entry: 0,
     text: [0x87],
@@ -98,8 +98,8 @@ test.only('TinyVM assembler: valid inputs', t => {
 .section text
         nop
 .section data
-        .ascii  "Abc\\n"
-        .asciz  "Abc"`;
+        ascii   "Abc\\n"
+        asciz   "Abc"`;
   result = {
     entry: 0,
     text: [0x87],
@@ -194,7 +194,7 @@ ldat:   db      0x1`;
 
   // constants
   file = `
-TEST = 0x1234
+.define TEST 0x1234
 .section text
         jmp     TEST`;
   result = {
@@ -205,7 +205,7 @@ TEST = 0x1234
 
   // include files
   file = `
-.import test/test1.ts
+.include test/test1.ts
 .section text
         jmp     TEST`;
   result = {
@@ -213,17 +213,7 @@ TEST = 0x1234
   };
   t.deepEquals(assemblyToTif(file), result, 'include files');
 
-
-  // include multiple files
-  file = `
-.import test/test2.ts
-.section text
-        jmp     TEST`;
-  result = {
-    text: [0x71, 0x34, 0x12, 0x00, 0x00],
-  };
-  t.deepEquals(assemblyToTif(file), result, 'include nested files');
-
+*/
 
   t.end();
 
@@ -231,6 +221,7 @@ TEST = 0x1234
 
 
 test('TinyAS: multiple sections', t => {
+  t.end(); 
 });
 
 // vim: ts=2:sw=2:sts=2:expandtab
