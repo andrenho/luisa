@@ -1,4 +1,14 @@
 export default function encode(s) {
+  const [cmd, t0, v0, a0, s0, t1, v1, a1, s1] = understandCommand(s);
+  return parseCommand(cmd, t0, v0, a0, s0, t1, v1, a1, s1);
+}
+
+
+
+//
+// understand command
+//
+function understandCommand(s) {
 
   function registerValue(r) {
     switch (r) {
@@ -21,10 +31,6 @@ export default function encode(s) {
       default: throw new Error('Invalid register ' + r);
     }
   }
-
-  //
-  // understand command
-  //
 
   // TODO - not working with one single parameter
   const m = s.match(/^\s*([a-z\.]+)(?:\s+(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|-?[0-9]+|0b[01_]+)\]?))?(?:\s*,\s*(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|-?[0-9]+|0b[01_]+)\]?))?\s*$/i); // https://regex101.com/r/pV1pA9/2
@@ -86,6 +92,7 @@ export default function encode(s) {
     cmd.pars.push({ type, value, size, valArray });
   }
 
+
   //
   // parse command (TODO)
   //
@@ -108,6 +115,14 @@ export default function encode(s) {
     }
   }
 
+  return [cmd, t0, v0, a0, s0, t1, v1, a1, s1];
+}
+
+
+// 
+// parse command
+// 
+function parseCommand(cmd, t0, v0, a0, s0, t1, v1, a1, s1) {
   let opcode = null;
 
   switch (cmd.opcode) {
@@ -659,5 +674,6 @@ export default function encode(s) {
 
   throw new Error(`Invalid command '${s}'`);
 }
+
 
 // vim: ts=2:sw=2:sts=2:expandtab

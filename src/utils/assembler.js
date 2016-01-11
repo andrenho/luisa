@@ -34,6 +34,19 @@ export default function assemblyToLif(code) {
   }
 
 
+  function chompLabels(line, ctx) {
+    const re = /[A-z]\w*:[\s\t]*/g;
+    let labels = [];
+    let a;
+    let last = 0;
+    while ((a = re.exec(line)) !== null) {
+      labels.push(a[0]);
+      last = re.lastIndex;
+    }
+    return line.slice(last);
+  }
+
+
   function parseText(line, ctx) {
     let bytes = encode(line);
     return bytes;
@@ -162,6 +175,7 @@ export default function assemblyToLif(code) {
       }
 
     } else if (line !== '') {
+      line = chompLabels(line, ctx);
       // code
       switch (ctx.currentSection) {
         case 'text': ctx.text = ctx.text.concat(parseText(line, ctx)); break;
