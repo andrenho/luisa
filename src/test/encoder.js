@@ -22,6 +22,7 @@ test('Encoder: valid commands', t => {
   ok(t, 'bz 0x12', [0x5D, 0x12, 0x00, 0x00, 0x00]);
   ok(t, 'ret', [0x74]);
   ok(t, 'push.a', [0x7E]);
+  ok(t, 'movb A, [0x1000]', [0x06, 0x00, 0x00, 0x10, 0x00, 0x00]);
   t.end();
 
 });
@@ -55,6 +56,7 @@ test('Encoder: invalid commands', t => {
   nok(t, 'or A, B, 0x42');
   nok(t, 'sys 0x1234');
   nok(t, 'pushb 0x1234');
+  nok(t, 'movb A, [test]');
   t.end();
 
 });
@@ -63,10 +65,11 @@ test('Encoder: invalid commands', t => {
 test('Encoder: labels', t => {
 
   function ok(t, s, v) {
-    t.same(encode(s), v, s);
+    t.same(encode(s, true), v, s);
   }
   
   ok(t, 'movb A, [test]', [0x6, 0x0, 'test', 0x0, 0x0, 0x0]);
+  ok(t, 'mov A, test', [0x4, 0x0, 'test', 0x0, 0x0, 0x0]);
 
   t.end();
 });
