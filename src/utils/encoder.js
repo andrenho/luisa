@@ -10,14 +10,14 @@ export default function encode(line, acceptLabel) {
     throw new Error('Invalid number of parameters.');
   }
 
-  const par = parameters.map(p => parseParameter(p));
+  const par = parameters.map(p => parseParameter(p, acceptLabel));
   console.log(par);
 
 }
 
 
-function parseParameter(p) {
-  let value, type, array = 0, none, [];
+function parseParameter(p, acceptLabel) {
+  let [value, type, array] = [0, 'none', []];
 
   // if indirect, add indirection and return
   if (p.startsWith('[') && p.endsWith(']')) {
@@ -34,15 +34,76 @@ function parseParameter(p) {
   }
 
   // if binary, convert to number
-  if (p.search(/0b[01_]+/) !== -1) {
+  if (p.test(/0b[01_]+/)) {
     p = parseInt(p, 2);
   }
 
-  // identify data type (value, register or label)
+  // is it a number?
+  if (p.test(/^-?\d+$/) || p.test(/^0[Xx][\dA-Fa-f]+$/)) {
+    value = parseInt(p);
+    if (value < 0) {
+      value = value >>> 0;
+    }
+    if (value <= 0xFF) {
+      type = 'v8';
+      array = [value];
+    } else if (value <= 0xFFFF) {
+      type = 'v16';
+      array = [value & 0xFF, value >> 8];
+    } else if (value <= 0xFFFFFFFF) {
+      type = 'v32';
+      array = [value & 0xFF, (value >> 8) & 0xFF, (value >> 16) & 0xFF, (value >> 24) & 0xFF];
+    } else {
+      throw new Error('Values higher than 32-bit are unsupported.');
+    }
+  
+  // is a register or label
+  } else {
+    value = registerValue(p.toLowerCase());
 
-  // if value, check data size
+    // is a register
+    if (value >= 0) {
+      type = 'register';
+      array = [value];
+
+    // is a label
+    } else if (acceptLabel) {
+      type = 'label';
+      array = [p, 0, 0, 0];
+
+    // its niether
+    } else {
+      throw new Error(`Could not understand expression '${p}'.`);
+    }
+
+  }
+
+  return { value, type, array };
 }
 
+
+function registerValue(r) {
+  switch (r) {
+    case 'a': return 0;
+    case 'b': return 1;
+    case 'c': return 2;
+    case 'd': return 3;
+    case 'e': return 4;
+    case 'f': return 5;
+    case 'g': return 6;
+    case 'h': return 7;
+    case 'i': return 8;
+    case 'j': return 9;
+    case 'k': return 10;
+    case 'l': return 11;
+    case 'fp': return 12;
+    case 'sp': return 13;
+    case 'pc': return 14;
+    case 'fl': return 15;
+    default: 
+      return -1;
+  }
+}
 
 /*
 export default function encode(s) {
