@@ -35,12 +35,33 @@ export default function assemblyToLif(code) {
 
 
   function chompLabels(line, ctx) {
-    const re = /[A-z]\w*:[\s\t]*/g;
-    let labels = [];
+    const re = /[\.@]?[A-z]\w*:[\s\t]*/g;
     let a;
     let last = 0;
-    while ((a = re.exec(line)) !== null) {
-      labels.push(a[0]);
+    // for each symbol found
+    while ((a = re.exec(line)) !== null) {  
+      // prepare symbol
+      let label = a[0].trim();
+      label = label.slice(0, label.length - 1);
+      // check if it's local or static/global
+      if (label.startsWith('.')) {
+        label = ctx.currentSymbol + label;
+      } else {
+        ctx.currentSymbol = label;
+      }
+      // check if symbol is duplicated
+      if (label in ctx.symbols) {
+        throw new Error(`Symbol '${label}' duplicated in line ${ctx.nline}.`);
+      }
+      // find address
+      let addr;
+      if (ctx.currentSection === 'bss') {
+        addr = ctx.bss;
+      } else {
+        addr = ctx[ctx.currentSection].length;
+      }
+      // add symbol
+      ctx.symbols[label] = { section: ctx.currentSection, addr };
       last = re.lastIndex;
     }
     return line.slice(last);
@@ -48,7 +69,7 @@ export default function assemblyToLif(code) {
 
 
   function parseText(line, ctx) {
-    let bytes = encode(line);
+    let bytes = encode(line, true, ctx.currentSymbol);
     return bytes;
   }
 
@@ -138,18 +159,39 @@ export default function assemblyToLif(code) {
   }
 
 
+  function createRelocationTable(ctx) {
+    for (let i = 0; i < ctx.text.length; ++i) {
+      if (typeof ctx.text[i] === 'string') {  // it's a label
+        const label = ctx.text[i];
+        if (label in ctx.symbols) {
+          ctx.reloc.push({ offset: i, symbol: label });
+          ctx.text[i] = 0x0;
+        }
+      }
+    }
+  }
+
+
+  function addExports(ctx) {
+    ctx.exports = Object.keys(ctx.symbols).filter(n => n.startsWith('@'));
+  }
+
+
   // 
   // MAIN PROCEDURE
   //
 
   let ctx = {
-    symbols: {},
-    constants: {},
-    currentSection: undefined,
     text: [],
     bss: 0,
     data: [],
     rodata: [],
+    symbols: {},
+    constants: {},
+    reloc: [],
+    exports: [],
+    currentSection: undefined,
+    currentSymbol: '',
     nline: 1,
   };
 
@@ -161,7 +203,7 @@ export default function assemblyToLif(code) {
     // remove spaces around
     line = line.trim();
 
-    if (line.startsWith('.')) {
+    if (line.startsWith('.') && !line.includes(':')) {
       // directive
       let [directive, ...pars] = line.split(' ');
       pars = pars.filter(n => n.trim() !== '');
@@ -174,24 +216,32 @@ export default function assemblyToLif(code) {
           throw new Error(`Invalid directive ${directive} in line ${ctx.nline}.`);
       }
 
-    } else if (line !== '') {
-      line = chompLabels(line, ctx);
+    } else {
+      const origLine = line;
       // code
-      switch (ctx.currentSection) {
-        case 'text': ctx.text = ctx.text.concat(parseText(line, ctx)); break;
-        case 'bss': ctx.bss += parseBSS(line, ctx); break;
-        case 'data': ctx.data = ctx.data.concat(parseData(line, 'data', ctx)); break;
-        case 'rodata': ctx.rodata = ctx.rodata.concat(parseData(line, 'rodata', ctx)); break;
-        default: 
-          throw new Error(`Invalid section in line ${ctx.nline}.`);
+      line = chompLabels(line, ctx);
+      if (line !== '') {
+        switch (ctx.currentSection) {
+          case 'text': ctx.text = ctx.text.concat(parseText(line, ctx)); break;
+          case 'bss': ctx.bss += parseBSS(line, ctx); break;
+          case 'data': ctx.data = ctx.data.concat(parseData(line, 'data', ctx)); break;
+          case 'rodata': ctx.rodata = ctx.rodata.concat(parseData(line, 'rodata', ctx)); break;
+          default: 
+            throw new Error(`Invalid section in line ${ctx.nline}.`);
+        }
       }
     }
 
     ++ctx.nline;
   }
 
+  // final adjustments
+  createRelocationTable(ctx);
+  addExports(ctx);
+
   // remove contextual unwanted info
   delete ctx.currentSection;
+  delete ctx.currentSymbol;
   delete ctx.constants;
   delete ctx.nline;
   if (Object.keys(ctx.symbols).length === 0) { delete ctx.symbols; }
@@ -199,6 +249,8 @@ export default function assemblyToLif(code) {
   if (ctx.bss === 0) { delete ctx.bss; }
   if (ctx.data.length === 0) { delete ctx.data; }
   if (ctx.rodata.length === 0) { delete ctx.rodata; }
+  if (ctx.reloc.length === 0) { delete ctx.reloc; }
+  if (ctx.exports.length === 0) { delete ctx.exports; }
 
   return ctx;
 }

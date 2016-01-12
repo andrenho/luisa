@@ -106,7 +106,6 @@ test('LuisaVM assembler: valid inputs', t => {
 
 
   // resolved labels in code
-  /*
   file = `
 .section text
 label:  nop
@@ -117,14 +116,18 @@ fwd_label:
         nop`;
   result = {
     text: [0x87,
-           0x71, 'label', 0x00, 0x00, 0x00,
-           0x71, 'fwd_label', 0x00, 0x00, 0x00,
+           0x71, 0x0, 0x00, 0x00, 0x00,
+           0x71, 0x0, 0x00, 0x00, 0x00,
            0x87,
            0x87],
     symbols: {
-      label: { section: 'text', addr: 0x00 },
-      fwd_label: { section: 'text', addr: 0x06 },
+      label: { section: 'text', addr: 0x0 },
+      fwd_label: { section: 'text', addr: 0xC },
     },
+    reloc: [
+      { offset: 0x2, symbol: 'label' },
+      { offset: 0x7, symbol: 'fwd_label' },
+    ],
   };
   t.deepEquals(assemblyToLif(file), result, 'static labels');
   
@@ -138,13 +141,18 @@ new:    nop
 .test1: jmp     .test1`;
   result = {
     text: [0x87,
-           0x71, '.test1', 0x00, 0x00, 0x00,
+           0x71, 0x00, 0x00, 0x00, 0x00,
            0x87,
-           0x71, 'new.test1', 0x00, 0x00, 0x00],
+           0x71, 0x00, 0x00, 0x00, 0x00],
     symbols: {
       '.test1': { section: 'text', addr: 0x01 },
+      'new': { section: 'text', addr: 0x6 },
       'new.test1': { section: 'text', addr: 0x07 },
     },
+    reloc: [
+      { offset: 0x2, symbol: '.test1' },
+      { offset: 0x8, symbol: 'new.test1' },
+    ],
   };
   t.deepEquals(assemblyToLif(file), result, 'local labels');
 
@@ -154,12 +162,36 @@ new:    nop
 .section text
         movb    A, [ldat]
 .section data
+        dw      0x1
 ldat:   db      0x1`;
   result = {
-    text: [0x06, 0x00, 'ldata', 0x00, 0x00, 0x00],
-    data: [0x01],
+    text: [0x06, 0x00, 0x00, 0x00, 0x00, 0x00],
+    data: [0x01, 0x00, 0x01],
+    reloc: [
+      { offset: 0x2, symbol: 'ldat' },
+    ],
     symbols: {
-      'ldat': { section: 'data', addr: 0x00 },
+      'ldat': { section: 'data', addr: 0x02 },
+    },
+  };
+  t.deepEquals(assemblyToLif(file), result, 'data labels');
+
+
+  // resolved labels in bss
+  file = `
+.section text
+        movb    A, [ldat]
+.section bss
+        resw    0x1
+ldat:   resb    0x1`;
+  result = {
+    text: [0x06, 0x00, 0x00, 0x00, 0x00, 0x00],
+    bss: 3,
+    reloc: [
+      { offset: 0x2, symbol: 'ldat' },
+    ],
+    symbols: {
+      'ldat': { section: 'bss', addr: 0x02 },
     },
   };
   t.deepEquals(assemblyToLif(file), result, 'data labels');
@@ -190,6 +222,7 @@ ldat:   db      0x1`;
   t.deepEquals(assemblyToLif(file), result, 'unresolved symbols');
   
 
+  /*
   // constants
   file = `
 .define TEST 0x1234

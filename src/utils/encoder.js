@@ -1,4 +1,4 @@
-export default function encode(line, acceptLabel) {
+export default function encode(line, acceptLabel=false, labelPrefix = '') {
 
   // separate operand and parameters
   let [operand, ...rest] = line.split(/[\s\t]+/);
@@ -10,7 +10,7 @@ export default function encode(line, acceptLabel) {
     throw new Error('Invalid number of parameters.');
   }
 
-  const pars = parameters.map(p => parseParameter(p, acceptLabel));
+  const pars = parameters.map(p => parseParameter(p, acceptLabel, labelPrefix));
   return parseOpcode(operand, pars, line);
 }
 
@@ -189,7 +189,7 @@ function parseOpcode(operand, pars, line) {
 // 
 // PARSE PARAMETERS
 // 
-function parseParameter(p, acceptLabel) {
+function parseParameter(p, acceptLabel, labelPrefix) {
 
   function registerValue(r) {
     switch (r) {
@@ -218,7 +218,7 @@ function parseParameter(p, acceptLabel) {
 
   // if indirect, add indirection and return
   if (p.startsWith('[') && p.endsWith(']')) {
-    let pp = parseParameter(p.slice(1, p.length - 1), acceptLabel);
+    let pp = parseParameter(p.slice(1, p.length - 1), acceptLabel, labelPrefix);
     if (pp.type === 'v8') {
       pp.array = pp.array.concat([0, 0, 0]);
       pp.type = 'v32';
@@ -266,7 +266,7 @@ function parseParameter(p, acceptLabel) {
     // is a label
     } else if (acceptLabel) {
       type = 'v32';
-      array = [p, 0, 0, 0];
+      array = [p.startsWith('.') ? (labelPrefix + p) : p, 0, 0, 0];
 
     // its niether
     } else {

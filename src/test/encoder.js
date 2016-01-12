@@ -70,6 +70,8 @@ test('Encoder: labels', t => {
   
   ok(t, 'movb A, [test]', [0x6, 0x0, 'test', 0x0, 0x0, 0x0]);
   ok(t, 'mov A, test', [0x4, 0x0, 'test', 0x0, 0x0, 0x0]);
+  ok(t, 'jmp label', [0x71, 'label', 0, 0, 0]);
+  t.same(encode('jmp .la', true, 'xy'), [0x71, 'xy.la', 0, 0, 0], 'jmp .la');
 
   t.end();
 });
