@@ -1,9 +1,9 @@
 import test from 'tape';
 
-import { assemblyToLif, joinLifObjects } from '../utils/assembler.js';
+import { assemblyToLif, joinLifObjects, createRelocationTable, convertLiftoLrf, convertLifToBinary } from '../utils/assembler.js';
 
 
-test('LuisaVM assembler: valid inputs', t => {
+test('LuisaVM assembler: assembly to LIF', t => {
 
   let file, result;
 
@@ -231,7 +231,7 @@ ldat:   resb    0x1`;
 });
 
 
-test('LuisaVM assembler: LIF joiner', t => {
+test('LuisaVM assembler: join LIF objects', t => {
 
   const objA = {
     text: [0x06, 0x00, '@ldat', 0x00, 0x00, 0x00],
@@ -268,7 +268,7 @@ test('LuisaVM assembler: LIF joiner', t => {
     data: [0x00, 0x24, 0xFF],
     symbols: {
       '@ldat': { section: 'text', addr: 0x02 },
-      'abc': { section: 'text', addr: 0x0 },
+      'abc': { section: 'text', addr: 0x6 },
       'c': { section: 'text', addr: 0xB },
       'xxx': { section: 'bss', addr: 0xC },
       'dt': { section: 'data', addr: 0x2 },
@@ -278,6 +278,65 @@ test('LuisaVM assembler: LIF joiner', t => {
   t.deepEquals(joinLifObjects([objA, objB, objC]), result, 'lifs joined');
   t.end();
 
+});
+
+
+test('LuisaVM assembler: create relocation table', t => {
+
+  const ok = {
+    text: [0x06, 'private', 0x00, 0x00, 0x00,
+           0x08, '@global', 0x00, 0x00, 0x00,
+           0x0A, 'private', 0x00, 0x00, 0x00,
+           0x0B, '@pending', 0x00, 0x00, 0x00],
+    data: [0x24, 0x12],
+    symbols: {
+      'private': { section: 'text', addr: 0x6 },
+      '@global': { section: 'data', addr: 0x1 },
+    },
+  };
+
+  const expectedPrivate = {
+    text: [0x06, 0x00, 0x00, 0x00, 0x00, 
+           0x08, '@global', 0x00, 0x00, 0x00,
+           0x0A, 0x00, 0x00, 0x00, 0x00,
+           0x0B, '@pending', 0x00, 0x00, 0x00],
+    data: [0x24, 0x12],
+    symbols: {
+      '@global': { section: 'data', addr: 0x1 },
+    },
+    reloc: [
+      { offset: 0x1, desloc: 0x6, section: 'text' },
+      { offset: 0xB, desloc: 0x6, section: 'text' },
+    ],
+  };
+  t.deepEquals(createRelocationTable(JSON.parse(JSON.stringify(ok)), false, true), expectedPrivate, 'generate & leave public pending');
+
+  const expectedPublic = {
+    text: [0x06, 0x00, 0x00, 0x00, 0x00, 
+           0x08, 0x00, 0x00, 0x00, 0x00,
+           0x0A, 0x00, 0x00, 0x00, 0x00,
+           0x0B, '@pending', 0x00, 0x00, 0x00],
+    data: [0x24, 0x12],
+    reloc: [
+      { offset: 0x1, desloc: 0x6, section: 'text' },
+      { offset: 0x6, desloc: 0x1, section: 'data' },
+      { offset: 0xB, desloc: 0x6, section: 'text' },
+    ],
+  };
+  t.deepEquals(createRelocationTable(JSON.parse(JSON.stringify(ok)), true, true), expectedPublic, 'generate & solve public');
+  t.throws(() => createRelocationTable(JSON.parse(JSON.stringify(ok)), true, false), null, 'try to solve public, but fail');
+
+  t.end();
+});
+
+
+test.skip('LuisaVM assembler: convert LIF to LRF', t => {
+  t.end();
+});
+
+
+test.skip('LuisaVM assembler: convert LIF to raw binary', t => {
+  t.end();
 });
 
 

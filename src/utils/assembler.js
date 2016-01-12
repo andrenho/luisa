@@ -201,35 +201,8 @@ export function assemblyToLif(code) {
   }
 
 
-  function createRelocationTable(ctx) {
-    for (let i = 0; i < ctx.text.length; ++i) {
-      if (typeof ctx.text[i] === 'string') {  // it's a label
-        const label = ctx.text[i];
-        if (label in ctx.symbols) {
-          ctx.reloc.push({ offset: i, symbol: label });
-          ctx.text[i] = 0x0;
-        }
-      }
-    }
-  }
-
-
   function addExports(ctx) {
     ctx.exports = Object.keys(ctx.symbols).filter(n => n.startsWith('@'));
-  }
-
-
-  function findUnresolvedSymbols(ctx) {
-    for (let i = 0; i < ctx.text.length; ++i) {
-      // info: here, the resolved labels were already removed from the text section
-      if (typeof ctx.text[i] === 'string') {
-        if (ctx.text[i].startsWith('@')) {
-          ctx.unresolved.push(ctx.text[i]);
-        } else {
-          throw new Error(`Unresolved symbol ${ctx.text[i]}.`);
-        }
-      }
-    }
   }
 
 
@@ -326,7 +299,7 @@ export function joinLifObjects(objects) {
     // join sections text, data and rodata
     for (let section of ['text', 'data', 'rodata']) {
       if (objA[section] || objB[section]) {
-        joined[section] = (objA[section] ? objA[section] : []).concat(objA[section] ? objA[section] : []);
+        joined[section] = (objA[section] ? objA[section] : []).concat(objB[section] ? objB[section] : []);
       }
     }
     // join bss
@@ -334,14 +307,103 @@ export function joinLifObjects(objects) {
       joined.bss = (objA.bss ? objA.bss : 0) + (objB.bss ? objB.bss : 0);
     }
     // add symbols
+    joined.symbols = {};
+    if (objA.symbols) {
+      Object.keys(objA.symbols).forEach(k => joined.symbols[k] = objA.symbols[k]);
+    }
+    if (objB.symbols) {
+      Object.keys(objB.symbols).forEach(k => {
+        let sym = { section: objB.symbols[k].section, addr: objB.symbols[k].addr };
+        if (sym.section === 'bss') {
+          sym.addr += (objA.bss ? objA.bss : 0);
+        } else {
+          sym.addr += (objA[sym.section] ? objA[sym.section].length : 0);
+        }
+        joined.symbols[k] = sym;
+      });
+    }
+    if (Object.keys(joined.symbols).length === 0) {
+      delete joined.symbols;
+    }
+    return joined;
   }
 
-
+  
+  // join all LIF objects
   let joined = {};
   for (let obj of objects) {
-    joinTwoLifObjects(joined, obj);
+    joined = joinTwoLifObjects(joined, obj);
   }
   return joined;
+}
+
+
+// 
+// RESOLVE SYMBOLS & CREATE RELOCATION TABLE
+//
+
+export function createRelocationTable(obj, resolvePublic, allowToLeavePublicPending) {
+  if (!obj.text) {
+    return obj;
+  }
+  if (!obj.reloc) {
+    obj.reloc = [];
+  }
+
+  // resolve references in text
+  let resolved = {};
+  for (let i = 0; i < obj.text.length; ++i) {
+    const v = obj.text[i];
+    if (typeof v === 'string') {
+      if (v.startsWith('@') && !resolvePublic) {
+        continue;
+      }
+      const sym = obj.symbols[v];
+      if (!sym) {
+        if (v.startsWith('@') && allowToLeavePublicPending) {
+        } else {
+          throw new Error(`Symbol ${v} was not found in symbol table.`);
+        }
+      } else {
+        obj.reloc.push({ offset: i, desloc: sym.addr, section: sym.section });
+        resolved[v] = true;
+        obj.text[i] = 0x00;
+      }
+    }
+  }
+
+  // remove resolved symbols
+  for (let s of Object.keys(obj.symbols)) {
+    if (s in resolved) {
+      delete obj.symbols[s];
+    }
+  }
+
+  // check if everything was resolved
+  for (let s of Object.keys(obj.symbols)) {
+    if (!s.startsWith('@') || (s.startsWith('@') && !allowToLeavePublicPending)) {
+      throw new Error(`Symbol ${s} could not be resolved.`);
+    }
+  }
+
+  // remove symbol table, if empty
+  if (Object.keys(obj.symbols).length === 0) {
+    delete obj.symbols;
+  }
+
+  return obj;
+}
+
+
+//
+// GENERATE BINARY
+//
+
+export function convertLifToLrf(obj) {
+}
+
+
+export function convertLifToBinary(obj, parameters) {
 }
 
 
