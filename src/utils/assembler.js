@@ -403,7 +403,7 @@ export function convertLifToLrf(obj) {
 }
 
 
-export function convertLifToBinary(obj, parameters) {
+export function convertLifToBinary(obj, offset) {
 }
 
 

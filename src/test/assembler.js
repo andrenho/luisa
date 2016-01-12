@@ -335,7 +335,35 @@ test.skip('LuisaVM assembler: convert LIF to LRF', t => {
 });
 
 
-test.skip('LuisaVM assembler: convert LIF to raw binary', t => {
+test('LuisaVM assembler: convert LIF to raw binary', t => {
+
+  const obj = {
+    text: [0x1, 0x2, 0x3, 0x0, 0x0, 0x0, 0x0,
+           0xA, 0x0, 0x0, 0x0, 0x0,
+           0xF, 0x0, 0x0, 0x0, 0x0],
+    bss: 32,
+    data: [0xA, 0xB, 0xC],
+    reloc: [
+      { offset: 0x3, desloc: 0x3, section: 'text' },
+      { offset: 0x8, desloc: 0x10, section: 'bss' },
+      { offset: 0xD, desloc: 0x1, section: 'data' },
+    ],
+  };
+
+  const expected = [
+    // text
+    0x01, 0x02, 0x03, 0x03, 0x00, 0x0F, 0x00,  // F0000
+    0x0A, 0x24, 0x00, 0x0F, 0x00,              // F0007
+    0x0F, 0x12, 0x00, 0x0F, 0x00,              // F000C
+    // data
+    0x0A, 0x0B, 0x0C,                          // F0011
+    // bss
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,           // F0014
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  ];
+
+  t.deepEquals(convertLifToBinary(obj, 0xF0000), expected, 'convert with offset = 0xF0000');
+
   t.end();
 });
 
