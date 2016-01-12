@@ -2,12 +2,29 @@
 // LRF : Luisa Relocatable Format (executables, object files and libraries)
 
 import encode from './encoder';
+let fs = require('fs');
+
+let reservedWords = [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+  'l', 'fp', 'sp', 'pc', 'fl', 'y', 'v', 'z', 's', 'gt', 'lt', 'p', 't',
+  'mov', 'movb', 'movw', 'movd', 'or', 'xor', 'and', 'shl', 'shr', 'not', 'add',
+  'sub', 'cmp', 'mul', 'idiv', 'mod', 'inc', 'dec', 'bz', 'beq', 'bnz', 'bneq', 'bneg',
+  'bpos', 'bgt', 'bgte', 'blt', 'blte', 'bv', 'bnv', 'jmp', 'jsr', 'ret', 'sys',
+  'iret', 'sret', 'pushb', 'pushw', 'pushd', 'push.a', 'popb', 'popw', 'popd',
+  'pop.a', 'popx', 'nop', 'db', 'dw', 'dd', 'resb', 'resw', 'resd' ];
 
 //
 // CONVERT ASSEMBLY TO LIF
 //
 
 export default function assemblyToLif(code) {
+
+  function replaceConstants(line, ctx) {
+    for(let c in ctx.constants) {
+      line = line.replace(c, ctx.constants[c]);
+    }
+    return line;
+  }
+
 
   function parseEntry(pars, ctx) {
     if (pars.length !== 1) {
@@ -30,6 +47,42 @@ export default function assemblyToLif(code) {
       return section;
     } else {
       throw new Error(`Invalid section ${section} in line ${ctx.nline}.`);
+    }
+  }
+
+
+  function parseConstant(pars, ctx) {
+    if (pars.length !== 2) {
+      throw new Error(`Syntax error in line ${ctx.nline}. [define]`);
+    }
+    const [name, value] = pars;
+    if (!/[A-z]\w*/.test(name)) {
+      throw new Error(`Invalid name for a define in line ${ctx.nline}. [define]`);
+    }
+    if (reservedWords.includes(name)) {
+      throw new Error(`${name} is a reserved word in line ${ctx.nline}. [define]`);
+    }
+    ctx.constants[name] = value;
+  }
+
+
+  function parseImport(pars, ctx) {
+    if (pars.length !== 1) {
+      throw new Error(`Syntax error in line ${ctx.nline}. [import]`);
+    }
+    let importedFile;
+    try {
+      importedFile = fs.readFileSync(pars[0]);
+    } catch(e) {
+      throw new Error(`Error reading file ${pars[0]}: ${e}`);
+    }
+    for (let line of importedFile.toString().split('\n')) {
+      line = line.replace(/;.*/, '').trim();
+      if (line.startsWith('.define')) {
+        parseConstant(line.trim().split(/[\s\t]+/).slice(1), ctx);
+      } else if (line !== '') {
+        throw new Error(`Invalid line in file ${pars[0]}: '${line}'`);
+      }
     }
   }
 
@@ -177,6 +230,20 @@ export default function assemblyToLif(code) {
   }
 
 
+  function findUnresolvedSymbols(ctx) {
+    for (let i = 0; i < ctx.text.length; ++i) {
+      // info: here, the resolved labels were already removed from the text section
+      if (typeof ctx.text[i] === 'string') {
+        if (ctx.text[i].startsWith('@')) {
+          ctx.unresolved.push(ctx.text[i]);
+        } else {
+          throw new Error(`Unresolved symbol ${ctx.text[i]}.`);
+        }
+      }
+    }
+  }
+
+
   // 
   // MAIN PROCEDURE
   //
@@ -190,6 +257,7 @@ export default function assemblyToLif(code) {
     constants: {},
     reloc: [],
     exports: [],
+    unresolved: [],
     currentSection: undefined,
     currentSymbol: '',
     nline: 1,
@@ -203,6 +271,9 @@ export default function assemblyToLif(code) {
     // remove spaces around
     line = line.trim();
 
+    // replace constants
+    line = replaceConstants(line, ctx);
+
     if (line.startsWith('.') && !line.includes(':')) {
       // directive
       let [directive, ...pars] = line.split(' ');
@@ -210,8 +281,8 @@ export default function assemblyToLif(code) {
       switch (directive) {
         case '.entry': ctx.entry = parseEntry(pars, ctx); break;
         case '.section': ctx.currentSection = parseSection(pars, ctx); break;
-        case '.define': parseConstant(pars); break;
-        case '.import': parseImport(pars); break;
+        case '.define': parseConstant(pars, ctx); break;
+        case '.import': parseImport(pars, ctx); break;
         default:
           throw new Error(`Invalid directive ${directive} in line ${ctx.nline}.`);
       }
@@ -238,6 +309,7 @@ export default function assemblyToLif(code) {
   // final adjustments
   createRelocationTable(ctx);
   addExports(ctx);
+  findUnresolvedSymbols(ctx);
 
   // remove contextual unwanted info
   delete ctx.currentSection;
@@ -251,6 +323,7 @@ export default function assemblyToLif(code) {
   if (ctx.rodata.length === 0) { delete ctx.rodata; }
   if (ctx.reloc.length === 0) { delete ctx.reloc; }
   if (ctx.exports.length === 0) { delete ctx.exports; }
+  if (ctx.unresolved.length === 0) { delete ctx.unresolved; }
 
   return ctx;
 }

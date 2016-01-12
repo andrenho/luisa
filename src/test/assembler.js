@@ -222,7 +222,6 @@ ldat:   resb    0x1`;
   t.deepEquals(assemblyToLif(file), result, 'unresolved symbols');
   
 
-  /*
   // constants
   file = `
 .define TEST 0x1234
@@ -236,15 +235,13 @@ ldat:   resb    0x1`;
 
   // include files
   file = `
-.include test/test1.ts
+.import src/test/test1.ls
 .section text
         jmp     TEST`;
   result = {
     text: [0x71, 0x34, 0x12, 0x00, 0x00],
   };
-  t.deepEquals(assemblyToLif(file), result, 'include files');
-
-*/
+  t.deepEquals(assemblyToLif(file), result, 'import files');
 
   t.end();
 
