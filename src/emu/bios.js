@@ -1,12 +1,14 @@
 import Device from './device';
-import { data } from './bioscontents';
 
 export default class BIOS extends Device {
 
-  constructor() {
+  constructor(biosCode) {
     super();
     this._const = this.constantList();
-    this._code = data;
+    if (!biosCode instanceof Uint8Array) {
+      throw new Error('Invalid BIOS code.');
+    }
+    this._code = biosCode;
   }
 
   name() { return 'LuisaBIOS'; }

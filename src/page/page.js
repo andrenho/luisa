@@ -6,7 +6,7 @@ window.onload = () => {
   //
   // initialize LuisaVM and debugger
   //
-  luisavm = new LuisaVM(256, [], document.getElementById('canvas'));
+  luisavm = new LuisaVM(256, [], document.getElementById('canvas'), window.biosCode);
   dbg = new Debugger(luisavm);
 
   const welcome = dbg.welcome().replace(/ /g, '&nbsp;').split('\n').join('<br>');
