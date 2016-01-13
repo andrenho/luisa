@@ -55,8 +55,6 @@ window.onload = () => {
     document.getElementById('debugger_output').innerHTML = '';
   };
 
-  setTimeout(() => {}, 16);
-
 };
 
 
