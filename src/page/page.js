@@ -6,14 +6,7 @@ window.onload = () => {
   //
   // initialize LuisaVM and debugger
   //
-  let b = [];
-  b = b.concat(Debugger.encode('movd [0xF0016014], 65'));        // movd [VID_P0], '@'
-  b = b.concat(Debugger.encode('movd [0xF0016018], 5'));         // movd [VID_P1], 5
-  b = b.concat(Debugger.encode('movd [0xF001601C], 5'));         // movd [VID_P1], 5
-  b = b.concat(Debugger.encode('movd [0xF0016020], 0'));         // movd [VID_P2], 0x000000
-  b = b.concat(Debugger.encode('movd [0xF0016024], 0x00FFFF'));  // movd [VID_P4], 0xFF0000
-  b = b.concat(Debugger.encode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
-  luisavm = new LuisaVM(256, [], document.getElementById('canvas'), new Uint8Array(b));
+  luisavm = new LuisaVM(256, [], document.getElementById('canvas'));
   dbg = new Debugger(luisavm);
 
   const welcome = dbg.welcome().replace(/ /g, '&nbsp;').split('\n').join('<br>');

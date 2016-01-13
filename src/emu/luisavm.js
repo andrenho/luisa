@@ -11,14 +11,14 @@ import Video from './video';
 
 export default class LuisaVM {
 
-  constructor(ramSizeKb, storageUnits, canvas, biosCode) {
+  constructor(ramSizeKb, storageUnits, canvas) {
     this.mb = new Motherboard();
     this.mmu = new MMU(new RAM(ramSizeKb));
     this.cpu = new CPU(this.mb);
     this.storage = new Storage(storageUnits);
     this.keyboard = new Keyboard();
     this.timer = new Timer();
-    this.bios = new BIOS(biosCode);
+    this.bios = new BIOS();
     this.video = new Video(canvas);
 
     this.mb.addDevice(this.mmu);
