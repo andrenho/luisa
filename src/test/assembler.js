@@ -359,7 +359,7 @@ test('LuisaVM assembler: convert LIF to raw binary', t => {
     0x0A, 0x0B, 0x0C,                          // F0011
     // bss
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,           // F0014
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0            // F0024
   ];
 
   t.deepEquals(convertLifToBinary(obj, 0xF0000), expected, 'convert with offset = 0xF0000');

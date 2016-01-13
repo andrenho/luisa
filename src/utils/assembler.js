@@ -400,10 +400,47 @@ export function createRelocationTable(obj, resolvePublic, allowToLeavePublicPend
 //
 
 export function convertLifToLrf(obj) {
+  throw new Error('not implemented yet');
 }
 
 
 export function convertLifToBinary(obj, offset) {
+  // find positions
+  const pos = {};
+  pos.text = offset;
+  pos.data = pos.text + (obj.text ? obj.text.length : 0);
+  pos.rodata = pos.data + (obj.data ? obj.data.length : 0);
+  pos.bss = pos.rodata + (obj.rodata ? obj.rodata.length : 0);
+
+  // add data
+  let data = [];
+  for (let section of ['text', 'data', 'rodata']) {
+    if (obj[section]) {
+      for (let d of obj[section]) { data.push(d); }
+    }
+  }
+  if (obj.bss) {
+    for (let i = 0; i < obj.bss; ++i) { data.push(0); }
+  }
+  
+  // replace relocation symbols
+  function replace(data, position, newData) {
+    if (position + 3 > data.length) {
+      throw new Error(`Invalid relocation in position 0x${position.toString(16)}.`);
+    }
+    data[position] = newData & 0xFF;
+    data[position+1] = (newData >> 8) & 0xFF;
+    data[position+2] = (newData >> 16) & 0xFF;
+    data[position+3] = (newData >> 24) & 0xFF;
+  }
+
+  if (obj.reloc) {
+    for (let r of obj.reloc) {
+      replace(data, r.offset, r.desloc + pos[r.section]);
+    }
+  }
+
+  return data;
 }
 
 
