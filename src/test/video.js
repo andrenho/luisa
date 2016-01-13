@@ -47,6 +47,7 @@ test('Draw one single pixel', t => {
   mb.set32(video.VID_P1, 5);
   mb.set32(video.VID_P2, 0xFF0000);
   mb.set(video.VID_OP, video.VID_OP_DRAW_PX);
+  video.update();
   
   t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0xFF, 0, 0], 'pixel is red');
 
@@ -57,6 +58,7 @@ test('Draw one single pixel', t => {
   // clear screen
   mb.set32(video.VID_P0, 0);
   mb.set(video.VID_OP, video.VID_OP_CLRSCR);
+  video.update();
   t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0, 0, 0], 'screen cleared, pixel is black again');
 
   t.end();
@@ -75,6 +77,7 @@ test('Draw character', t => {
   mb.set32(video.VID_P5, 1);
   mb.set32(video.VID_P6, 1);
   mb.set(video.VID_OP, video.VID_OP_WRITE);
+  video.update();
 
   // check if pixels were set correctly
   let px = 42; // 10 [border] + 6*5 [x=5] + 1 [offset] + 1 [first pixel]
@@ -82,6 +85,7 @@ test('Draw character', t => {
   mb.set32(video.VID_P0, px);
   mb.set32(video.VID_P1, py);
   mb.set(video.VID_OP, video.VID_OP_GET_PX);
+  video.update();
   t.equals(mb.get32(video.VID_R0), 0xFF0000, 'character set correctly');
 
   mb.set32(video.VID_P0, '@'.charCodeAt(0));
@@ -92,6 +96,7 @@ test('Draw character', t => {
   mb.set32(video.VID_P5, 1);
   mb.set32(video.VID_P6, 1);
   mb.set(video.VID_OP, video.VID_OP_WRITE);
+  video.update();
 
   // check if pixels were set correctly
   px += 6;

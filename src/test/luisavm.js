@@ -39,6 +39,7 @@ test('LuisaVM: full example', t => {
   for(let i=0; i<6; ++i) {
     tm.step();
   }
+  tm.video.update();
   t.equals(tm.cpu.PC, 0xF0006010 + b.length, 'PC is in the right place');
 
   // check pixel
