@@ -373,21 +373,23 @@ export function createRelocationTable(obj, resolvePublic, allowToLeavePublicPend
   }
 
   // remove resolved symbols
-  for (let s of Object.keys(obj.symbols)) {
-    if (s in resolved) {
-      delete obj.symbols[s];
+  if (obj.symbols) {
+    for (let s of Object.keys(obj.symbols)) {
+      if (s in resolved) {
+        delete obj.symbols[s];
+      }
     }
-  }
 
-  // check if everything was resolved
-  for (let s of Object.keys(obj.symbols)) {
-    if (!s.startsWith('@') || (s.startsWith('@') && !allowToLeavePublicPending)) {
-      throw new Error(`Symbol ${s} could not be resolved.`);
+    // check if everything was resolved
+    for (let s of Object.keys(obj.symbols)) {
+      if (!s.startsWith('@') || (s.startsWith('@') && !allowToLeavePublicPending)) {
+        throw new Error(`Symbol ${s} could not be resolved.`);
+      }
     }
   }
 
   // remove symbol table, if empty
-  if (Object.keys(obj.symbols).length === 0) {
+  if (obj.symbols && Object.keys(obj.symbols).length === 0) {
     delete obj.symbols;
   }
 

@@ -1,5 +1,5 @@
-- write assembler
-- write preprocessor
+- write assembler (ok)
+- write preprocessor (no)
 - write linker
 - load BIOS
 - write disk tool (host)

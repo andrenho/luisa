@@ -1,0 +1,58 @@
+#!/usr/bin/env babel-node
+
+import { 
+  assemblyToLif, 
+  joinLifObjects, 
+  createRelocationTable, 
+  convertLiftoLrf, 
+  convertLifToBinary 
+} from './utils/assembler.js';
+let fs = require('fs');
+
+//
+// parse commandline options
+//
+
+const opt = require('node-getopt').create([
+  ['f', 'format=ARG', 'output format (options: lrf, bin)'],
+  ['T', 'offset=ARG', 'program offset (bin format only)'],
+  ['h', 'help', 'display this help'],
+]).bindHelp().parseSystem();
+
+if (opt.argv.length < 1) {
+  throw new Error('Must have at least one source file.');
+}
+
+const format = opt.options.format || 'lrf';
+const offset = parseInt(opt.options.offset) || 0;
+
+//
+// load and parse files
+//
+
+let obj = [];
+for (let f of opt.argv) {
+  obj.push(createRelocationTable(assemblyToLif(fs.readFileSync(f).toString())), false, true);
+}
+
+const lif = createRelocationTable(joinLifObjects(obj), true, false);
+
+let output;
+if (format === 'lrf') {
+  output = convertLiftoLrf(lif);
+} else if (format === 'bin') {
+  output = convertLifToBinary(lif, offset);
+} else {
+  throw new Error(`Invalid output format ${output}.`);
+}
+
+//
+// output
+//
+
+for (let d of output) { 
+  process.stdout.write(String.fromCharCode(d), 'ascii');
+}
+  
+
+// vim: ts=2:sw=2:sts=2:expandtab:syntax=javascript
