@@ -1,7 +1,11 @@
+.import host/luisa.ls
+
 .section text
-	movd	[0xF0016014], 0x00000042
-	movd	[0xF0016018], 0x00000005
-	movd	[0xF001601C], 0x00000005
-	movd	[0xF0016020], 0x00000000
-	movd	[0xF0016024], 0x00FF00FF
-	movb	[0xF0016012], 0x05
+	movd	[VID_P0], 0x00000043
+	movd	[VID_P1], 0x00000005
+	movd	[VID_P2], 0x00000005
+	movd	[VID_P3], 0x00000000
+	movd	[VID_P4], 0x00FF00FF
+	movb	[VID_OP], 5
+
+; vim: syntax=las

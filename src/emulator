@@ -23,6 +23,9 @@ let canvas = new Canvas(500, 560);
 */
 let vm = new LuisaVM(256, [], canvas);
 let dbg = new Debugger(vm);
+for (let c of Object.keys(dbg._const)) {
+  console.log(`.define ${dbg._const[c]} 0x${parseInt(c).toString(16)}`);
+}
 
 console.log(dbg.welcome());
 

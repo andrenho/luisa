@@ -1,7 +1,7 @@
 - write assembler (ok)
 - write preprocessor (no)
 - write linker (ok)
-- load BIOS
+- load BIOS (ok)
 - write disk tool (host)
 - write boot tool (guest)
 - write operating system
