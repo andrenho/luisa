@@ -55,6 +55,16 @@ window.onload = () => {
     document.getElementById('debugger_output').innerHTML = '';
   };
 
+
+  //
+  // update video
+  //
+  function videoUpdate(time) {
+    luisavm.video.update();
+    window.requestAnimationFrame(videoUpdate);
+  }
+  window.requestAnimationFrame(videoUpdate);
+
 };
 
 

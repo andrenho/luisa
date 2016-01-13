@@ -23,6 +23,7 @@ export default class Video extends Device {
     this._p = new Uint32Array(8);
     this._r = new Uint32Array(2);
     this._charCache = {};
+    this._pending = [];
 
     this._ctx.fillStyle = 'black';
     this._ctx.fillRect(0, 0, this._width, this._height);
@@ -119,26 +120,40 @@ export default class Video extends Device {
   }
 
 
+  update() {
+    for (const p of this._pending) {
+      switch(p.cmd) {
+        case this.VID_OP_CLRSCR:
+          this._ctx.fillStyle = `rgb(${(p.pars[0] >> 16) & 0xFF},${(p.pars[0] >> 8) & 0xFF},${p.pars[0] & 0xFF})`;
+          this._ctx.fillRect(0, 0, this._width, this._height);
+          break;
+        case this.VID_OP_DRAW_PX:
+          let px = (p.pars[0] + (p.pars[1] * this._width)) * 4;
+          this._data.data[px + 3] = 0xFF;
+          this._data.data[px + 0] = (p.pars[2] >> 16) & 0xFF;
+          this._data.data[px + 1] = (p.pars[2] >> 8) & 0xFF;
+          this._data.data[px + 2] = p.pars[2] & 0xFF;
+          this._ctx.putImageData(this._data, 0, 0, p.pars[0], p.pars[1], 1, 1);
+          break;
+        case this.VID_OP_WRITE:
+          this._drawChar.apply(this, p.pars);
+          break;
+      }
+    }
+    this._pending = [];
+  }
+
+
   _execute(op) {
     switch (op) {
-      case this.VID_OP_CLRSCR:
-        this._ctx.fillStyle = `rgb(${(this._p[0] >> 16) & 0xFF},${(this._p[0] >> 8) & 0xFF},${this._p[0] & 0xFF})`;
-        this._ctx.fillRect(0, 0, this._width, this._height);
-        break;
-      case this.VID_OP_DRAW_PX:
-        let px = (this._p[0] + (this._p[1] * this._width)) * 4;
-        this._data.data[px + 3] = 0xFF;
-        this._data.data[px + 0] = (this._p[2] >> 16) & 0xFF;
-        this._data.data[px + 1] = (this._p[2] >> 8) & 0xFF;
-        this._data.data[px + 2] = this._p[2] & 0xFF;
-        this._ctx.putImageData(this._data, 0, 0, this._p[0], this._p[1], 1, 1);
-        break;
       case this.VID_OP_GET_PX:
         const d = this._ctx.getImageData(this._p[0], this._p[1], 1, 1).data;
         return [(d[0] << 16) | (d[1] << 8) | d[2], 0];
+      case this.VID_OP_CLRSCR:
+      case this.VID_OP_DRAW_PX:
       case this.VID_OP_WRITE:
-        this._drawChar.apply(this, this._p.slice(0, 7));
-        break; // TODO
+        this._pending.push({ cmd: op, pars: this._p.slice(0, 7) });
+        break;
     }
     return [0, 0];
   }
