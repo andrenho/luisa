@@ -1,3 +1,5 @@
+'use strict';
+
 //
 // run when the window is loaded
 //
@@ -7,7 +9,7 @@ window.onload = () => {
   //
   // initialize main web worker
   //
-  let worker = new Worker('web/luisavm.js');
+  let worker = new Worker('src/page/worker.js');
   worker.addEventListener('message', e => message(e.data));
   worker.postMessage(['init', biosCode]);  // initialize VM and debugger
 

@@ -1,15 +1,6 @@
-import Motherboard from './motherboard';
-import RAM from './ram';
-import MMU from './mmu';
-import CPU from './cpu';
-import Storage from './storage';
-import Keyboard from './keyboard';
-import Timer from './timer';
-import BIOS from './bios';
-import Video from './video';
+'use strict';
 
-
-export default class LuisaVM {
+class LuisaVM {
 
   constructor(ramSizeKb, storageUnits, biosCode) {
     this.mb = new Motherboard();

@@ -1,6 +1,6 @@
-import Device from './device';
+'use strict';
 
-export default class BIOS extends Device {
+class BIOS extends Device {
 
   constructor(biosCode) {
     super();

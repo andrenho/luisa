@@ -1,5 +1,17 @@
-import LuisaVM from '../emu/luisavm';
-import Debugger from '../utils/debugger';
+'use strict';
+
+importScripts('../emu/lsbstorage.js',
+              '../emu/ram.js',
+              '../emu/device.js',
+              '../emu/motherboard.js',
+              '../emu/mmu.js',
+              '../emu/cpu.js',
+              '../emu/storage.js',
+              '../emu/keyboard.js',
+              '../emu/timer.js',
+              '../emu/bios.js',
+              '../emu/luisavm.js',
+              '../utils/debugger.js');
 
 var luisavm, dbg;
 

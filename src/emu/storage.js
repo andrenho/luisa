@@ -1,6 +1,6 @@
-import Device from './device';
+'use strict';
 
-export default class Storage extends Device {
+class Storage extends Device {
 
   constructor(units) {
     super();

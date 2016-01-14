@@ -1,4 +1,6 @@
-export default class LSBStorage {
+'use strict';
+
+class LSBStorage {
 
   constructor() {
     if (this.constructor === LSBStorage) {

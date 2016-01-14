@@ -1,6 +1,6 @@
-import LSBStorage from './lsbstorage';
+'use strict';
 
-export default class Device extends LSBStorage {
+class Device extends LSBStorage {
 
   constructor() {
     super();

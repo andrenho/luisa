@@ -1,11 +1,11 @@
-import encode from './encoder';
+'use strict';
 
 function h(n, digits) {
   return (Array(digits || 0).join('0') + n.toString(16)).substr(-digits).toUpperCase();
 }
 
 
-export default class Debugger {
+class Debugger {
 
   constructor(luisavm) {
     this._vm = luisavm;

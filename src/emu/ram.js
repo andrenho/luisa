@@ -1,6 +1,6 @@
-import LSBStorage from './lsbstorage';
+'use strict';
 
-export default class RAM extends LSBStorage {
+class RAM extends LSBStorage {
 
   constructor(_sizeKb) {
     super();
