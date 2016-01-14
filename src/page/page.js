@@ -1,6 +1,7 @@
 'use strict';
 
 let videoCanvas;
+let debuggerVisible = false;
 
 //
 // ON LOAD WINDOW
@@ -10,6 +11,10 @@ window.onload = () => {
 
   videoCanvas = new VideoCanvas(document.getElementById('canvas'));
   videoCanvas.initCanvas();
+  document.getElementById('canvas').onclick = (e) => {
+    videoCanvas.clearScreen(0, 0, 0);
+    worker.postMessage(['run']);
+  };
 
   //
   // initialize main web worker
@@ -106,6 +111,24 @@ window.onload = () => {
   //
   document.getElementById('settings').onclick = (e) => {
     alert('Not implemented yet.');
+    return false;
+  };
+
+
+  // 
+  // Show debugger
+  //
+  document.getElementById('show_debugger').onclick = (e) => {
+    if (!debuggerVisible) {
+      document.getElementById('debugger').style.display = 'block';
+      document.getElementById('show_debugger').innerHTML = 'Hide debugger';
+      debuggerVisible = true;
+    } else {
+      document.getElementById('debugger').style.display = 'none';
+      document.getElementById('show_debugger').innerHTML = 'Show debugger';
+      debuggerVisible = false;
+    }
+    return false;
   };
 
 
@@ -114,6 +137,7 @@ window.onload = () => {
   //
   document.getElementById('tests').onclick = (e) => {
     worker.postMessage(['run_tests']);
+    return false;
   };
 
 };

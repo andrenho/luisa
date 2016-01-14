@@ -79,6 +79,7 @@
       </canvas>
       <p>
         <a href="#" id="settings" class="always_blue">Settings</a> |
+        <a href="#" id="show_debugger" class="always_blue">Show debugger</a> |
         <a href="https://github.com/andrenho/luisavm/wiki">VM Documentation</a> |
         <a href="https://github.com/andrenho/luisavm/">Development</a> |
         <a href="#" id="tests" class="always_blue">Run tests...</a> (in console) |
@@ -86,8 +87,8 @@
       </p>
     </div>
 
-    <div class="block">
-      <div class="debugger_output" id="debugger_output"></div>
+    <div id="debugger" class="block" style="display: none;">
+      <div class="debugger_output" id="debugger_output"><div>Loading emulator...</div></div>
       - <input id="debugger_input" type="text" inputmode="verbatim" maxlength="60" size="55">
         <i>(AltGr+D)</i>
         <input id="clear_debugger" type="button" value="C">

@@ -27,6 +27,11 @@ class LuisaVM {
   }
 
 
+  run() {
+    for(;;) this.step();
+  }
+
+
 }
 
 

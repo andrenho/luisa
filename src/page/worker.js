@@ -26,7 +26,13 @@ self.addEventListener('message', e => {
       luisavm = new LuisaVM(256, [], biosCode, pars[0], pars[1], data => self.postMessage(['callback', data]));
       console.log('Virtual machine initalized.');
       dbg = new Debugger(luisavm);
+      self.postMessage(['print_debugger', '<div>Done!</div><div>&nbsp;</div>']);
       self.postMessage(['print_debugger', dbg.welcome()]);
+      break;
+
+    // run
+    case 'run':
+      luisavm.run();
       break;
 
     // message to debugger

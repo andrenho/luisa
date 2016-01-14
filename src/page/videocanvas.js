@@ -13,6 +13,10 @@ class VideoCanvas {
   initCanvas() {
     this._ctx.fillStyle = 'black';
     this._ctx.fillRect(0, 0, canvas.width, canvas.height);
+    this._ctx.font = "11px Sudo";
+    this._ctx.fillStyle = 'white';
+    this._ctx.textAlign = 'center';
+    this._ctx.fillText('Click to run', this._canvas.width / 2, this._canvas.height / 2);
   }
 
 
