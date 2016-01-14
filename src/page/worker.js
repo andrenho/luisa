@@ -1,6 +1,7 @@
 'use strict';
 
-importScripts('../emu/lsbstorage.js',
+importScripts('../emu/bioscode.js',
+              '../emu/lsbstorage.js',
               '../emu/ram.js',
               '../emu/device.js',
               '../emu/motherboard.js',
@@ -10,6 +11,7 @@ importScripts('../emu/lsbstorage.js',
               '../emu/keyboard.js',
               '../emu/timer.js',
               '../emu/bios.js',
+              '../emu/video.js',
               '../emu/luisavm.js',
               '../utils/debugger.js');
 
@@ -21,7 +23,7 @@ self.addEventListener('message', e => {
 
     // initialize VM and debugger
     case 'init':
-      luisavm = new LuisaVM(256, [], pars[0]);
+      luisavm = new LuisaVM(256, [], biosCode, pars[0], pars[1]);
       console.log('Virtual machine initalized.');
       dbg = new Debugger(luisavm);
       self.postMessage(['print_debugger', dbg.welcome()]);

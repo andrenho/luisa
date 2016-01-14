@@ -55,7 +55,7 @@ fs.readFile(filename, (err, data) => {
     process.stdout.write(ns.join(', ') + '],\n\n');
   }
 
-  process.stdout.write('];\n\nexport default chars;\n');
+  process.stdout.write('];\n');
 });
 
 // vim: ts=2:sw=2:sts=2:expandtab:syntax=javascript

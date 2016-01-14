@@ -6,12 +6,21 @@
 
 window.onload = () => {
 
+  const canvas = document.getElementById('canvas');
+
   //
   // initialize main web worker
   //
   let worker = new Worker('src/page/worker.js');
   worker.addEventListener('message', e => message(e.data));
-  worker.postMessage(['init', biosCode]);  // initialize VM and debugger
+  worker.postMessage(['init', canvas.width, canvas.height]);  // initialize VM and debugger
+
+  // 
+  // initialize canvas
+  //
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 
   //

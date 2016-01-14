@@ -1,10 +1,8 @@
-import Device from './device';
+'use strict';
 
-import chars from './chars';
+class Video extends Device {
 
-export default class Video extends Device {
-
-  constructor(canvas) {
+  constructor(width, height) {
     super();
 
     // constants
@@ -15,18 +13,18 @@ export default class Video extends Device {
 
     // initialize
     this._const = this.constantList();
-    this._width = canvas.width;
-    this._height = canvas.height;
-    this._canvas = canvas;
-    this._ctx = canvas.getContext('2d');
-    this._data = this._ctx.getImageData(0, 0, this._width, this._height);
+    this._width = width;
+    this._height = height;
+    //this._canvas = canvas;
+    //this._ctx = canvas.getContext('2d');
+    //this._data = this._ctx.getImageData(0, 0, this._width, this._height);
     this._p = new Uint32Array(8);
     this._r = new Uint32Array(2);
     this._charCache = {};
     this._pending = [];
 
-    this._ctx.fillStyle = 'black';
-    this._ctx.fillRect(0, 0, this._width, this._height);
+    //this._ctx.fillStyle = 'black';
+    //this._ctx.fillRect(0, 0, this._width, this._height);
   }
 
   name() { return 'LuisaVideo'; }
