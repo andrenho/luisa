@@ -1,11 +1,13 @@
+'use strict';
+
 /*
 var luisavm;
 var dbg;
 */
 
-window.onload = () => {
+window.onload = function () {
 
-  let worker = new Worker('web/luisavm.js');
+  var worker = new Worker('web/luisavm.js');
   worker.postMessage(undefined);
 
   /*
@@ -14,12 +16,9 @@ window.onload = () => {
   //
   luisavm = new LuisaVM(256, [], document.getElementById('canvas'), window.biosCode);
   dbg = new Debugger(luisavm);
-
-  const welcome = dbg.welcome().replace(/ /g, '&nbsp;').split('\n').join('<br>');
+   const welcome = dbg.welcome().replace(/ /g, '&nbsp;').split('\n').join('<br>');
   document.getElementById('debugger_output').innerHTML = `<div>${welcome}</div>`;
-
-
-  // 
+    // 
   // on pressing AltGr+D, go to debugger
   //
   document.onkeypress = (e) => {
@@ -29,9 +28,7 @@ window.onload = () => {
     }
     return true;
   };
-
-
-  //
+    //
   // parse debugger input
   //
   document.getElementById('debugger_input').onkeypress = (e) => {
@@ -44,25 +41,18 @@ window.onload = () => {
       const txt = document.getElementById('debugger_input').value;
       const output = document.getElementById('debugger_output');
       const pr = dbg.parse(txt).replace(/ /g, '&nbsp;').split('\n').join('<br>');
-
-      output.innerHTML = `<div>${pr}</div><div>- <b>${txt}</b></div>` + output.innerHTML;
-
-      document.getElementById('debugger_input').value = '';
-
-      return false;
+       output.innerHTML = `<div>${pr}</div><div>- <b>${txt}</b></div>` + output.innerHTML;
+       document.getElementById('debugger_input').value = '';
+       return false;
     }
   };
-
-
-  // 
+    // 
   // C button (clear debugger)
   //
   document.getElementById('clear_debugger').onclick = (e) => {
     document.getElementById('debugger_output').innerHTML = '';
   };
-
-
-  //
+    //
   // update video
   //
   function videoUpdate(time) {
@@ -71,7 +61,7 @@ window.onload = () => {
   }
   window.requestAnimationFrame(videoUpdate);
   */
-
 };
 
 // vim: ts=2:sw=2:sts=2:expandtab
+

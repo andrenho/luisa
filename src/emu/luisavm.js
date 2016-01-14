@@ -11,7 +11,7 @@ import Video from './video';
 
 export default class LuisaVM {
 
-  constructor(ramSizeKb, storageUnits, canvas, biosCode) {
+  constructor(ramSizeKb, storageUnits, biosCode) {
     this.mb = new Motherboard();
     this.mmu = new MMU(new RAM(ramSizeKb));
     this.cpu = new CPU(this.mb);
@@ -19,7 +19,7 @@ export default class LuisaVM {
     this.keyboard = new Keyboard();
     this.timer = new Timer();
     this.bios = new BIOS(biosCode);
-    this.video = new Video(canvas);
+    //this.video = new Video();
 
     this.mb.addDevice(this.mmu);
     this.mb.addDevice(this.cpu);
@@ -27,7 +27,7 @@ export default class LuisaVM {
     this.mb.addDevice(this.keyboard);
     this.mb.addDevice(this.timer);
     this.mb.addDevice(this.bios);
-    this.mb.addDevice(this.video);
+    //this.mb.addDevice(this.video);
   }
 
 
