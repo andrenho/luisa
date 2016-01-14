@@ -1,22 +1,36 @@
-/*
-var luisavm;
-var dbg;
-*/
+//
+// run when the window is loaded
+//
 
 window.onload = () => {
 
+  //
+  // initialize main web worker
+  //
   let worker = new Worker('web/luisavm.js');
-  worker.postMessage(undefined);
+  worker.addEventListener('message', e => message(e.data));
+  worker.postMessage(['init', biosCode]);  // initialize VM and debugger
 
-  /*
-  //
-  // initialize LuisaVM and debugger
-  //
-  luisavm = new LuisaVM(256, [], document.getElementById('canvas'), window.biosCode);
-  dbg = new Debugger(luisavm);
 
-  const welcome = dbg.welcome().replace(/ /g, '&nbsp;').split('\n').join('<br>');
-  document.getElementById('debugger_output').innerHTML = `<div>${welcome}</div>`;
+  //
+  // receive and parse information from worker
+  // 
+
+  function message(a) {
+    const pars = a.slice(1);
+    switch (a[0]) {
+      
+      // print info on the debugger
+      case 'print_debugger':
+        const output = document.getElementById('debugger_output');
+        output.innerHTML = `<div>${pars[0].replace(/ /g, '&nbsp;').split('\n').join('<br>')}</div>` + output.innerHTML;
+        break;
+
+      // other, invalid message
+      default:
+        console.error(`Invalid command ${e.data[0]} received from worker.`);
+    }
+  }
 
 
   // 
@@ -43,11 +57,10 @@ window.onload = () => {
       
       const txt = document.getElementById('debugger_input').value;
       const output = document.getElementById('debugger_output');
-      const pr = dbg.parse(txt).replace(/ /g, '&nbsp;').split('\n').join('<br>');
-
-      output.innerHTML = `<div>${pr}</div><div>- <b>${txt}</b></div>` + output.innerHTML;
-
+      output.innerHTML = `<div>- <b>${txt}</b></div>` + output.innerHTML;
       document.getElementById('debugger_input').value = '';
+
+      worker.postMessage(['to_debugger', txt]);
 
       return false;
     }
@@ -61,7 +74,9 @@ window.onload = () => {
     document.getElementById('debugger_output').innerHTML = '';
   };
 
+};
 
+/*
   //
   // update video
   //
@@ -71,7 +86,5 @@ window.onload = () => {
   }
   window.requestAnimationFrame(videoUpdate);
   */
-
-};
 
 // vim: ts=2:sw=2:sts=2:expandtab
