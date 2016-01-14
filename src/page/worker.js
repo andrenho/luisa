@@ -23,7 +23,7 @@ self.addEventListener('message', e => {
 
     // initialize VM and debugger
     case 'init':
-      luisavm = new LuisaVM(256, [], biosCode, pars[0], pars[1]);
+      luisavm = new LuisaVM(256, [], biosCode, pars[0], pars[1], callback);
       console.log('Virtual machine initalized.');
       dbg = new Debugger(luisavm);
       self.postMessage(['print_debugger', dbg.welcome()]);
@@ -39,5 +39,11 @@ self.addEventListener('message', e => {
       console.error(`Invalid command ${e.data[0]} received by worker.`);
   }
 });
+
+
+function callback(data) {
+  self.postMessage(['callback', data]);
+}
+
 
 // vim: ts=2:sw=2:sts=2:expandtab

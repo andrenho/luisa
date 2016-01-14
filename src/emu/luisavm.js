@@ -2,7 +2,7 @@
 
 class LuisaVM {
 
-  constructor(ramSizeKb, storageUnits, biosCode, screenWidth, screenHeight) {
+  constructor(ramSizeKb, storageUnits, biosCode, screenWidth, screenHeight, callback) {
     this.mb = new Motherboard();
     this.mmu = new MMU(new RAM(ramSizeKb));
     this.cpu = new CPU(this.mb);
@@ -10,7 +10,7 @@ class LuisaVM {
     this.keyboard = new Keyboard();
     this.timer = new Timer();
     this.bios = new BIOS(biosCode);
-    this.video = new Video(screenWidth, screenHeight);
+    this.video = new Video(screenWidth, screenHeight, callback);
 
     this.mb.addDevice(this.mmu);
     this.mb.addDevice(this.cpu);

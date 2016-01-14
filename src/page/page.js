@@ -22,6 +22,17 @@ window.onload = () => {
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  //
+  // read callbacks each 16ms
+  //
+  let callbacks = [];
+  function update(time) {
+    executeCallbacks(callbacks);
+    callbacks = [];
+    window.requestAnimationFrame(update);
+  }
+  window.requestAnimationFrame(update);
+
 
   //
   // receive and parse information from worker
@@ -35,6 +46,11 @@ window.onload = () => {
       case 'print_debugger':
         const output = document.getElementById('debugger_output');
         output.innerHTML = `<div>${pars[0].replace(/ /g, '&nbsp;').split('\n').join('<br>')}</div>` + output.innerHTML;
+        break;
+
+      // a callback was called
+      case 'callback':
+        callbacks.push(pars[0]);
         break;
 
       // other, invalid message
@@ -87,15 +103,5 @@ window.onload = () => {
 
 };
 
-/*
-  //
-  // update video
-  //
-  function videoUpdate(time) {
-    luisavm.video.update();
-    window.requestAnimationFrame(videoUpdate);
-  }
-  window.requestAnimationFrame(videoUpdate);
-  */
 
 // vim: ts=2:sw=2:sts=2:expandtab
