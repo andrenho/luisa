@@ -1,7 +1,3 @@
-import test from 'tape';
-
-import LSBStorage from '../emu/lsbstorage';
-
 class MockStorage extends LSBStorage {
   constructor() { 
     super(); 
@@ -16,7 +12,7 @@ test('LSBStorage: 16 bits', t => {
   m.set16(2, 0xABCD);
   t.equal(m.z[2], 0xCD, '1st byte');
   t.equal(m.z[3], 0xAB, '2nd byte');
-  t.deepEqual(m.get16(2), 0xABCD, 'LSB read');
+  t.same(m.get16(2), 0xABCD, 'LSB read');
   t.end();
 });
 
@@ -27,7 +23,7 @@ test('LSBStorage: 32 bits', t => {
   t.equal(m.z[5], 0xEF, '2nd byte');
   t.equal(m.z[6], 0xCD, '3rd byte');
   t.equal(m.z[7], 0xFB, '4th byte');
-  t.deepEqual(m.get32(4), 0xFBCDEF01, 'LSB read');
+  t.same(m.get32(4), 0xFBCDEF01, 'LSB read');
   t.end();
 });
 
@@ -43,7 +39,7 @@ test('LSBStorage: array', t => {
   let m = new MockStorage();
   m.setArray(2, [0x1, 0x2, 0x3]);
   t.equal(m.z[3], 0x2, '2nd byte');
-  t.deepEqual(m.getArray(2, 3), [0x1, 0x2, 0x3], 'full read');
+  t.same(m.getArray(2, 3), [0x1, 0x2, 0x3], 'full read');
   t.end();
 });
 

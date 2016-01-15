@@ -15,7 +15,7 @@ importScripts('../emu/bioscode.js',
               '../emu/luisavm.js',
               '../utils/debugger.js');
 
-var luisavm, dbg;
+let luisavm, dbg;
 
 self.addEventListener('message', e => {
   const pars = e.data.slice(1);
@@ -42,7 +42,7 @@ self.addEventListener('message', e => {
 
     // run tests
     case 'run_tests':
-      self.importScripts('../test/tests.js');
+      testInterface.runTests();
       break;
 
     // other, invalid message
@@ -51,5 +51,46 @@ self.addEventListener('message', e => {
   }
 });
 
+
+//
+// TEST INTERFACE
+//
+let test = {
+  equal(result, compare, description) {
+  },
+  same(result, compare, description) {
+  },
+  throws(f, result, description) {
+  },
+  end() {
+  },
+};
+
+
+class TestInterface {
+
+  constructor() {
+    this._tests = [];
+    this._loaded = false;
+  }
+
+
+  runTests() {
+    this._loadTests();
+    for (const test of tests) {
+      test.f(t);
+    }
+  }
+
+
+  _loadTests() {
+    if (!this._loaded) {
+      importScripts('../test/lsbstorage.js');
+      this._loaded = true;
+    }
+  }
+
+}
+let testInterface = new TestInterface();
 
 // vim: ts=2:sw=2:sts=2:expandtab

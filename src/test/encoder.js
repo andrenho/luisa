@@ -1,7 +1,3 @@
-import test from 'tape';
-
-import encode from '../utils/encoder';
-
 //
 // ENCODER
 //
