@@ -1,7 +1,3 @@
-import test from 'tape';
-
-import RAM from '../emu/ram';
-
 test('RAM: Get/set', t => {
   let r = new RAM(4);
   t.equal(r.get(3), 0, 'get byte');

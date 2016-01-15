@@ -1,12 +1,6 @@
-import test from 'tape';
-
-import Motherboard from '../emu/motherboard';
-import RAM from '../emu/ram';
-import MMU from '../emu/mmu';
-import CPU from '../emu/cpu';
-
-import Video from '../emu/video';
-
+test('Video', t => {
+  t.fail('Implement these tests.');
+});
 
 /*
 function makeVideo() {

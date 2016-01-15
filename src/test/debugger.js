@@ -1,8 +1,3 @@
-import test from 'tape';
-
-import LuisaVM from '../emu/luisavm';
-import Debugger from '../utils/debugger';
-
 //
 // DECODER
 //
@@ -15,8 +10,8 @@ test('Debugger decoder', t => {
   function ok(t, a, s) {
     tm.mb.setArray(0x0, a);
     const c = dbg.decode(0x0);
-    t.equals(c[0], s, s);
-    t.equals(c[1], a.length, 'operation size = ' + a.length);
+    t.equal(c[0], s, s);
+    t.equal(c[1], a.length, 'operation size = ' + a.length);
   }
 
   ok(t, [0xFF], 'data    0xFF');

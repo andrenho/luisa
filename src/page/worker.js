@@ -55,12 +55,74 @@ self.addEventListener('message', e => {
 //
 // TEST INTERFACE
 //
-let test = {
+function deepEquals(o1, o2) {
+  return JSON.stringify(o1) === JSON.stringify(o2);
+}
+
+
+let t = {
   equal(result, compare, description) {
+    if (result === compare) {
+      self.postMessage(['test_ok', description]);
+    } else {
+      self.postMessage(['test_nok', description, compare, result]);
+    }
+  },
+  notEqual(result, compare, description) {
+    if (result === compare) {
+      self.postMessage(['test_nok', description, compare, result]);
+    } else {
+      self.postMessage(['test_ok', description]);
+    }
   },
   same(result, compare, description) {
+    if (deepEquals(result, compare)) {
+      self.postMessage(['test_ok', description]);
+    } else {
+      self.postMessage(['test_nok', description, compare, result]);
+    }
   },
   throws(f, result, description) {
+    try {
+      f();
+    } catch(e) {
+      self.postMessage(['test_ok', description]);
+      return;
+    } 
+    self.postMessage(['test_nok', description, 'exception', 'ok']);
+  },
+  doesNotThrow(f, result, description) {
+    try {
+      f();
+    } catch(e) {
+      self.postMessage(['test_nok', description, 'exception', 'ok']);
+      return;
+    } 
+    self.postMessage(['test_ok', description]);
+  },
+  pass(description) {
+    self.postMessage(['test_ok', description]);
+  },
+  fail(description) {
+    self.postMessage(['test_nok', description]);
+  },
+  comment(description) {
+    // TODO - subtest
+    self.postMessage(['test_title', description]);
+  },
+  true(value, description) {
+    if (value) {
+      self.postMessage(['test_ok', description]);
+    } else {
+      self.postMessage(['test_nok', description, true, value]);
+    }
+  },
+  false(value, description) {
+    if (value) {
+      self.postMessage(['test_nok', description, true, value]);
+    } else {
+      self.postMessage(['test_ok', description]);
+    }
   },
   end() {
   },
@@ -75,22 +137,48 @@ class TestInterface {
   }
 
 
+  addTest(name, f) {
+    this._tests.push({ name, f });
+  }
+
+
   runTests() {
     this._loadTests();
-    for (const test of tests) {
+    for (const test of this._tests) {
+      self.postMessage(['test_title', test.name]);
       test.f(t);
     }
+    // TODO - total tests
   }
 
 
   _loadTests() {
     if (!this._loaded) {
-      importScripts('../test/lsbstorage.js');
+      importScripts(
+        '../test/lsbstorage.js',
+        '../test/ram.js',
+        '../test/device.js',
+        '../test/mmu.js',
+        '../test/motherboard.js',
+        '../test/cpu.js',
+        '../test/keyboard.js',
+        '../test/storage.js',
+        '../test/bios.js',
+        '../test/timer.js',
+        '../test/video.js',
+        '../test/luisavm.js',
+        '../test/debugger.js'
+      );
       this._loaded = true;
     }
   }
 
 }
+
 let testInterface = new TestInterface();
+
+function test(name, f) {
+  testInterface.addTest(name, f);
+}
 
 // vim: ts=2:sw=2:sts=2:expandtab

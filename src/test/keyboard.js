@@ -1,12 +1,3 @@
-import test from 'tape';
-
-import Motherboard from '../emu/motherboard';
-import RAM from '../emu/ram';
-import MMU from '../emu/mmu';
-import CPU from '../emu/cpu';
-
-import Keyboard from '../emu/keyboard';
-
 function makeKeyboard() {
   const m = new Motherboard();
   m.addDevice(new MMU(new RAM(256)));
@@ -39,12 +30,12 @@ test('Keyboard: keypresses (poll)', t => {
   kbd.addEvent({ event: 'press', shift: false, control: false, alt: true, key: 0x20 });
   kbd.addEvent({ event: 'release', shift: false, control: false, alt: true, key: 0x20 });
 
-  t.equals(mb.get(kbd.KBD_QUEUE_FULL), 0, 'queue is not full');
-  t.equals(mb.get32(kbd.KBD_FRONT), (1 << 0x1C) | 0x20, 'event #1');
+  t.equal(mb.get(kbd.KBD_QUEUE_FULL), 0, 'queue is not full');
+  t.equal(mb.get32(kbd.KBD_FRONT), (1 << 0x1C) | 0x20, 'event #1');
   mb.set(mb.get(kbd.KBD_DEQUEUE));
-  t.equals(mb.get32(kbd.KBD_FRONT), ((1 << 0x1F) | (1 << 0x1C) | 0x20) >>> 0, 'event #2');
+  t.equal(mb.get32(kbd.KBD_FRONT), ((1 << 0x1F) | (1 << 0x1C) | 0x20) >>> 0, 'event #2');
   mb.set(mb.get(kbd.KBD_DEQUEUE));
-  t.equals(mb.get32(kbd.KBD_FRONT), 0, 'all events dequeued');
+  t.equal(mb.get32(kbd.KBD_FRONT), 0, 'all events dequeued');
 
   t.end();
 });
@@ -62,9 +53,9 @@ test('Keyboard: keypresses (interrupt)', t => {
   kbd.addEvent({ event: 'press', shift: false, control: false, alt: true, key: 0x20 });
   mb.step();
 
-  t.equals(cpu.PC, 0x1000, 'interrupt was called');
-  t.equals(mb.get(kbd.KBD_QUEUE_FULL), 0, 'queue is not full');
-  t.equals(mb.get32(kbd.KBD_FRONT), (1 << 0x1C) | 0x20, 'event #1');
+  t.equal(cpu.PC, 0x1000, 'interrupt was called');
+  t.equal(mb.get(kbd.KBD_QUEUE_FULL), 0, 'queue is not full');
+  t.equal(mb.get32(kbd.KBD_FRONT), (1 << 0x1C) | 0x20, 'event #1');
 
   t.end();
 });
@@ -77,7 +68,7 @@ test('Keyboard: queue full', t => {
     kbd.addEvent({ event: 'press', shift: false, control: false, alt: true, key: 0x20 });
   }
 
-  t.equals(mb.get(kbd.KBD_QUEUE_FULL), 1, 'queue is full');
+  t.equal(mb.get(kbd.KBD_QUEUE_FULL), 1, 'queue is full');
 
   t.end();
 });

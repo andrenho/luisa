@@ -56,9 +56,20 @@ window.onload = () => {
         callbacks.push(pars[0]);
         break;
 
+      // tests
+      case 'test_title':
+        document.getElementById('tests_list').innerHTML += `<h3>${pars[0]}</h3>`;
+        break;
+      case 'test_ok':
+        document.getElementById('tests_list').innerHTML += `<span class="ok"></span>${pars[0]}<br>`;
+        break;
+      case 'test_nok':
+        document.getElementById('tests_list').innerHTML += `<span class="nok"></span>${pars[0]} (expected: ${pars[1]}, got: ${pars[2]})<br>`;
+        break;
+
       // other, invalid message
       default:
-        console.error(`Invalid command ${e.data[0]} received from worker.`);
+        console.error(`Invalid command ${a[0]} received from worker.`);
     }
   }
 
@@ -137,7 +148,12 @@ window.onload = () => {
   //
   document.getElementById('tests').onclick = (e) => {
     worker.postMessage(['run_tests']);
+    document.getElementById('tests_display').style.display = 'block';
     return false;
+  };
+  document.getElementById('hide_tests').onclick = (e) => {
+    document.getElementById('tests_list').innerHTML = '';
+    document.getElementById('tests_display').style.display = 'none';
   };
 
 };

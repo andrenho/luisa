@@ -1,12 +1,3 @@
-import test from 'tape';
-
-import Motherboard from '../emu/motherboard';
-import RAM from '../emu/ram';
-import MMU from '../emu/mmu';
-import CPU from '../emu/cpu';
-
-import Timer from '../emu/timer';
-
 function makeTimer() {
   const m = new Motherboard();
   m.addDevice(new MMU(new RAM(256)));
@@ -40,7 +31,7 @@ test('Timer: clock', t => {
   const cp_now = (Date.now() - d) >>> 0;
   const vm_now = mb.get32(tm.TM_CLOCK);
 
-  t.ok((vm_now >= cp_now - 10000) && (vm_now <= cp_now + 10000), 
+  t.pass((vm_now >= cp_now - 10000) && (vm_now <= cp_now + 10000), 
       `times match 0x${vm_now.toString(16)} (VM) vs 0x${cp_now.toString(16)}`);
 
   t.end();
@@ -55,7 +46,7 @@ test('Timer: counter', t => {
   mb.step();
   const v = mb.get32(tm.TM_COUNTER0);
   t.notEqual(v, 0, 'counter != 0');
-  t.ok(v > 50, 'counter > 50');
+  t.pass(v > 50, 'counter > 50');
 
   t.end();
 });
@@ -72,8 +63,8 @@ test('Timer: interrupt', t => {
   sleep(100);
   mb.step();
 
-  t.equals(cpu.PC, 0x1000, 'interrupt was called');
-  t.equals(mb.get(tm.TM_CUR_INT), 0x1, 'the correct interrupt was called');
+  t.equal(cpu.PC, 0x1000, 'interrupt was called');
+  t.equal(mb.get(tm.TM_CUR_INT), 0x1, 'the correct interrupt was called');
 
   t.end();
 });

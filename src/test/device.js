@@ -1,7 +1,3 @@
-import test from 'tape';
-
-import Device from '../emu/device';
-
 class MockDevice extends Device {
   name() { return 'MockDevice'; }
   deviceType() { return Device.Type.OTHER_OUTPUT; }

@@ -1,8 +1,3 @@
-import test from 'tape';
-
-import RAM from '../emu/ram';
-import MMU from '../emu/mmu';
-
 // 
 // VMEM disabled
 //
@@ -70,7 +65,7 @@ function mmu_vmem() {
 test('MMU: enabled VMEM', t => {
   let m = mmu_vmem();
   t.equal(m.get32(m.MMU_VMEM), (0x4 | (1 << 31)) >>> 0, 'VMEM register is correct');
-  t.ok(m.active, 'VMEM is active');
+  t.pass(m.active, 'VMEM is active');
   t.equal(m._vmem.page, 0x4, 'VMEM page is 0x4');
   t.end();
 });
