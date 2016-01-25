@@ -1,0 +1,18 @@
+@font-face { font-family: sudo; src: url('sudo/Sudo.ttf'); }
+@font-face { font-family: sudo; font-weight: bold; src: url('sudo/Sudo-Bold.ttf'); }
+
+body {
+    font-family: sudo, monospace;
+}
+
+header {
+    font-size: 180%;
+    font-weight: bold;
+}
+
+footer {
+    font-size: 80%;
+}
+
+/* vim: ts=4:sw=4:sts=4:expandtab
+ */
