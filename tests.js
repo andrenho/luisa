@@ -19,7 +19,7 @@ class TestEnvironment {
 
         let fmt = function(s) {
             if(typeof s === 'number') {
-                return '0x' + s.toString(16);
+                return '0x' + s.toString(16).toUpperCase();
             } else if(typeof s === 'object') {
                 return '[' + s.map(v => fmt(v)).join(', ') + ']';
             } else {

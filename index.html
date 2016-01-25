@@ -65,6 +65,7 @@
 
         <!-- MOTHERBOARD -->
         <section id="mboard_doc">
+          <h3>Memory map</h3>
           <p>The <b>motherboard</b> coordinates how the memory is accessed. Each <b>device</b>
             contains an addressing area, and the motherboard will relay the information
             to the device, according to the address.</p>
@@ -76,12 +77,43 @@
               <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
               <li>access the physical address in RAM. If the address is out of bounds, it will</li>
               <li>set an "<b><i>out of bounds</i></b>" register. This register can be accessed
-                at 0xFFFF&nbsp;FFFF.</li>
+                at 0xFFFFFFFF.</li>
             </ol>
           </p>
+
+          <h3>Devices</h3>
           <p>New devices can be created in javascript and connected to the motherboard.
             For that, they need to respect the following interface:</p>
-          <p><b><i>TODO</i></b></p>
+          <pre class="code">
+class Device {
+    constructor(interrupts...)
+    name()            : string
+    interrupt_count() : int 
+    get(addr)         : uint8_t
+    set(addr, uint_8)
+    doc()             : html_string
+    debug()           : html_string
+}
+          </pre>
+          <p>Devices of this kind will receive 256 bytes of memory.</p>
+          <p>Devices can also request an extra, larger amount of memory
+             to be used as a direct memory access area (DMA). These devices
+             need to respect the following interface:</p>
+          <pre class="code">
+class DMADevice extends Device {
+    area_requested() : int
+    get_dma(addr)    : uint8_t
+    set_dma(addr, uint8_t)
+} 
+          </pre>
+          <p>The MMU is a special kind of devices that manages virtual memory
+             addresses. There can be only one MMU attached to the motherboard,
+             and it follows this interface:</p>
+          <pre class="code">
+class MMU extends Device {
+    translate(uint32_t) : uint32_t
+}
+          </pre>
         </section>
 
         <section id="mboard_test">
