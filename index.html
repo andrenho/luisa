@@ -3,6 +3,8 @@
   <meta charset="utf-8">
   <link rel="stylesheet" href="tinyvm.css">
   <script src="page.js"></script>
+  <script src="tests.js"></script>
+  <script src="computer.js"></script>
   <title>tinyvm 0.0.1</title>
 
   <body>
@@ -40,10 +42,32 @@
 
         <!-- ABOUT PAGE -->
         <section id="about_doc">
-          hello world!
+          <p><b>tinyvm</b> is a emulator for a 32-bit computer that aims to be 
+            as powerful as a modern computer, but as simple as 8-bit computer
+            from the 80s. This computer doesn't exist in a physical form 
+            (<i>yet</i>).</p>
+          <p>Features:
+            <ul>
+              <li>32-bit CPU</li>
+              <li>up to 4 Gb of RAM</li>
+              <li>virtual memory</li>
+              <li>up to 4 hard disks of 256 Gb each</li>
+            </ul>
+          </p>
+          <p>The tab "<i>doc</i>" contains the documentation for each one of the 
+            computer devices on the left. The tab "<i>debug</i>" allows the 
+            internals of each device to be inspected.</p>
+          <p>The code for this emulator is avaliable under the
+            <a href="LICENSE">GPLv3 license</a>.</p>
         </section>
 
         <section id="not_avaliable">Not avaliable.</section>
+
+        <!-- COMPUTER -->
+        <section id="memmap_test">
+          <button class="test" onclick="(new Computer(4)).run_tests('memmap_tests');">Run tests</button>
+          <section id="memmap_tests"></section>
+        </section>
 
       </section>
 

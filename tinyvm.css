@@ -1,11 +1,16 @@
 @font-face { 
     font-family: 'Sudo'; 
-    src: url('sudo/Sudo.ttf?') format('truetype'); 
+    src: url('sudo/Sudo.ttf') format('truetype'); 
 }
 @font-face { 
     font-family: 'Sudo'; 
     font-weight: bold; 
-    src: url('sudo/Sudo-Bold.ttf?') format('truetype'); 
+    src: url('sudo/Sudo-Bold.ttf') format('truetype'); 
+}
+@font-face { 
+    font-family: 'Sudo'; 
+    font-style: italic; 
+    src: url('sudo/Sudo-Italic.ttf') format('truetype'); 
 }
 
 /*
@@ -40,6 +45,7 @@ nav.topmenu {
     position: relative;
     left: 150px;
     cursor: pointer;
+    width: 200px;
 }
 
 nav.leftmenu {
@@ -71,16 +77,32 @@ nav.topmenu > span.selected {
 
 section.content {
     float: left;
-    margin: 10px;
+    position: relative;
+    left: 10px;
+    width: calc(100% - 170px);
+    margin-top: 10px;
     padding: 10px;
     border: black solid;
     border-width: 1px 0 0 1px;
-    min-height: 100px;
-    min-width: 400px;
+    min-height: 250px;
 }
 
 section.content > section {
     display: none;
+}
+
+/*
+ * TESTS
+ */
+table.test {
+    margin: 5px;
+    border-collapse: collapse;
+}
+
+table.test > tbody > tr > th, td {
+    border: 1px black solid;
+    padding: 2px 5px 2px 5px;
+    text-align: left;
 }
 
 /* vim: ts=4:sw=4:sts=4:expandtab

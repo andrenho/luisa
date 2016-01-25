@@ -6,8 +6,8 @@
 // 
 // GLOBALS
 //
-var page = 'about';
-var block = 'doc';
+let page = 'about';
+let block = 'doc';
 
 
 //
@@ -17,26 +17,32 @@ var block = 'doc';
 // called when page is loaded
 window.onload = function()
 {
-    update_page();
-
     // are we in development mode?
     if(get_query_string('dev')) {
         document.getElementById('dev_mode').checked = true;
         document.getElementById('dev').style.display = 'block';
+        if(window.sessionStorage.getItem("last_page")) {
+            page = window.sessionStorage.getItem("last_page");
+            block = window.sessionStorage.getItem("last_block");
+        }
     }
-}
+
+    update_page();
+};
 
 // called when a menu is clicked
 function menu(id) {
-    if(id == 'doc' || id == 'debug' || id == 'test') {
+    if(id === 'doc' || id === 'debug' || id === 'test') {
         block = id;
     } else {
         page = id;
     }
     update_page();
+    window.sessionStorage.setItem('last_page', page);
+    window.sessionStorage.setItem('last_block', block);
 }
 
-
+// called when "Development mode" box is checked
 function update_dev_mode(c)
 {
     document.getElementById('dev').style.display = (c ? 'block' : 'none');
@@ -47,29 +53,31 @@ function update_dev_mode(c)
 // FUNCTIONS
 //
 
+// return a letiable from a query string
 function get_query_string(key) {  
     return unescape(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + escape(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
 }
 
+// update contents based on the selected page
 function update_page()
 {
     // update menus
-    var ch = document.getElementById('topmenu').children;
-    for(var i=0; i<ch.length; ++i) {
+    let ch = document.getElementById('topmenu').children;
+    for(let i=0; i<ch.length; ++i) {
         ch[i].className = "";
     }
     document.getElementById(block).className = 'selected';
 
-    var ch = document.getElementById('leftmenu').children;
-    for(var i=0; i<ch.length; ++i) {
+    ch = document.getElementById('leftmenu').children;
+    for(let i=0; i<ch.length; ++i) {
         ch[i].className = "";
     }
     document.getElementById(page).className = 'selected';
 
     // show page
-    var id = page + '_' + block;
-    var ch = document.getElementById('content').children;
-    for(var i=0; i<ch.length; ++i) {
+    let id = page + '_' + block;
+    ch = document.getElementById('content').children;
+    for(let i=0; i<ch.length; ++i) {
         ch[i].style.display = 'none';
     }
     try {
