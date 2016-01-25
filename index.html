@@ -31,8 +31,8 @@
       </nav>
 
       <nav id="leftmenu" class="leftmenu">
-        <span onclick="menu(this.id);" id="memmap">Memory (map)</span>
-        <span onclick="menu(this.id);" id="memaddr">Memory (addresses)</span>
+        <span onclick="menu(this.id);" id="mboard">Motherboard</span>
+        <span onclick="menu(this.id);" id="mmu">MMU</span>
         <span onclick="menu(this.id);" id="about" class="selected">About</span>
       </nav>
 
@@ -63,10 +63,29 @@
 
         <section id="not_avaliable">Not avaliable.</section>
 
-        <!-- COMPUTER -->
-        <section id="memmap_test">
-          <button class="test" onclick="(new Computer(4)).run_tests('memmap_tests');">Run tests</button>
-          <section id="memmap_tests"></section>
+        <!-- MOTHERBOARD -->
+        <section id="mboard_doc">
+          <p>The <b>motherboard</b> coordinates how the memory is accessed. Each <b>device</b>
+            contains an addressing area, and the motherboard will relay the information
+            to the device, according to the address.</p>
+          <p>The addressing areas are organized in a <b>memory map</b>.</p>
+          <p>The full physical memory of the computer (<b>RAM</b>) is also present
+            in the motherboard. When a memory address is accessed, the motherboard will:
+            <ol>
+              <li>look for a device in the memory map. If no device is mapped to this address, it will</li>
+              <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
+              <li>access the physical address in RAM. If the address is out of bounds, it will</li>
+              <li>set an "<b><i>out of bounds</i></b>" register.
+            </ol>
+          </p>
+          <p>New devices can be created in javascript and connected to the motherboard.
+            For that, they need to respect the following interface:</p>
+          <p><b><i>TODO</i></b></p>
+        </section>
+
+        <section id="mboard_test">
+          <button class="test" onclick="(new Computer(4)).run_tests('mboard_tests');">Run tests</button>
+          <section id="mboard_tests"></section>
         </section>
 
       </section>

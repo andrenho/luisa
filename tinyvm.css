@@ -12,6 +12,12 @@
     font-style: italic; 
     src: url('sudo/Sudo-Italic.ttf') format('truetype'); 
 }
+@font-face { 
+    font-family: 'Sudo'; 
+    font-weight: bold; 
+    font-style: italic; 
+    src: url('sudo/Sudo-BoldItalic.ttf') format('truetype'); 
+}
 
 /*
  * BODY
