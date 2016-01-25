@@ -4,7 +4,7 @@
   <link rel="stylesheet" href="tinyvm.css">
   <script src="page.js"></script>
   <script src="tests.js"></script>
-  <script src="computer.js"></script>
+  <script src="motherboard.js"></script>
   <title>tinyvm 0.0.1</title>
 
   <body>
@@ -75,7 +75,8 @@
               <li>look for a device in the memory map. If no device is mapped to this address, it will</li>
               <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
               <li>access the physical address in RAM. If the address is out of bounds, it will</li>
-              <li>set an "<b><i>out of bounds</i></b>" register.
+              <li>set an "<b><i>out of bounds</i></b>" register. This register can be accessed
+                at 0xFFFF&nbsp;FFFF.</li>
             </ol>
           </p>
           <p>New devices can be created in javascript and connected to the motherboard.
@@ -84,7 +85,7 @@
         </section>
 
         <section id="mboard_test">
-          <button class="test" onclick="(new Computer(4)).run_tests('mboard_tests');">Run tests</button>
+          <button class="test" onclick="(new Motherboard(4)).run_tests('mboard_tests');">Run tests</button>
           <section id="mboard_tests"></section>
         </section>
 

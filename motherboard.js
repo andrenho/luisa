@@ -1,6 +1,6 @@
 'use strict';
 
-class Computer {
+class Motherboard {
 
     constructor(mem_size_kb) {
         this.mem_size_kb = mem_size_kb;
@@ -13,7 +13,9 @@ class Computer {
     }
 
     set(addr, value) {
-        if(addr > this.mem_size_kb * 1024) { 
+        if(addr === 0xFFFFFFFF) {
+            this.out_of_bounds = ((value == 0) ? false : true);
+        } else if(addr > this.mem_size_kb * 1024) { 
             this.out_of_bounds = true;
         } else {
             this.mem[addr] = value;
@@ -21,7 +23,9 @@ class Computer {
     }
 
     get(addr) {
-        if(addr > this.mem_size_kb * 1024) { 
+        if(addr === 0xFFFFFFFF) {
+            return this.out_of_bounds ? 1 : 0;
+        } else if(addr > this.mem_size_kb * 1024) { 
             this.out_of_bounds = true;
             return 0;
         } else {
@@ -33,10 +37,10 @@ class Computer {
         if(addr + 3 > this.mem_size_kb * 1024) { 
             this.out_of_bounds = true;
         } else {
-            this.mem[addr] = value & 0xff;
-            this.mem[addr+1] = (value >> 8) & 0xff;
-            this.mem[addr+2] = (value >> 16) & 0xff;
-            this.mem[addr+3] = value >> 24;
+            this.set(addr, value & 0xff);
+            this.set(addr+1, (value >> 8) & 0xff);
+            this.set(addr+2, (value >> 16) & 0xff);
+            this.set(addr+3, value >> 24);
         }
     }
 
@@ -45,10 +49,10 @@ class Computer {
             this.out_of_bounds = true;
             return 0;
         } else {
-            return (this.mem[addr+3] << 24)   |
-                   (this.mem[addr+2] << 16) |
-                   (this.mem[addr+1] << 8)  |
-                   this.mem[addr];
+            return (this.get(addr+3) << 24)   |
+                   (this.get(addr+2) << 16) |
+                   (this.get(addr+1) << 8)  |
+                   this.get(addr);
         }
     }
 
@@ -76,8 +80,8 @@ class Computer {
                 }, '=', [0xEF, 0x89], this ] ]);
         te.test('Out of bounds',
                 [ 
-                    [ t => { t.get(0xF0); return t.out_of_bounds; }, '=', false, this ],
-                    [ t => { t.get(0xF000000); return t.out_of_bounds; }, '=', true, this ],
+                    [ t => { t.get(0xF0); return t.get(0xFFFFFFFF); }, '=', 0, this ],
+                    [ t => { t.get(0xE000000); return t.get(0xFFFFFFFF); }, '=', 1, this ],
                 ]);
         this.reset();
     }
