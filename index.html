@@ -2,27 +2,60 @@
 <html>
   <meta charset="utf-8">
   <link rel="stylesheet" href="tinyvm.css">
+  <script src="page.js"></script>
   <title>tinyvm 0.0.1</title>
 
   <body>
-    <header>tinyvm 0.0.1</header>
-    <hr>
+    <header>
+      tinyvm 0.0.1
+      <hr>
+    </header>
 
-    <section>
-      <input type="checkbox" name="development_mode">Development mode
+    <!-- COMPUTER -->
+
+    <section id="computer">
+      <section id="screen"></section>
+      <input type="checkbox" id="dev_mode" onchange="update_dev_mode(this.checked);">Development mode
     </section>
 
-    <hr>
+    <!-- MENUS -->
+
+    <section id="dev" class="development">
+
+      <nav id="topmenu" class="topmenu">
+        <span onclick="menu(this.id);" id="doc" class="selected">doc</span>
+        <span onclick="menu(this.id);" id="debug">debug</span>
+        <span onclick="menu(this.id);" id="test">test</span>
+      </nav>
+
+      <nav id="leftmenu" class="leftmenu">
+        <span onclick="menu(this.id);" id="memmap">Memory (map)</span>
+        <span onclick="menu(this.id);" id="memaddr">Memory (addresses)</span>
+        <span onclick="menu(this.id);" id="about" class="selected">About</span>
+      </nav>
+
+      <!-- CONTENTS -->
+
+      <section id="content" class="content">
+
+        <!-- ABOUT PAGE -->
+        <section id="about_doc">
+          hello world!
+        </section>
+
+        <section id="not_avaliable">Not avaliable.</section>
+
+      </section>
+
+    </section>
+
+
     <footer>
-      <p>
-        &copy; André Wagner (2016) - Released under the 
-        <a href="http://www.gnu.org/licenses/gpl-3.0.en.html">GPLv3 license</a>.
-      </p> 
-      <p>
-        Tested on the latest versions of
-        <a href="https://www.google.com/chrome/">Google Chrome</a> and
-        <a href="https://www.mozilla.org/firefox/">Mozilla Firefox</a>.
-      </p>
+      <hr>
+      Released under the <a href="LICENSE">GPLv3 license</a>.<br>
+      Tested on the latest versions of
+      <a href="https://www.google.com/chrome/">Google Chrome</a> and
+      <a href="https://www.mozilla.org/firefox/">Mozilla Firefox</a>.
     </footer>
   </body>
 </html>
