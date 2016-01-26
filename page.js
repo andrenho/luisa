@@ -95,7 +95,8 @@ function update_page()
 
 function initialize_debuggers()
 {
-    document.getElementById('mmap').innerHTML = tinyvm.debug();
+    document.getElementById('mmap').innerHTML = tinyvm.mmap_debug();
+    tinyvm.set_ph_mem_debug('phmem');
 }
 
 

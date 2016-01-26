@@ -5,6 +5,7 @@
   <script src="util.js"></script>
   <script src="page.js"></script>
   <script src="tests.js"></script>
+  <script src="memorydebugger.js"></script>
   <script src="bios.js"></script>
   <script src="motherboard.js"></script>
   <title>tinyvm 0.0.1</title>
@@ -96,7 +97,7 @@
               <td class="address">0x00000000</td>
             </tr>
             <tr>
-              <td class="area" style="height: 100px; background-color: #ffdddd;">Invalid access area</td>
+              <td class="area" style="height: 100px; background-color: #ffeeee;">Invalid access area</td>
               <td class="beginning"></td>
               <td class="address">?? (depending on memory size)</td>
             </tr>
@@ -154,6 +155,8 @@ class MMU extends Device {
         <section id="mboard_debug">
           <h2>Memory map</h2>
           <section id="mmap"></section>
+          <h2>Physical memory</h2>
+          <section id="phmem"></section>
         </section>
 
         <section id="mboard_test">

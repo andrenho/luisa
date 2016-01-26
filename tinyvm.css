@@ -168,5 +168,38 @@ table.mmap > tbody > tr > td.address {
     width: 90px;
 }
 
+/*
+ * MEMORY
+ */
+td.data {
+    border: 0;
+    padding: 0;
+    text-align: center;
+}
+
+td.addr {
+    border: 1px black solid;
+    font-weight: bold;
+}
+
+.noborder {
+    border-width: 0;
+    padding-right: 2px;
+}
+
+span.base_address {
+    padding-right: 10px;
+}
+
+input.data_input {
+    font-family: Sudo;
+    font-size: 100%;
+    text-align: center;
+    width: 16px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
 /* vim: ts=4:sw=4:sts=4:expandtab
  */

@@ -29,6 +29,8 @@ class Motherboard {
         if(!this.naked) {
             this.add_device(new BIOS());
         }
+
+        this.mem_debug = new MemoryDebugger(this, 0x0, this.mem_size - 1, true);
     }
 
     //
@@ -56,7 +58,7 @@ class Motherboard {
                 }
             }
             this.out_of_bounds = true;  // if not found
-        } else if(addr > this.mem_size) { 
+        } else if(addr >= this.mem_size) { 
             this.out_of_bounds = true;
         } else {
             this.mem[addr] = value;
@@ -82,7 +84,7 @@ class Motherboard {
                 }
             }
             this.out_of_bounds = true;  // if not found
-        } else if(addr > this.mem_size) { 
+        } else if(addr >= this.mem_size) { 
             this.out_of_bounds = true;
             return 0;
         } else {
@@ -102,6 +104,22 @@ class Motherboard {
                (this.get(addr+2) << 16) |
                (this.get(addr+1) << 8)  |
                this.get(addr);
+    }
+
+    ph_set(addr, value) {
+        if(addr >= this.mem_size) { 
+            throw 'out of bounds';
+        } else {
+            this.mem[addr] = value;
+        }
+    }
+
+    ph_get(addr) {
+        if(addr >= this.mem_size) { 
+            throw 'out of bounds';
+        } else {
+            return this.mem[addr];
+        }
     }
 
     //
@@ -154,7 +172,7 @@ class Motherboard {
     // DEBUGGING INFORMATION
     //
 
-    debug() {
+    mmap_debug() {
         // create HTML table
         let s = ['<table class="mmap">'];
 
@@ -166,7 +184,7 @@ class Motherboard {
                 </tr>`);
         if(this.mem_size < 0xf0000000) {
             s.push(`<tr>
-                      <td class="area" style="height: 100px; background-color: #ffdddd;">Invalid access area</td>
+                      <td class="area" style="height: 100px; background-color: #ffeeee;">Invalid access area</td>
                       <td class="beginning"></td>
                       <td class="address">0x` + to_hex(this.mem_size, 8) + `
                     </tr>`);
@@ -183,7 +201,7 @@ class Motherboard {
         }
         if(pos < DEV_RAM_ADDR) {
             s.push(`<tr>
-                      <td class="area" style="height: 50px; background-color: #ffdddd;">Invalid access area</td>
+                      <td class="area" style="height: 50px; background-color: #ffeeee;">Invalid access area</td>
                       <td class="beginning"></td>
                       <td class="address">0x` + to_hex(pos, 8) + `
                     </tr>`);
@@ -201,7 +219,7 @@ class Motherboard {
             }
         }
         s.push(`<tr>
-                  <td class="area" style="height: 50px; background-color: #ffdddd;">Invalid access area</td>
+                  <td class="area" style="height: 50px; background-color: #ffeeee;">Invalid access area</td>
                   <td class="beginning"></td>
                   <td class="address">0x` + to_hex(pos, 8) + `
                 </tr>
@@ -212,6 +230,10 @@ class Motherboard {
                 </tr>
               </table>`);
         return s.join('');
+    }
+
+    set_ph_mem_debug(id) {
+        return this.mem_debug.set_initial_html(id);
     }
 
     //
