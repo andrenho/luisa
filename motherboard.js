@@ -202,7 +202,7 @@ class Motherboard {
             set_ram(a, v) { if(a === 0) this.x = v; }
         }
         te.test('RAM Device memory access', [
-            [ t => { return t.add_device(new Device()); }, '=', 'RAMDevice', this ],
+            [ t => { return t.add_device(new RAMDevice()); }, '=', 'RAMDevice', this ],
             [ t => {
                 t.set(DEV_RAM_ADDR + 0, 42);
                 return t.get(DEV_RAM_ADDR + 0);
