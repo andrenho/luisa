@@ -6,9 +6,10 @@ const OUT_OF_BOUNDS_REG = 0xFFFFFFFF;
 
 class Motherboard {
 
-    constructor(mem_size_kb) {
+    constructor(mem_size_kb, naked) {
         this.mem_size_kb = mem_size_kb;
         this.mem_size = mem_size_kb * 1024;
+        this.naked = naked;
         this.reset();
     }
 
@@ -23,6 +24,11 @@ class Motherboard {
         this.mmu = null;
 
         this._current = { reg: DEV_REG_ADDR, ram: DEV_RAM_ADDR }     // used for calculating the device memory areas
+
+        // devices
+        if(!this.naked) {
+            this.add_device(new BIOS());
+        }
     }
 
     //
@@ -191,7 +197,7 @@ class Motherboard {
                           <td class="beginning"></td>
                           <td class="address">0x` + to_hex(pos, 8) + `</td>
                         </tr>`);
-                pos += 256;
+                pos += d.dev.area_requested();
             }
         }
         s.push(`<tr>
@@ -213,7 +219,7 @@ class Motherboard {
     //
 
     run_tests(section) {
-        var te = new TestEnvironment(section);
+        const te = new TestEnvironment(section);
 
         // test memory
         te.test('Memory amount (kB)',

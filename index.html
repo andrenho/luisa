@@ -5,6 +5,7 @@
   <script src="util.js"></script>
   <script src="page.js"></script>
   <script src="tests.js"></script>
+  <script src="bios.js"></script>
   <script src="motherboard.js"></script>
   <title>tinyvm 0.0.1</title>
 
@@ -156,7 +157,7 @@ class MMU extends Device {
         </section>
 
         <section id="mboard_test">
-          <button class="test" onclick="(new Motherboard(4)).run_tests('mboard_tests');">Run tests</button>
+          <button class="test" onclick="(new Motherboard(4, true)).run_tests('mboard_tests');">Run tests</button>
           <section id="mboard_tests"></section>
         </section>
 
