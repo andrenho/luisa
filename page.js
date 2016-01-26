@@ -64,15 +64,15 @@ function get_query_string(key) {
 function update_page()
 {
     // update menus
-    let ch = document.getElementById('topmenu').children;
+    const ch = document.getElementById('topmenu').children;
     for(let i=0; i<ch.length; ++i) {
         ch[i].className = "";
     }
     document.getElementById(block).className = 'selected';
 
-    ch = document.getElementById('leftmenu').children;
-    for(let i=0; i<ch.length; ++i) {
-        ch[i].className = "";
+    const ch2 = document.getElementById('leftmenu').children;
+    for(let i=0; i<ch2.length; ++i) {
+        ch2[i].className = "";
     }
     document.getElementById(page).className = 'selected';
 
@@ -80,10 +80,10 @@ function update_page()
     update_debuggers();
 
     // show page
-    let id = page + '_' + block;
-    ch = document.getElementById('content').children;
-    for(let i=0; i<ch.length; ++i) {
-        ch[i].style.display = 'none';
+    const id = page + '_' + block;
+    const ch3 = document.getElementById('content').children;
+    for(let i=0; i<ch3.length; ++i) {
+        ch3[i].style.display = 'none';
     }
     try {
         document.getElementById(id).style.display = 'block';

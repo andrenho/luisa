@@ -17,7 +17,7 @@ class TestEnvironment {
 
     test(desc, tests) {
 
-        let fmt = function(s, v) {
+        function fmt(s, v) {
             if(v) {
                 return 'exception';
             } else if(s === null || s === undefined) {
@@ -37,9 +37,9 @@ class TestEnvironment {
         tests.forEach(t => {
             if(!fst) { s.push('<tr>'); }
             
-            let test_function = t[0], validation = t[1], expected = t[2], data = t[3];
-            let r = this._run_test(test_function, validation, expected, data);
-            let ok = r[0], result = r[1], exception = r[2];
+            const test_function = t[0], validation = t[1], expected = t[2], data = t[3];
+            const r = this._run_test(test_function, validation, expected, data);
+            const ok = r[0], result = r[1], exception = r[2];
 
             //  add to table
             s.push('<td style="text-align: center;">' + fmt(expected, (validation == 'exception')) + '</td>');
@@ -77,13 +77,13 @@ class TestEnvironment {
         let ok = true;
         if(validation === '=') {
             if(typeof expected === 'object') {
-                if(typeof result != 'object') {
+                if(typeof result !== 'object') {
                     ok = false;
-                } else if(result.length != expected.length) {
+                } else if(result.length !== expected.length) {
                     ok = false;
                 } else {
                     for(let i=0; i<result.length; ++i) {
-                        if(expected[i] != result[i]) {
+                        if(expected[i] !== result[i]) {
                             ok = false;
                             break;
                         }
@@ -94,7 +94,7 @@ class TestEnvironment {
             }
         } else if(validation == 'exception') {
             ok = exception;
-            if(expected && (result != expected)) {
+            if(expected && (result !== expected)) {
                 ok = false;
             }
         } else if(validation == '!exception') {

@@ -103,7 +103,7 @@ class Motherboard {
     //
 
     add_device(dev) {
-        let type = this._device_type(dev);
+        const type = this._device_type(dev);
         if(type == 'invalid') {
             throw 'Invalid device ' + dev;
         }
@@ -217,7 +217,7 @@ class Motherboard {
 
         // test memory
         te.test('Memory amount (kB)',
-                [ [ t => { return t.mem_size_kb; }, '=', 4, this ] ]);
+                [ [ t => t.mem_size_kb, '=', 4, this ] ]);
         te.test('Getting/setting data (8-bit)',
                 [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
         te.test('Getting/setting data (32-bit)',
@@ -228,7 +228,7 @@ class Motherboard {
                         t.set(0x7, 0x67);
                         return t.get32(0x4);
                 }, '=', 0x67452301, this ],
-                  [ t => {
+                [ t => {
                         t.set32(0x8, 0x89ABCDEF);
                         return [ t.get(0x8), t.get(0xB) ];
                 }, '=', [0xEF, 0x89], this ] ]);
@@ -241,7 +241,7 @@ class Motherboard {
 
         // test devices
         class FakeDevice {};
-        te.test('Invalid device', [[ t => { t.add_device(new FakeDevice()); }, 'exception', null, this ]]);
+        te.test('Invalid device', [[ t => t.add_device(new FakeDevice()), 'exception', null, this ]]);
 
         class Device {
             constructor() { this.x = 0; }
@@ -250,12 +250,12 @@ class Motherboard {
             set(a, v) { if(a === 0) this.x = v; }
         };
         te.test('Device memory access', [
-            [ t => { return t.add_device(new Device()); }, '=', 'Device', this ],
+            [ t => t.add_device(new Device()), '=', 'Device', this ],
             [ t => {
                 t.set(DEV_REG_ADDR + 0, 42);
                 return t.get(DEV_REG_ADDR + 0);
             }, '=', 42, this ],
-            [ t => { return t.out_of_bounds; }, '=', false, this ],
+            [ t => t.out_of_bounds, '=', false, this ],
         ]);
 
         class RAMDevice {
@@ -268,23 +268,23 @@ class Motherboard {
             set_ram(a, v) { if(a === 0) this.x = v; }
         }
         te.test('RAM Device memory access', [
-            [ t => { return t.add_device(new RAMDevice()); }, '=', 'RAMDevice', this ],
+            [ t => t.add_device(new RAMDevice()), '=', 'RAMDevice', this ],
             [ t => {
                 t.set(DEV_RAM_ADDR + 0, 42);
                 return t.get(DEV_RAM_ADDR + 0);
             }, '=', 42, this ],
-            [ t => { return t.out_of_bounds; }, '=', false, this ],
+            [ t => t.out_of_bounds, '=', false, this ],
         ]);
 
         te.test('Devices addresses', [
-            [ t => { return t.devices[0].reg_area; }, '=', DEV_REG_ADDR, this ],
-            [ t => { return t.devices[1].reg_area; }, '=', DEV_REG_ADDR + 256, this ],
-            [ t => { return t.devices[1].ram_area; }, '=', DEV_RAM_ADDR, this ],
+            [ t => t.devices[0].reg_area, '=', DEV_REG_ADDR, this ],
+            [ t => t.devices[1].reg_area, '=', DEV_REG_ADDR + 256, this ],
+            [ t => t.devices[1].ram_area, '=', DEV_RAM_ADDR, this ],
         ]);
     }
 
 }
 
-let tinyvm = new Motherboard(256);
+const tinyvm = new Motherboard(256);
 
 // vim: ts=4:sw=4:sts=4:expandtab
