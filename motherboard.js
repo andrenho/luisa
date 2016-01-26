@@ -72,7 +72,7 @@ class Motherboard {
             for(let d of this.devices) {
                 if(d.has_ram) {
                     if(addr >= d.ram_area && addr < (d.ram_area + d.ram_size)) {
-                        return d.dev.get_ram(addr - d.ram_area, value);
+                        return d.dev.get_ram(addr - d.ram_area);
                     }
                 }
             }
@@ -209,6 +209,8 @@ class Motherboard {
             }, '=', 42, this ],
             [ t => { return t.out_of_bounds; }, '=', false, this ],
         ]);
+
+        // TODO - test memory areas
     }
 
 }
