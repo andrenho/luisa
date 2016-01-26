@@ -25,6 +25,9 @@
 
 body {
     font-family: Sudo, monospace;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 header {
@@ -109,6 +112,37 @@ th, td {
     border: 1px black solid;
     padding: 2px 5px 2px 5px;
     text-align: left;
+}
+
+/*
+ * MEMORY MAP
+ */
+
+table.mmap {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 150px;
+    font-size: 95%;
+}
+
+table.mmap > tbody > tr > td.area {
+    width: 80px;
+    text-align: center;
+    vertical-align: center;
+}
+
+table.mmap > tbody > tr > td.beginning {
+    border-width: 1px 0 0 0;
+    width: 0px;
+    padding: 0 6px 0 0;
+}
+
+table.mmap > tbody > tr > td.address {
+    border: 0;
+    vertical-align: top;
+    font-size: 80%; 
+    padding-left: 0;
+    width: 90px;
 }
 
 /* vim: ts=4:sw=4:sts=4:expandtab

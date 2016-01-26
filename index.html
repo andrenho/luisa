@@ -17,7 +17,9 @@
 
     <section id="computer">
       <section id="screen"></section>
-      <input type="checkbox" id="dev_mode" onchange="update_dev_mode(this.checked);">Development mode
+      <label>
+        <input type="checkbox" id="dev_mode" onchange="update_dev_mode(this.checked);">Development mode
+      </label>
     </section>
 
     <!-- MENUS -->
@@ -46,14 +48,13 @@
             as powerful as a modern computer, but as simple as 8-bit computer
             from the 80s. This computer doesn't exist in a physical form 
             (<i>yet</i>).</p>
-          <p>Features:
-            <ul>
-              <li>32-bit CPU</li>
-              <li>up to 4 Gb of RAM</li>
-              <li>virtual memory</li>
-              <li>up to 4 hard disks of 256 Gb each</li>
-            </ul>
-          </p>
+          <p>Features:</p>
+          <ul>
+            <li>32-bit CPU</li>
+            <li>up to 4 Gb of RAM</li>
+            <li>virtual memory</li>
+            <li>up to 4 hard disks of 256 Gb each</li>
+          </ul>
           <p>The tab "<i>doc</i>" contains the documentation for each one of the 
             computer devices on the left. The tab "<i>debug</i>" allows the 
             internals of each device to be inspected.</p>
@@ -71,15 +72,42 @@
             to the device, according to the address.</p>
           <p>The addressing areas are organized in a <b>memory map</b>.</p>
           <p>The full physical memory of the computer (<b>RAM</b>) is also present
-            in the motherboard. When a memory address is accessed, the motherboard will:
-            <ol>
-              <li>look for a device in the memory map. If no device is mapped to this address, it will</li>
-              <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
-              <li>access the physical address in RAM. If the address is out of bounds, it will</li>
-              <li>set an "<b><i>out of bounds</i></b>" register. This register can be accessed
-                at 0xFFFFFFFF.</li>
-            </ol>
-          </p>
+            in the motherboard. When a memory address is accessed, the motherboard will:</p>
+          <ol>
+            <li>look for a device in the memory map. If no device is mapped to this address, it will</li>
+            <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
+            <li>access the physical address in RAM. If the address is out of bounds, it will</li>
+            <li>set an "<b><i>out of bounds</i></b>" register. This register can be accessed
+              at 0xFFFFFFFF.</li>
+          </ol>
+          <p>This means that, without a MMU active, the memory map will look like this:</p>
+          <table class="mmap">
+            <tr>
+              <td class="area" style="height: 70px; background-color: #ccffff;">RAM (physical memory)</td>
+              <td class="beginning"></td>
+              <td class="address">0x00000000</td>
+            </tr>
+            <tr>
+              <td class="area" style="height: 100px; background-color: #ffdddd;">Invalid access area</td>
+              <td class="beginning"></td>
+              <td class="address">?? (depending on memory size)</td>
+            </tr>
+            <tr>
+              <td class="area" style="height: 40px; background-color: #ffccff;">Devices registers</td>
+              <td class="beginning"></td>
+              <td class="address">0xF0000000</td>
+            </tr>
+            <tr>
+              <td class="area" style="height: 80px; background-color: #ffcc99;">Devices RAM</td>
+              <td class="beginning"></td>
+              <td class="address">0xF0010000</td>
+            </tr>
+            <tr>
+              <td class="area" style="font-size: 80%; height: 10px; background-color: #ffffcc;">Out of bounds register</td>
+              <td class="beginning"></td>
+              <td class="address">0xFFFFFFFF</td>
+            </tr>
+          </table>
 
           <h3>Implementing new devices</h3>
           <p>New devices can be created in javascript and connected to the motherboard.
@@ -88,22 +116,21 @@
 class Device {
     constructor(interrupts...)
     name()            : string
-    interrupt_count() : int 
+    interrupt_count() : int         [optional]
     get(addr)         : uint8_t
     set(addr, uint_8)
-    doc()             : html_string
-    debug()           : html_string
+    doc()             : html_string [optional]
+    debug()           : html_string [optional]
 }
           </pre>
-          <p>Devices of this kind will receive 256 bytes of memory.</p>
+          <p>Devices of this kind will receive 256 bytes of area to use as registers.</p>
           <p>Devices can also request an extra, larger amount of memory
-             to be used as a direct memory access area (DMA). These devices
-             need to respect the following interface:</p>
+             to be used as a local RAM. These devices need to respect the following interface:</p>
           <pre class="code">
-class DMADevice extends Device {
+class RAMDevice extends Device {
     area_requested() : int
-    get_dma(addr)    : uint8_t
-    set_dma(addr, uint8_t)
+    get_ram(addr)    : uint8_t
+    set_ram(addr, uint8_t)
 } 
           </pre>
           <p>The MMU is a special kind of devices that manages virtual memory

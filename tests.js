@@ -17,8 +17,12 @@ class TestEnvironment {
 
     test(desc, tests) {
 
-        let fmt = function(s) {
-            if(typeof s === 'number') {
+        let fmt = function(s, v) {
+            if(v) {
+                return 'exception';
+            } else if(s === null || s === undefined) {
+                return '';
+            } else if(typeof s === 'number') {
                 return '0x' + s.toString(16).toUpperCase();
             } else if(typeof s === 'object') {
                 return '[' + s.map(v => fmt(v)).join(', ') + ']';
@@ -34,45 +38,16 @@ class TestEnvironment {
             if(!fst) { s.push('<tr>'); }
             
             let test_function = t[0], validation = t[1], expected = t[2], data = t[3];
-
-            // run test
-            let result;
-            try {
-                result = test_function(data);  // run test
-            } catch(e) {
-                result = e;
-            }
-
-            // verify assertion
-            let ok = true;
-            if(validation === '=') {
-                if(typeof expected === 'object') {
-                    if(typeof result != 'object') {
-                        ok = false;
-                    } else if(result.length != expected.length) {
-                        ok = false;
-                    } else {
-                        for(let i=0; i<result.length; ++i) {
-                            if(expected[i] != result[i]) {
-                                ok = false;
-                                break;
-                            }
-                        }
-                    }
-                } else {
-                    ok = (result === expected);
-                }
-            } else {
-                throw 'Invalid validation type';
-            }
+            let r = this._run_test(test_function, validation, expected, data);
+            let ok = r[0], result = r[1], exception = r[2];
 
             //  add to table
-            s.push('<td style="text-align: center;">' + fmt(expected) + '</td>');
-            s.push('<td style="text-align: center;">' + fmt(result) + '</td>');
+            s.push('<td style="text-align: center;">' + fmt(expected, (validation == 'exception')) + '</td>');
+            s.push('<td style="text-align: center;">' + fmt(result, exception) + '</td>');
             if(ok) {
-                s.push('<td style="text-align: center;"><img src="img/ok.png" alt="ok"></td>');
+                s.push('<td style="text-align: center;"><img src="img/ok.png" alt="ok" width="16" height="16"></td>');
             } else {
-                s.push('<td style="text-align: center;"><img src="img/failed.png" alt="failed"></td>');
+                s.push('<td style="text-align: center;"><img src="img/failed.png" alt="failed" width="16" height="16"></td>');
             }
 
             s.push('</tr>');
@@ -80,6 +55,54 @@ class TestEnvironment {
         });
 
         document.getElementById('tests').innerHTML += s.join('');
+    }
+
+
+    //
+    // PRIVATE METHODS
+    //
+
+    _run_test(test_function, validation, expected, data) {
+        // run test
+        let result;
+        let exception = false;
+        try {
+            result = test_function(data);  // run test
+        } catch(e) {
+            result = e;
+            exception = true;
+        }
+
+        // verify assertion
+        let ok = true;
+        if(validation === '=') {
+            if(typeof expected === 'object') {
+                if(typeof result != 'object') {
+                    ok = false;
+                } else if(result.length != expected.length) {
+                    ok = false;
+                } else {
+                    for(let i=0; i<result.length; ++i) {
+                        if(expected[i] != result[i]) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                ok = (result === expected);
+            }
+        } else if(validation == 'exception') {
+            ok = exception;
+            if(expected && (result != expected)) {
+                ok = false;
+            }
+        } else if(validation == '!exception') {
+            ok = !exception;
+        } else {
+            throw 'Invalid validation type "' + validation + "'";
+        }
+        return [ ok, result, exception ]
     }
 
 }
