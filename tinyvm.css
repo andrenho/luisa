@@ -41,6 +41,21 @@ footer {
     padding-top: 10px;
 }
 
+h2 {
+    font-size: 130%;
+}
+
+table {
+    margin: 5px;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px black solid;
+    padding: 2px 5px 2px 5px;
+    text-align: left;
+}
+
 /*
  * MENUS
  */
@@ -52,7 +67,7 @@ footer {
 
 nav.topmenu {
     position: relative;
-    left: 150px;
+    left: 130px;
     cursor: pointer;
     width: 200px;
 }
@@ -60,6 +75,7 @@ nav.topmenu {
 nav.leftmenu {
     float: left;
     padding-top: 18px;
+    width: 110px;
     cursor: pointer;
 }
 
@@ -88,7 +104,7 @@ section.content {
     float: left;
     position: relative;
     left: 10px;
-    width: calc(100% - 170px);
+    width: calc(100% - 145px);
     margin-top: 10px;
     padding: 10px;
     border: black solid;
@@ -103,15 +119,22 @@ section.content > section {
 /*
  * TESTS
  */
-table {
-    margin: 5px;
-    border-collapse: collapse;
+td.ok {
+    text-align: center;
+    background-color: #ccffcc;
 }
 
-th, td {
-    border: 1px black solid;
-    padding: 2px 5px 2px 5px;
-    text-align: left;
+td.ok:after {
+    content: '\2714';
+}
+
+td.nok {
+    text-align: center;
+    background-color: #ffcccc;
+}
+
+td.nok:after {
+    content: '\2718';
 }
 
 /*
@@ -126,7 +149,7 @@ table.mmap {
 }
 
 table.mmap > tbody > tr > td.area {
-    width: 80px;
+    width: 100px;
     text-align: center;
     vertical-align: center;
 }

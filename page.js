@@ -27,6 +27,7 @@ window.onload = function()
         }
     }
 
+    initialize_debuggers();
     update_page();
 };
 
@@ -58,6 +59,7 @@ function get_query_string(key) {
     return unescape(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + escape(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
 }
 
+
 // update contents based on the selected page
 function update_page()
 {
@@ -74,6 +76,9 @@ function update_page()
     }
     document.getElementById(page).className = 'selected';
 
+    // update debuggers
+    update_debuggers();
+
     // show page
     let id = page + '_' + block;
     ch = document.getElementById('content').children;
@@ -85,6 +90,17 @@ function update_page()
     } catch(_) {
         document.getElementById('not_avaliable').style.display = 'block';
     }
+}
+
+
+function initialize_debuggers()
+{
+    document.getElementById('mmap').innerHTML = tinyvm.debug();
+}
+
+
+function update_debuggers()
+{
 }
 
 

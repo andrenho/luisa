@@ -12,7 +12,7 @@ class Motherboard {
         this.reset();
     }
 
-    // 
+    //
     // MOTHERBOARD MANAGEMENT
     //
 
@@ -67,7 +67,6 @@ class Motherboard {
                 }
             }
             this.out_of_bounds = true;  // if not found
-            // TODO
         } else if(addr >= DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(d.has_ram) {
@@ -99,7 +98,7 @@ class Motherboard {
                this.get(addr);
     }
 
-    // 
+    //
     // DEVICE MANAGEMENT
     //
 
@@ -107,6 +106,9 @@ class Motherboard {
         let type = this._device_type(dev);
         if(type == 'invalid') {
             throw 'Invalid device ' + dev;
+        }
+        if(this.devices.length === 255) {
+            throw 'Maximum number of devices is 255.';
         }
         this.devices.push({ 
             dev: dev,
@@ -142,7 +144,71 @@ class Motherboard {
         }
     }
 
-    // 
+    //
+    // DEBUGGING INFORMATION
+    //
+
+    debug() {
+        // create HTML table
+        let s = ['<table class="mmap">'];
+
+        // TODO - check if virtual memory is active
+        s.push(`<tr>
+                  <td class="area" style="height: 70px; background-color: #ccffff;">RAM (physical memory)</td>
+                  <td class="beginning"></td>
+                  <td class="address">0x00000000</td>
+                </tr>`);
+        if(this.mem_size < 0xf0000000) {
+            s.push(`<tr>
+                      <td class="area" style="height: 100px; background-color: #ffdddd;">Invalid access area</td>
+                      <td class="beginning"></td>
+                      <td class="address">0x` + to_hex(this.mem_size, 8) + `
+                    </tr>`);
+        }
+
+        let pos = DEV_REG_ADDR
+        for(let d of this.devices) {
+            s.push(`<tr>
+                      <td class="area" style="background-color: #ffccff;">` + d.dev.name() + `</td>
+                      <td class="beginning"></td>
+                      <td class="address">0x` + to_hex(pos, 8) + `</td>
+                    </tr>`);
+            pos += 256;
+        }
+        if(pos < DEV_RAM_ADDR) {
+            s.push(`<tr>
+                      <td class="area" style="height: 50px; background-color: #ffdddd;">Invalid access area</td>
+                      <td class="beginning"></td>
+                      <td class="address">0x` + to_hex(pos, 8) + `
+                    </tr>`);
+        }
+
+        pos = DEV_RAM_ADDR;
+        for(let d of this.devices) {
+            if(d.has_ram) {
+                s.push(`<tr>
+                          <td class="area" style="height: 80px; background-color: #ccffcc;">` + d.dev.name() + `</td>
+                          <td class="beginning"></td>
+                          <td class="address">0x` + to_hex(pos, 8) + `</td>
+                        </tr>`);
+                pos += 256;
+            }
+        }
+        s.push(`<tr>
+                  <td class="area" style="height: 50px; background-color: #ffdddd;">Invalid access area</td>
+                  <td class="beginning"></td>
+                  <td class="address">0x` + to_hex(pos, 8) + `
+                </tr>
+                <tr>
+                  <td class="area" style="font-size: 80%; height: 10px; background-color: #ffffcc;">Out of bounds reg</td>
+                  <td class="beginning"></td>
+                  <td class="address">0xFFFFFFFF</td>
+                </tr>
+              </table>`);
+        return s.join('');
+    }
+
+    //
     // TESTS
     //
 
@@ -155,11 +221,11 @@ class Motherboard {
         te.test('Getting/setting data (8-bit)',
                 [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
         te.test('Getting/setting data (32-bit)',
-                [ [ t => { 
-                        t.set(0x4, 0x01); 
-                        t.set(0x5, 0x23); 
-                        t.set(0x6, 0x45); 
-                        t.set(0x7, 0x67); 
+                [ [ t => {
+                        t.set(0x4, 0x01);
+                        t.set(0x5, 0x23);
+                        t.set(0x6, 0x45);
+                        t.set(0x7, 0x67);
                         return t.get32(0x4);
                 }, '=', 0x67452301, this ],
                   [ t => {
@@ -210,9 +276,15 @@ class Motherboard {
             [ t => { return t.out_of_bounds; }, '=', false, this ],
         ]);
 
-        // TODO - test memory areas
+        te.test('Devices addresses', [
+            [ t => { return t.devices[0].reg_area; }, '=', DEV_REG_ADDR, this ],
+            [ t => { return t.devices[1].reg_area; }, '=', DEV_REG_ADDR + 256, this ],
+            [ t => { return t.devices[1].ram_area; }, '=', DEV_RAM_ADDR, this ],
+        ]);
     }
 
 }
+
+let tinyvm = new Motherboard(256);
 
 // vim: ts=4:sw=4:sts=4:expandtab

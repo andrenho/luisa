@@ -2,6 +2,7 @@
 <html>
   <meta charset="utf-8">
   <link rel="stylesheet" href="tinyvm.css">
+  <script src="util.js"></script>
   <script src="page.js"></script>
   <script src="tests.js"></script>
   <script src="motherboard.js"></script>
@@ -34,15 +35,18 @@
 
       <nav id="leftmenu" class="leftmenu">
         <span onclick="menu(this.id);" id="mboard">Motherboard</span>
-        <span onclick="menu(this.id);" id="mmu">MMU</span>
         <span onclick="menu(this.id);" id="about" class="selected">About</span>
       </nav>
 
+      <!--          -->
       <!-- CONTENTS -->
+      <!--          -->
 
       <section id="content" class="content">
 
+        <!--            -->
         <!-- ABOUT PAGE -->
+        <!--            -->
         <section id="about_doc">
           <p><b>tinyvm</b> is a emulator for a 32-bit computer that aims to be 
             as powerful as a modern computer, but as simple as 8-bit computer
@@ -64,9 +68,12 @@
 
         <section id="not_avaliable">Not avaliable.</section>
 
+        <!--             -->
         <!-- MOTHERBOARD -->
+        <!--             -->
+
         <section id="mboard_doc">
-          <h3>Motherboard</h3>
+          <h2>Motherboard</h2>
           <p>The <b>motherboard</b> coordinates how the memory is accessed. Each <b>device</b>
             contains an addressing area, and the motherboard will relay the information
             to the device, according to the address.</p>
@@ -98,18 +105,18 @@
               <td class="address">0xF0000000</td>
             </tr>
             <tr>
-              <td class="area" style="height: 80px; background-color: #ffcc99;">Devices RAM</td>
+              <td class="area" style="height: 80px; background-color: #ccffcc;">Devices RAM</td>
               <td class="beginning"></td>
               <td class="address">0xF0010000</td>
             </tr>
             <tr>
-              <td class="area" style="font-size: 80%; height: 10px; background-color: #ffffcc;">Out of bounds register</td>
+              <td class="area" style="font-size: 80%; height: 10px; background-color: #ffffcc;">Out of bounds reg</td>
               <td class="beginning"></td>
               <td class="address">0xFFFFFFFF</td>
             </tr>
           </table>
 
-          <h3>Implementing new devices</h3>
+          <h2>Implementing new devices</h2>
           <p>New devices can be created in javascript and connected to the motherboard.
             For that, they need to respect the following interface:</p>
           <pre class="code">
@@ -141,6 +148,11 @@ class MMU extends Device {
     translate(uint32_t) : uint32_t
 }
           </pre>
+        </section>
+
+        <section id="mboard_debug">
+          <h2>Memory map</h2>
+          <section id="mmap"></section>
         </section>
 
         <section id="mboard_test">

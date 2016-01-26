@@ -45,9 +45,9 @@ class TestEnvironment {
             s.push('<td style="text-align: center;">' + fmt(expected, (validation == 'exception')) + '</td>');
             s.push('<td style="text-align: center;">' + fmt(result, exception) + '</td>');
             if(ok) {
-                s.push('<td style="text-align: center;"><img src="img/ok.png" alt="ok" width="16" height="16"></td>');
+                s.push('<td class="ok"></td>');
             } else {
-                s.push('<td style="text-align: center;"><img src="img/failed.png" alt="failed" width="16" height="16"></td>');
+                s.push('<td class="nok"></td>');
             }
 
             s.push('</tr>');
