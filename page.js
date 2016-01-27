@@ -18,7 +18,7 @@ let block = 'doc';
 window.onload = function()
 {
     // are we in development mode?
-    if(get_query_string('dev')) {
+    if(getQueryString('dev')) {
         document.getElementById('dev_mode').checked = true;
         document.getElementById('dev').style.display = 'block';
         if(window.sessionStorage.getItem("last_page")) {
@@ -27,9 +27,10 @@ window.onload = function()
         }
     }
 
-    initialize_page();
-    update_page();
+    initializePage();
+    updatePage();
 };
+
 
 // called when a menu is clicked
 function menu(id) {
@@ -38,10 +39,11 @@ function menu(id) {
     } else {
         page = id;
     }
-    update_page();
+    updatePage();
     window.sessionStorage.setItem('last_page', page);
     window.sessionStorage.setItem('last_block', block);
 }
+
 
 // called when "Development mode" box is checked
 function update_dev_mode(c)
@@ -54,14 +56,15 @@ function update_dev_mode(c)
 // FUNCTIONS
 //
 
+
 // return a letiable from a query string
-function get_query_string(key) {  
+function getQueryString(key) {  
     return unescape(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + escape(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
 }
 
 
 // update contents based on the selected page
-function update_page()
+function updatePage()
 {
     // update menus
     const ch = document.getElementById('topmenu').children;
@@ -77,7 +80,7 @@ function update_page()
     document.getElementById(page).className = 'selected';
 
     // update debuggers
-    update_debuggers();
+    updateDebuggers();
 
     // show page
     const id = page + '_' + block;
@@ -93,16 +96,19 @@ function update_page()
 }
 
 
-function initialize_page()
+function initializePage()
 {
     // initialize empty sections
-    document.getElementById('mmap').innerHTML = tinyvm.mmap_debug();
+    document.getElementById('mmap').innerHTML = tinyvm.mmapDebug();
 
     // initialize tag "memory_data"
+    [].forEach.call(document.getElementsByClassName('memory_data'), e => {
+        createMemoryData(e);
+    });
 }
 
 
-function update_debuggers()
+function updateDebuggers()
 {
 }
 

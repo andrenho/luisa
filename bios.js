@@ -4,9 +4,9 @@ class BIOS {
     name() { return "BIOS"; }
     get(a) { return 0; }
     set(a,v) { }
-    area_requested() { return 64 * 1024; }
-    get_ram(a) { return 0; }
-    set_ram(a, v) { }
+    areaRequested() { return 64 * 1024; }
+    getRAM(a) { return 0; }
+    setRAM(a, v) { }
 }
 
 

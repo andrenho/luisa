@@ -7,7 +7,7 @@ class MemoryDebugger {
         this.begin = begin;
         this.end = end;
         this.physical = physical;
-        this.base_address = begin;
+        this.baseAddress = begin;
     }
 
     set(addr, value) {
@@ -26,24 +26,24 @@ class MemoryDebugger {
         }
     }
 
-    set_initial_html(id) {
+    setInitialHTML(id) {
         let s = [];
 
         // buttons
         s.push('<p>');
-        s.push(`Base address: <span class="base_address">0x${to_hex(this.base_address, 8)}</span>`);
+        s.push(`Base address: <span class="base_address">0x${toHex(this.baseAddress, 8)}</span>`);
         s.push('<button type="button">&#9664;</button>');
         s.push('<button type="button">&#9654;</button>');
         s.push('</p>');
 
         // memory table
-        let pos = this.base_address;
+        let pos = this.baseAddress;
         s.push('<table class="memory">');
 
         // table title
         s.push('<tr><th class="noborder"></th><th class="noborder"></th>');
         for(let i=0; i<16; ++i) {
-            s.push(`<th class="addr_header">_${to_hex(i, 1)}</th>`);
+            s.push(`<th class="addr_header">_${toHex(i, 1)}</th>`);
             if(i == 7) s.push('<th class="noborder"></th>');
         }
         s.push('<th class="noborder"></th><th class="noborder"></th></tr>');
@@ -52,10 +52,10 @@ class MemoryDebugger {
         for(let i=0; i<16; ++i) {
             let chars = [];
             s.push('<tr>');
-            s.push(`<td class="addr">${to_hex(pos, 8)}</td>`);
+            s.push(`<td class="addr">${toHex(pos, 8)}</td>`);
             s.push('<td class="noborder"></td>');
             for(let x=0; x<16; ++x) {
-                s.push(`<td class="data">${this.data_html(pos)}</td>`);
+                s.push(`<td class="data">${this.dataHTML(pos)}</td>`);
                 const c = this.get(pos);
                 chars.push(c >= 32 ? String.fromCharCode(c) : '.');
                 if(x == 7) s.push('<td class="noborder"></td>');
@@ -70,9 +70,9 @@ class MemoryDebugger {
         document.getElementById(id).innerHTML = s.join('');
     }
 
-    data_html(addr) {
-        //return to_hex(this.get(addr), 2);
-        return `<input class="data_input" type="text" value="${to_hex(this.get(addr), 2)}">`
+    dataHTML(addr) {
+        //return toHex(this.get(addr), 2);
+        return `<input class="data_input" type="text" value="${toHex(this.get(addr), 2)}">`
     }
 
 }

@@ -38,7 +38,7 @@ class TestEnvironment {
             if(!fst) { s.push('<tr>'); }
             
             const test_function = t[0], validation = t[1], expected = t[2], data = t[3];
-            const r = this._run_test(test_function, validation, expected, data);
+            const r = this._runTest(test_function, validation, expected, data);
             const ok = r[0], result = r[1], exception = r[2];
 
             //  add to table
@@ -62,7 +62,7 @@ class TestEnvironment {
     // PRIVATE METHODS
     //
 
-    _run_test(test_function, validation, expected, data) {
+    _runTest(test_function, validation, expected, data) {
         // run test
         let result;
         let exception = false;

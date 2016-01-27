@@ -6,10 +6,10 @@ const OUT_OF_BOUNDS_REG = 0xFFFFFFFF;
 
 class Motherboard {
 
-    constructor(mem_size_kb, naked) {
-        this.mem_size_kb = mem_size_kb;
-        this.mem_size = mem_size_kb * 1024;
-        this.naked = naked;
+    constructor(memSizeKb, naked) {
+        this.memSizeKb = memSizeKb;
+        this.memSize = memSizeKb * 1024;
+        this._naked = naked;
         this.reset();
     }
 
@@ -18,19 +18,17 @@ class Motherboard {
     //
 
     reset() {
-        this.mem = new Uint8Array(this.mem_size_kb * 1024);
-        this.out_of_bounds = false;
+        this.mem = new Uint8Array(this.memSizeKb * 1024);
+        this.outOfBounds = false;
         this.devices = [];
         this.mmu = null;
 
         this._current = { reg: DEV_REG_ADDR, ram: DEV_RAM_ADDR }     // used for calculating the device memory areas
 
         // devices
-        if(!this.naked) {
-            this.add_device(new BIOS());
+        if(!this._naked) {
+            this.addDevice(new BIOS());
         }
-
-        this.mem_debug = new MemoryDebugger(this, 0x0, this.mem_size - 1, true);
     }
 
     //
@@ -39,7 +37,7 @@ class Motherboard {
 
     set(addr, value) {
         if(addr === OUT_OF_BOUNDS_REG) {
-            this.out_of_bounds = ((value == 0) ? false : true);
+            this.outOfBounds = ((value == 0) ? false : true);
         } else if(addr >= DEV_REG_ADDR && addr < DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(addr >= d.reg_area && addr < (d.reg_area + d.reg_size)) {
@@ -47,19 +45,19 @@ class Motherboard {
                     return;
                 }
             }
-            this.out_of_bounds = true;  // if not found
+            this.outOfBounds = true;  // if not found
         } else if(addr >= DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(d.has_ram) {
                     if(addr >= d.ram_area && addr < (d.ram_area + d.ram_size)) {
-                        d.dev.set_ram(addr - d.ram_area, value);
+                        d.dev.setRAM(addr - d.ram_area, value);
                         return;
                     }
                 }
             }
-            this.out_of_bounds = true;  // if not found
-        } else if(addr >= this.mem_size) { 
-            this.out_of_bounds = true;
+            this.outOfBounds = true;  // if not found
+        } else if(addr >= this.memSize) { 
+            this.outOfBounds = true;
         } else {
             this.mem[addr] = value;
         }
@@ -67,25 +65,25 @@ class Motherboard {
 
     get(addr) {
         if(addr === OUT_OF_BOUNDS_REG) {
-            return this.out_of_bounds ? 1 : 0;
+            return this.outOfBounds ? 1 : 0;
         } else if(addr >= DEV_REG_ADDR && addr < DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(addr >= d.reg_area && addr < (d.reg_area + d.reg_size)) {
                     return d.dev.get(addr - d.reg_area);
                 }
             }
-            this.out_of_bounds = true;  // if not found
+            this.outOfBounds = true;  // if not found
         } else if(addr >= DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(d.has_ram) {
                     if(addr >= d.ram_area && addr < (d.ram_area + d.ram_size)) {
-                        return d.dev.get_ram(addr - d.ram_area);
+                        return d.dev.getRAM(addr - d.ram_area);
                     }
                 }
             }
-            this.out_of_bounds = true;  // if not found
-        } else if(addr >= this.mem_size) { 
-            this.out_of_bounds = true;
+            this.outOfBounds = true;  // if not found
+        } else if(addr >= this.memSize) { 
+            this.outOfBounds = true;
             return 0;
         } else {
             return this.mem[addr];
@@ -106,16 +104,16 @@ class Motherboard {
                this.get(addr);
     }
 
-    ph_set(addr, value) {
-        if(addr >= this.mem_size) { 
+    physicalSet(addr, value) {
+        if(addr >= this.memSize) { 
             throw 'out of bounds';
         } else {
             this.mem[addr] = value;
         }
     }
 
-    ph_get(addr) {
-        if(addr >= this.mem_size) { 
+    physicalGet(addr) {
+        if(addr >= this.memSize) { 
             throw 'out of bounds';
         } else {
             return this.mem[addr];
@@ -126,8 +124,8 @@ class Motherboard {
     // DEVICE MANAGEMENT
     //
 
-    add_device(dev) {
-        const type = this._device_type(dev);
+    addDevice(dev) {
+        const type = this._deviceType(dev);
         if(type == 'invalid') {
             throw 'Invalid device ' + dev;
         }
@@ -140,23 +138,23 @@ class Motherboard {
             reg_size: 256,
             has_ram: (type == 'RAMDevice'),
             ram_area: this._current.ram,
-            ram_size: (type == 'RAMDevice') ? dev.area_requested() : undefined,
+            ram_size: (type == 'RAMDevice') ? dev.areaRequested() : undefined,
         });
         this._current.reg += 256;
         if(type == 'RAMDevice') {
-            this._current.ram += dev.area_requested();
+            this._current.ram += dev.areaRequested();
         }
         // TODO - area, mmu
         return type;
     }
 
-    _device_type(dev) {
+    _deviceType(dev) {
         if(dev.name && typeof dev.name === 'function' &&
            dev.get  && typeof dev.get  === 'function' &&
            dev.set  && typeof dev.set  === 'function') {
-            if(dev.area_requested && typeof dev.area_requested === 'function' &&
-               dev.get_ram && typeof dev.get_ram === 'function' &&
-               dev.set_ram && typeof dev.set_ram === 'function') {
+            if(dev.areaRequested && typeof dev.areaRequested === 'function' &&
+               dev.getRAM && typeof dev.getRAM === 'function' &&
+               dev.setRAM && typeof dev.setRAM === 'function') {
                 return 'RAMDevice';
             } else if(dev.translate && typeof dev.translate === 'function') {
                 return 'MMU';
@@ -172,7 +170,7 @@ class Motherboard {
     // DEBUGGING INFORMATION
     //
 
-    mmap_debug() {
+    mmapDebug() {
         // create HTML table
         let s = ['<table class="mmap">'];
 
@@ -182,11 +180,11 @@ class Motherboard {
                   <td class="beginning"></td>
                   <td class="address">0x00000000</td>
                 </tr>`);
-        if(this.mem_size < 0xf0000000) {
+        if(this.memSize < 0xf0000000) {
             s.push(`<tr>
                       <td class="area invalid">Invalid access area</td>
                       <td class="beginning"></td>
-                      <td class="address">0x` + to_hex(this.mem_size, 8) + `
+                      <td class="address">0x` + toHex(this.memSize, 8) + `
                     </tr>`);
         }
 
@@ -195,7 +193,7 @@ class Motherboard {
             s.push(`<tr>
                       <td class="area devreg">` + d.dev.name() + `</td>
                       <td class="beginning"></td>
-                      <td class="address">0x` + to_hex(pos, 8) + `</td>
+                      <td class="address">0x` + toHex(pos, 8) + `</td>
                     </tr>`);
             pos += 256;
         }
@@ -203,7 +201,7 @@ class Motherboard {
             s.push(`<tr>
                       <td class="area invalid">Invalid access area</td>
                       <td class="beginning"></td>
-                      <td class="address">0x` + to_hex(pos, 8) + `
+                      <td class="address">0x` + toHex(pos, 8) + `
                     </tr>`);
         }
 
@@ -213,15 +211,15 @@ class Motherboard {
                 s.push(`<tr>
                           <td class="area devram">` + d.dev.name() + `</td>
                           <td class="beginning"></td>
-                          <td class="address">0x` + to_hex(pos, 8) + `</td>
+                          <td class="address">0x` + toHex(pos, 8) + `</td>
                         </tr>`);
-                pos += d.dev.area_requested();
+                pos += d.dev.areaRequested();
             }
         }
         s.push(`<tr>
                   <td class="area invalid">Invalid access area</td>
                   <td class="beginning"></td>
-                  <td class="address">0x` + to_hex(pos, 8) + `
+                  <td class="address">0x` + toHex(pos, 8) + `
                 </tr>
                 <tr>
                   <td class="area ob">OB register</td>
@@ -232,20 +230,20 @@ class Motherboard {
         return s.join('');
     }
 
-    set_ph_mem_debug(id) {
-        return this.mem_debug.set_initial_html(id);
+    set_ph_memDebug(id) {
+        return this.memDebug.setInitialHTML(id);
     }
 
     //
     // TESTS
     //
 
-    run_tests(section) {
+    runTests(section) {
         const te = new TestEnvironment(section);
 
         // test memory
         te.test('Memory amount (kB)',
-                [ [ t => t.mem_size_kb, '=', 4, this ] ]);
+                [ [ t => t.memSizeKb, '=', 4, this ] ]);
         te.test('Getting/setting data (8-bit)',
                 [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
         te.test('Getting/setting data (32-bit)',
@@ -269,7 +267,7 @@ class Motherboard {
 
         // test devices
         class FakeDevice {};
-        te.test('Invalid device', [[ t => t.add_device(new FakeDevice()), 'exception', null, this ]]);
+        te.test('Invalid device', [[ t => t.addDevice(new FakeDevice()), 'exception', null, this ]]);
 
         class Device {
             constructor() { this.x = 0; }
@@ -278,12 +276,12 @@ class Motherboard {
             set(a, v) { if(a === 0) this.x = v; }
         };
         te.test('Device memory access', [
-            [ t => t.add_device(new Device()), '=', 'Device', this ],
+            [ t => t.addDevice(new Device()), '=', 'Device', this ],
             [ t => {
                 t.set(DEV_REG_ADDR + 0, 42);
                 return t.get(DEV_REG_ADDR + 0);
             }, '=', 42, this ],
-            [ t => t.out_of_bounds, '=', false, this ],
+            [ t => t.outOfBounds, '=', false, this ],
         ]);
 
         class RAMDevice {
@@ -291,17 +289,17 @@ class Motherboard {
             name() { return ""; }
             get(a) { return 0; }
             set(a,v) { }
-            area_requested() { return 256; }
-            get_ram(a) { if(a === 0) return this.x; else return 0; }
-            set_ram(a, v) { if(a === 0) this.x = v; }
+            areaRequested() { return 256; }
+            getRAM(a) { if(a === 0) return this.x; else return 0; }
+            setRAM(a, v) { if(a === 0) this.x = v; }
         }
         te.test('RAM Device memory access', [
-            [ t => t.add_device(new RAMDevice()), '=', 'RAMDevice', this ],
+            [ t => t.addDevice(new RAMDevice()), '=', 'RAMDevice', this ],
             [ t => {
                 t.set(DEV_RAM_ADDR + 0, 42);
                 return t.get(DEV_RAM_ADDR + 0);
             }, '=', 42, this ],
-            [ t => t.out_of_bounds, '=', false, this ],
+            [ t => t.outOfBounds, '=', false, this ],
         ]);
 
         te.test('Devices addresses', [
