@@ -6,10 +6,10 @@ Some explanations:
  - In development mode, each page selected is composed of a pair containing the
    top and left menus separated by a underscore. For example, if the user selects
    "Motherboard" and "debug", all sections will be hidden except for "mboard_debug".
-   The code that does this is in "page.js", in the function `updatePage()`.
+   The code that does this is in "page.js", in the method `updatePage()`.
  - Some sections will be built dynamically by javascript. This is mostly true
    about the "debug" sections. The code that builds these sections is in
-   "page.js", in the function `initializePage()`.
+   "page.js", in the method `initializePage()`.
  - A special <span class="memory_data"> is a widget that, managed by javascript code,
    allows edition and direct access to the emulated computer memory.
 -->
@@ -44,7 +44,7 @@ Some explanations:
     <section id="computer">
       <section id="screen"></section>
       <label>
-        <input type="checkbox" id="dev_mode" onchange="update_dev_mode(this.checked);">Development mode
+        <input type="checkbox" id="dev_mode" onchange="page.developmentModeUpdated(this.checked);">Development mode
       </label>
     </section>
 
@@ -55,14 +55,14 @@ Some explanations:
     <section id="dev" class="development">
 
       <nav id="topmenu" class="topmenu">
-        <span onclick="menu(this.id);" id="doc" class="selected">doc</span>
-        <span onclick="menu(this.id);" id="debug">debug</span>
-        <span onclick="menu(this.id);" id="test">test</span>
+        <span onclick="page.menuSelected(this.id);" id="doc" class="selected">doc</span>
+        <span onclick="page.menuSelected(this.id);" id="debug">debug</span>
+        <span onclick="page.menuSelected(this.id);" id="test">test</span>
       </nav>
 
       <nav id="leftmenu" class="leftmenu">
-        <span onclick="menu(this.id);" id="mboard">Motherboard</span>
-        <span onclick="menu(this.id);" id="about" class="selected">About</span>
+        <span onclick="page.menuSelected(this.id);" id="mboard">Motherboard</span>
+        <span onclick="page.menuSelected(this.id);" id="about" class="selected">About</span>
       </nav>
 
       <!--          -->
