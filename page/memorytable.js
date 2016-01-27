@@ -55,12 +55,49 @@ class MemoryTable {
 
 
     _setupTable() {
+
+        function th(klass, content) {
+            const t = document.createElement('th')
+            t.className = klass;
+            if(content) t.innerHTML = content;
+            return t;
+        }
+
+        // table
         const table = document.createElement('table');
         table.className = 'memory';
 
+        // title row
         const tr_header = document.createElement('tr');
-        // ...
+        tr_header.appendChild(th('noborder'));
+        for(let i=0; i<16; ++i) {
+            tr_header.appendChild(th('addr_header', `_${toHex(i, 1)}`));
+            if(i == 7) tr_header.appendChild(th('noborder'));
+        }
+        tr_header.appendChild(th('noborder'));
         table.appendChild(tr_header);
+
+        // data row
+        
+/*
+        // data
+        for(let i=0; i<16; ++i) {
+            let chars = [];
+            s.push('<tr>');
+            s.push(`<td class="addr">${toHex(pos, 8)}</td>`);
+            s.push('<td class="noborder"></td>');
+            for(let x=0; x<16; ++x) {
+                s.push(`<td class="data">${this.dataHTML(pos)}</td>`);
+                const c = this.get(pos);
+                chars.push(c >= 32 ? String.fromCharCode(c) : '.');
+                if(x == 7) s.push('<td class="noborder"></td>');
+                ++pos;
+            }
+            s.push('<td class="noborder"></td>');
+            s.push(`<td class="data">${chars.join('')}</td>`);
+            s.push('</tr>');
+        }
+*/
 
         this.parent.appendChild(table);
     }
