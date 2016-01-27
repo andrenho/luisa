@@ -1,4 +1,19 @@
 <!DOCTYPE html>
+
+<!--
+Some explanations:
+
+ - In development mode, each page selected is composed of a pair containing the
+   top and left menus separated by a underscore. For example, if the user selects
+   "Motherboard" and "debug", all sections will be hidden except for "mboard_debug".
+   The code that does this is in "page.js", in the function `update_page()`.
+ - Some sections will be built dynamically by javascript. This is mostly true
+   about the "debug" sections. The code that builds these sections is in
+   "page.js", in the function `initialize_page()`.
+ - A special <span class="memory_data"> is a widget that, managed by javascript code,
+   allows edition and direct access to the emulated computer memory.
+-->
+
 <html>
   <meta charset="utf-8">
   <link rel="stylesheet" href="tinyvm.css">
@@ -16,7 +31,9 @@
       <hr>
     </header>
 
+    <!--          -->
     <!-- COMPUTER -->
+    <!--          -->
 
     <section id="computer">
       <section id="screen"></section>
@@ -25,7 +42,9 @@
       </label>
     </section>
 
+    <!--       -->
     <!-- MENUS -->
+    <!--       -->
 
     <section id="dev" class="development">
 
@@ -86,33 +105,33 @@
             <li>look for a device in the memory map. If no device is mapped to this address, it will</li>
             <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
             <li>access the physical address in RAM. If the address is out of bounds, it will</li>
-            <li>set an "<b><i>out of bounds</i></b>" register. This register can be accessed
+            <li>set the <b>OB</b> (<i>out of bounds</i>) register. This register can be accessed
               at 0xFFFFFFFF.</li>
           </ol>
           <p>This means that, without a MMU active, the memory map will look like this:</p>
           <table class="mmap">
             <tr>
-              <td class="area" style="height: 70px; background-color: #ccffff;">RAM (physical memory)</td>
+              <td class="area ram">RAM (physical memory)</td>
               <td class="beginning"></td>
               <td class="address">0x00000000</td>
             </tr>
             <tr>
-              <td class="area" style="height: 100px; background-color: #ffeeee;">Invalid access area</td>
+              <td class="area invalid">Invalid access area</td>
               <td class="beginning"></td>
               <td class="address">?? (depending on memory size)</td>
             </tr>
             <tr>
-              <td class="area" style="height: 40px; background-color: #ffccff;">Devices registers</td>
+              <td class="area devreg">Devices registers</td>
               <td class="beginning"></td>
               <td class="address">0xF0000000</td>
             </tr>
             <tr>
-              <td class="area" style="height: 80px; background-color: #ccffcc;">Devices RAM</td>
+              <td class="area devram">Devices RAM</td>
               <td class="beginning"></td>
               <td class="address">0xF0010000</td>
             </tr>
             <tr>
-              <td class="area" style="font-size: 80%; height: 10px; background-color: #ffffcc;">Out of bounds reg</td>
+              <td class="area ob">OB</td>
               <td class="beginning"></td>
               <td class="address">0xFFFFFFFF</td>
             </tr>
@@ -153,10 +172,35 @@ class MMU extends Device {
         </section>
 
         <section id="mboard_debug">
+
           <h2>Memory map</h2>
           <section id="mmap"></section>
+
+          <h2>Registers</h2>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Register</th>
+                <th>Description</th>
+                <th>Address</th>
+                <th>Current value</th>
+              </tr>
+              <tr>
+                <td>OB</td>
+                <td>
+                  Set to 1 when an access was made to a memory address outside of bounds.
+                  Needs to be reset manually.
+                </td>
+                <td>0xFFFFFFFF</td>
+                <td><span class="memory_data">0xFFFFFFFF,rw</span></td>
+              </tr>
+            </table>
+          </section>
+
+          <!--
           <h2>Physical memory</h2>
           <section id="phmem"></section>
+          -->
         </section>
 
         <section id="mboard_test">

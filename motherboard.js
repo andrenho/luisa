@@ -178,13 +178,13 @@ class Motherboard {
 
         // TODO - check if virtual memory is active
         s.push(`<tr>
-                  <td class="area" style="height: 70px; background-color: #ccffff;">RAM (physical memory)</td>
+                  <td class="area ram">RAM (physical memory)</td>
                   <td class="beginning"></td>
                   <td class="address">0x00000000</td>
                 </tr>`);
         if(this.mem_size < 0xf0000000) {
             s.push(`<tr>
-                      <td class="area" style="height: 100px; background-color: #ffeeee;">Invalid access area</td>
+                      <td class="area invalid">Invalid access area</td>
                       <td class="beginning"></td>
                       <td class="address">0x` + to_hex(this.mem_size, 8) + `
                     </tr>`);
@@ -193,7 +193,7 @@ class Motherboard {
         let pos = DEV_REG_ADDR
         for(let d of this.devices) {
             s.push(`<tr>
-                      <td class="area" style="background-color: #ffccff;">` + d.dev.name() + `</td>
+                      <td class="area devreg">` + d.dev.name() + `</td>
                       <td class="beginning"></td>
                       <td class="address">0x` + to_hex(pos, 8) + `</td>
                     </tr>`);
@@ -201,7 +201,7 @@ class Motherboard {
         }
         if(pos < DEV_RAM_ADDR) {
             s.push(`<tr>
-                      <td class="area" style="height: 50px; background-color: #ffeeee;">Invalid access area</td>
+                      <td class="area invalid">Invalid access area</td>
                       <td class="beginning"></td>
                       <td class="address">0x` + to_hex(pos, 8) + `
                     </tr>`);
@@ -211,7 +211,7 @@ class Motherboard {
         for(let d of this.devices) {
             if(d.has_ram) {
                 s.push(`<tr>
-                          <td class="area" style="height: 80px; background-color: #ccffcc;">` + d.dev.name() + `</td>
+                          <td class="area devram">` + d.dev.name() + `</td>
                           <td class="beginning"></td>
                           <td class="address">0x` + to_hex(pos, 8) + `</td>
                         </tr>`);
@@ -219,12 +219,12 @@ class Motherboard {
             }
         }
         s.push(`<tr>
-                  <td class="area" style="height: 50px; background-color: #ffeeee;">Invalid access area</td>
+                  <td class="area invalid">Invalid access area</td>
                   <td class="beginning"></td>
                   <td class="address">0x` + to_hex(pos, 8) + `
                 </tr>
                 <tr>
-                  <td class="area" style="font-size: 80%; height: 10px; background-color: #ffffcc;">Out of bounds reg</td>
+                  <td class="area ob">OB register</td>
                   <td class="beginning"></td>
                   <td class="address">0xFFFFFFFF</td>
                 </tr>

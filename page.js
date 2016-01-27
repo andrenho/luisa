@@ -27,7 +27,7 @@ window.onload = function()
         }
     }
 
-    initialize_debuggers();
+    initialize_page();
     update_page();
 };
 
@@ -93,10 +93,12 @@ function update_page()
 }
 
 
-function initialize_debuggers()
+function initialize_page()
 {
+    // initialize empty sections
     document.getElementById('mmap').innerHTML = tinyvm.mmap_debug();
-    tinyvm.set_ph_mem_debug('phmem');
+
+    // initialize tag "memory_data"
 }
 
 

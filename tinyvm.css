@@ -168,6 +168,31 @@ table.mmap > tbody > tr > td.address {
     width: 90px;
 }
 
+td.ram {
+    height: 80px; 
+    background-color: #ccffff;
+}
+
+td.invalid {
+    height: 50px; 
+    background-color: #ffeeee;
+}
+
+td.devreg {
+    height: 20px; 
+    background-color: #ffccff;
+}
+
+td.devram {
+    height: 90px; 
+    background-color: #ccffcc;
+}
+
+td.ob {
+    height: 10px; 
+    background-color: #ffffcc;
+}
+
 /*
  * MEMORY
  */
@@ -200,6 +225,14 @@ input.data_input {
     margin: 0;
     border: 0;
 }
+
+/*
+ * SPECIAL TAGS
+ */
+.memory_data {
+    display: none;
+    text-align: center;
+};
 
 /* vim: ts=4:sw=4:sts=4:expandtab
  */
