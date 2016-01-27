@@ -1,8 +1,76 @@
 'use strict';
 
+class MemoryTable {
+
+    constructor(parent) {
+        this.parent = parent;
+
+        // read parameters
+        const pars = parent.innerHTML.split(',');
+        this.start = parseInt(pars[0]);
+        if(pars[1] == 'physical_memory_size') {
+            this.end = tinyvm.mboard.memSize - this.start;
+        } else {
+            this.end = parseInt(pars[1]) - this.start;
+        }
+        this.physical = false;
+        for(let i=2; i<pars.length; ++i) {
+            if(pars[i] === 'physical') {
+                this.physical = true;
+            }
+        }
+
+        this._setupHeader();
+        this._setupTable();
+    }
+
+    
+    _setupHeader() {
+        this.parent.innerHTML = '';
+        this.parent.style.display = 'block';
+
+        // title
+        const p = document.createElement('p');
+        p.innerHTML = 'Base address: ';
+
+        const base = document.createElement('span');
+        base.innerHTML = '0,6,prefix,rw';
+        base.numberData = new NumberData(base);
+        base.style.paddingRight = '5px';
+        p.appendChild(base);
+
+        // buttons
+        const back = document.createElement('button');
+        back.type = 'button';
+        back.innerHTML = '&#9664;';
+        p.appendChild(back);
+
+        const forward = document.createElement('button');
+        forward.type = 'button';
+        forward.innerHTML = '&#9654;';
+        p.appendChild(forward);
+
+        this.parent.appendChild(p);
+    }
+
+
+    _setupTable() {
+        const table = document.createElement('table');
+        table.className = 'memory';
+
+        const tr_header = document.createElement('tr');
+        // ...
+        table.appendChild(tr_header);
+
+        this.parent.appendChild(table);
+    }
+
+}
+
+/*
 class MemoryDebugger {
 
-    constructor(mb, begin, end, physical, lines) {
+    constructor(mb, begin, end, physical) {
         this.mb = mb;
         this.begin = begin;
         this.end = end;
@@ -76,5 +144,6 @@ class MemoryDebugger {
     }
 
 }
+*/
 
 // vim: ts=4:sw=4:sts=4:expandtab

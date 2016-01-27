@@ -12,6 +12,8 @@ Some explanations:
    "page.js", in the method `initializePage()`.
  - A special <span class="memory_data"> is a widget that, managed by javascript code,
    allows edition and direct access to the emulated computer memory.
+ - A special <span class="memory_table"> is a widget that, managed by javascript code,
+   presents a memory table and optionally allows editing.
 -->
 
 <html>
@@ -21,9 +23,9 @@ Some explanations:
   <!-- management code -->
   <script src="page/util.js"></script>
   <script src="page/memorydata.js"></script>
+  <script src="page/memorytable.js"></script>
   <script src="page/page.js"></script>
   <script src="page/tests.js"></script>
-  <script src="page/memorydebugger.js"></script>
 
   <!-- emulator code -->
   <script src="tinyvm/bios.js"></script>
@@ -200,15 +202,13 @@ class MMU extends Device {
                   Needs to be reset to 0 manually.
                 </td>
                 <td>0xFFFFFFFF</td>
-                <td class="value"><span class="memory_data">0xFFFFFFFF,rw,prefix</span></td>
+                <td class="value"><span class="memory_data">0xFFFFFFFF,2,prefix,rw</span></td>
               </tr>
             </table>
           </section>
 
-          <!--
           <h2>Physical memory</h2>
-          <section id="phmem"></section>
-          -->
+          <section class="memory_table">0x0,physical_memory_size,physical</section>
         </section>
 
         <section id="mboard_test">

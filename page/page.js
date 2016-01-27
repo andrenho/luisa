@@ -38,6 +38,11 @@ class Page {
         // initialize empty sections
         document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
 
+        // initialize tag "memory_table"
+        [].forEach.call(document.getElementsByClassName('memory_table'), e => {
+            e.memoryTable = new MemoryTable(e);
+        });
+
         // initialize tag "memory_data"
         this._forEachMemoryData(e => { e.memoryData = new MemoryData(e); });
     }
