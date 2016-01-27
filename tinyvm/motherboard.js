@@ -6,10 +6,9 @@ const OUT_OF_BOUNDS_REG = 0xFFFFFFFF;
 
 class Motherboard {
 
-    constructor(memSizeKb, naked) {
+    constructor(memSizeKb) {
         this.memSizeKb = memSizeKb;
         this.memSize = memSizeKb * 1024;
-        this._naked = naked;
         this.reset();
     }
 
@@ -24,11 +23,6 @@ class Motherboard {
         this.mmu = null;
 
         this._current = { reg: DEV_REG_ADDR, ram: DEV_RAM_ADDR }     // used for calculating the device memory areas
-
-        // devices
-        if(!this._naked) {
-            this.addDevice(new BIOS());
-        }
     }
 
     //
@@ -310,7 +304,5 @@ class Motherboard {
     }
 
 }
-
-const tinyvm = new Motherboard(256);
 
 // vim: ts=4:sw=4:sts=4:expandtab

@@ -19,15 +19,16 @@ Some explanations:
   <link rel="stylesheet" href="tinyvm.css">
   
   <!-- management code -->
-  <script src="util.js"></script>
-  <script src="memory_data.js"></script>
-  <script src="page.js"></script>
-  <script src="tests.js"></script>
-  <script src="memorydebugger.js"></script>
+  <script src="page/util.js"></script>
+  <script src="page/memorydata.js"></script>
+  <script src="page/page.js"></script>
+  <script src="page/tests.js"></script>
+  <script src="page/memorydebugger.js"></script>
 
   <!-- emulator code -->
-  <script src="bios.js"></script>
-  <script src="motherboard.js"></script>
+  <script src="tinyvm/bios.js"></script>
+  <script src="tinyvm/motherboard.js"></script>
+  <script src="tinyvm/tinyvm.js"></script>
 
   <title>tinyvm 0.0.1</title>
 
@@ -192,13 +193,14 @@ class MMU extends Device {
                 <th>Current value</th>
               </tr>
               <tr>
-                <td>OB</td>
+                <td class="register">OB</td>
                 <td>
+                  <b>Out of bounds.</b>
                   Set to 1 when an access was made to a memory address outside of bounds.
-                  Needs to be reset manually.
+                  Needs to be reset to 0 manually.
                 </td>
                 <td>0xFFFFFFFF</td>
-                <td><span class="memory_data">0xFFFFFFFF,rw</span></td>
+                <td class="value"><span class="memory_data">0xFFFFFFFF,rw,prefix</span></td>
               </tr>
             </table>
           </section>
@@ -210,7 +212,7 @@ class MMU extends Device {
         </section>
 
         <section id="mboard_test">
-          <button class="test" onclick="(new Motherboard(4, true)).runTests('mboard_tests');">Run tests</button>
+          <button class="test" onclick="(new Motherboard(4)).runTests('mboard_tests');">Run tests</button>
           <section id="mboard_tests"></section>
         </section>
 
@@ -222,9 +224,9 @@ class MMU extends Device {
     <footer>
       <hr>
       Released under the <a href="LICENSE">GPLv3 license</a>.<br>
-      Tested on the latest versions of
-      <a href="https://www.google.com/chrome/">Google Chrome</a> and
-      <a href="https://www.mozilla.org/firefox/">Mozilla Firefox</a>.
+      Tested on the latest version of
+      <a href="https://www.google.com/chrome/">Google Chrome</a><!-- and
+      <a href="https://www.mozilla.org/firefox/">Mozilla Firefox</a>-->.
     </footer>
   </body>
 </html>

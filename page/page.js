@@ -36,12 +36,10 @@ class Page {
     initializePage()
     {
         // initialize empty sections
-        document.getElementById('mmap').innerHTML = tinyvm.mmapDebug();
+        document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
 
         // initialize tag "memory_data"
-        [].forEach.call(document.getElementsByClassName('memory_data'), e => {
-            createMemoryData(e);
-        });
+        this._forEachMemoryData(e => { e.memoryData = new MemoryData(e); });
     }
 
 
@@ -111,6 +109,13 @@ class Page {
     // return a letiable from a query string
     _getQueryString(key) {  
         return unescape(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + escape(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
+    }
+
+    // execute a function `f` for each tag of the type memory_data
+    _forEachMemoryData(f, data) {
+        [].forEach.call(document.getElementsByClassName('memory_data'), e => {
+            f(e, data);
+        });
     }
 
 }
