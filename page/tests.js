@@ -3,8 +3,9 @@
 class TestEnvironment {
 
     constructor(section) {
+        this.section = section;
         document.getElementById(section).innerHTML = `
-<table id="tests" class="test">
+<table id="test_${section}" class="test">
     <tr>
         <th style="min-width: 100px;">Test</th>
         <th>Expected value</th>
@@ -54,7 +55,7 @@ class TestEnvironment {
             fst = false;
         });
 
-        document.getElementById('tests').innerHTML += s.join('');
+        document.getElementById(`test_${this.section}`).innerHTML += s.join('');
     }
 
 
@@ -102,7 +103,7 @@ class TestEnvironment {
         } else {
             throw 'Invalid validation type "' + validation + "'";
         }
-        return [ ok, result, exception ]
+        return [ ok, result, exception ];
     }
 
 }
