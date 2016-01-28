@@ -5,6 +5,8 @@ class MemoryTable {
     constructor(parent) {
         this.parent = parent;
 
+        this._elements = { data: [], chars: [], row_header: [] };
+
         // read parameters
         const pars = parent.innerHTML.split(',');
         this.start = parseInt(pars[0]);
@@ -22,9 +24,21 @@ class MemoryTable {
 
         this._setupHeader();
         this._setupTable();
+
+        this.update();
     }
 
-    
+
+    update() {
+        for(let d of this._elements.data) {
+            d.memoryData.update();
+        }
+        for(let c of this._elements.chars) {
+            this._updateChars(c);
+        }
+    }
+
+
     _setupHeader() {
         this.parent.innerHTML = '';
         this.parent.style.display = 'block';
@@ -38,17 +52,41 @@ class MemoryTable {
         base.numberData = new NumberData(base);
         base.style.paddingRight = '5px';
         p.appendChild(base);
+        this.numberData = base.numberData;
+        this.numberData.afterUpdate = v => {
+            if(v < this.start) {
+                this.numberData.value = this.start / 0x100;
+            } else if(v >= this.end) {
+                this.numberData.value = (this.end / 0x100) - 1;
+            }
+            this.numberData.update();
+            this._updateBaseAddress(base.numberData.value);
+        };
 
         // buttons
         const back = document.createElement('button');
         back.type = 'button';
         back.innerHTML = '&#9664;';
         p.appendChild(back);
+        back.onclick = () => {
+            if(this.numberData.value > this.start / 0x100) {
+                --this.numberData.value;
+                this.numberData.update();
+                this._updateBaseAddress(base.numberData.value);
+            }
+        };
 
         const forward = document.createElement('button');
         forward.type = 'button';
         forward.innerHTML = '&#9654;';
         p.appendChild(forward);
+        forward.onclick = () => {
+            if(this.numberData.value < (this.end / 0x100 - 1)) {
+                ++this.numberData.value;
+                this.numberData.update();
+                this._updateBaseAddress(base.numberData.value);
+            }
+        };
 
         this.parent.appendChild(p);
     }
@@ -56,6 +94,11 @@ class MemoryTable {
 
     _setupTable() {
 
+        // table
+        const table = document.createElement('table');
+        table.className = 'memory';
+
+        // title row
         function th(klass, content) {
             const t = document.createElement('th')
             t.className = klass;
@@ -63,12 +106,8 @@ class MemoryTable {
             return t;
         }
 
-        // table
-        const table = document.createElement('table');
-        table.className = 'memory';
-
-        // title row
         const tr_header = document.createElement('tr');
+        tr_header.appendChild(th('noborder'));
         tr_header.appendChild(th('noborder'));
         for(let i=0; i<16; ++i) {
             tr_header.appendChild(th('addr_header', `_${toHex(i, 1)}`));
@@ -78,109 +117,91 @@ class MemoryTable {
         table.appendChild(tr_header);
 
         // data row
-        
-/*
-        // data
+        function td(klass, content) {
+            const t = document.createElement('td')
+            t.className = klass;
+            if(content) t.innerHTML = content;
+            return t;
+        }
+
+        let pos = this.numberData.value;
         for(let i=0; i<16; ++i) {
-            let chars = [];
-            s.push('<tr>');
-            s.push(`<td class="addr">${toHex(pos, 8)}</td>`);
-            s.push('<td class="noborder"></td>');
-            for(let x=0; x<16; ++x) {
-                s.push(`<td class="data">${this.dataHTML(pos)}</td>`);
-                const c = this.get(pos);
-                chars.push(c >= 32 ? String.fromCharCode(c) : '.');
-                if(x == 7) s.push('<td class="noborder"></td>');
+            const row = document.createElement('tr');
+            let row_header = td("addr", '0x' + toHex(pos >> 4, 7) + '_');
+            row.appendChild(row_header);
+            this._elements.row_header.push(row_header);
+
+            row.appendChild(td('noborder'));
+
+            const chars = td('data');
+            chars.origins = [];
+            this._elements.chars.push(chars);
+
+            for(let x=0; x<0x10; ++x) {
+                const addr = pos;
+                const cell = td('data');
+                cell.addr = addr;
+
+                const base = document.createElement('span');
+                base.innerHTML = addr + ',2,rw';
+                base.memoryData = new MemoryData(base);
+                base.memoryData.afterUpdate = v => {
+                    this._updateChars(base.chars);
+                };
+                this._elements.data.push(base);
+
+                // link data and chars
+                base.chars = chars;
+                chars.origins.push(base);
+
+                cell.appendChild(base);
+
+                row.appendChild(cell);
+
+                if(x == 7) row.appendChild(td('noborder'));
+
                 ++pos;
             }
-            s.push('<td class="noborder"></td>');
-            s.push(`<td class="data">${chars.join('')}</td>`);
-            s.push('</tr>');
+
+            row.appendChild(td('noborder'));
+
+            // chars
+            this._updateChars(chars);
+            row.appendChild(chars);
+
+            table.appendChild(row);
         }
-*/
 
         this.parent.appendChild(table);
     }
 
-}
-
-/*
-class MemoryDebugger {
-
-    constructor(mb, begin, end, physical) {
-        this.mb = mb;
-        this.begin = begin;
-        this.end = end;
-        this.physical = physical;
-        this.baseAddress = begin;
+    
+    _updateChars(chars) {
+        let cs = [];
+        for(let b of chars.origins) {
+            const c = b.memoryData.memoryValue();
+            cs.push(c >= 32 ? String.fromCharCode(c) : '.');
+        }
+        chars.innerHTML = cs.join('');
     }
 
-    set(addr, value) {
-        if(this.physical) {
-            this.mb.mem[addr] = value;
-        } else {
-            this.mb.set(addr, value);
-        }
-    }
 
-    get(addr) {
-        if(this.physical) {
-            return this.mb.mem[addr];
-        } else {
-            return this.mb.get(addr);
-        }
-    }
-
-    setInitialHTML(id) {
-        let s = [];
-
-        // buttons
-        s.push('<p>');
-        s.push(`Base address: <span class="base_address">0x${toHex(this.baseAddress, 8)}</span>`);
-        s.push('<button type="button">&#9664;</button>');
-        s.push('<button type="button">&#9654;</button>');
-        s.push('</p>');
-
-        // memory table
-        let pos = this.baseAddress;
-        s.push('<table class="memory">');
-
-        // table title
-        s.push('<tr><th class="noborder"></th><th class="noborder"></th>');
-        for(let i=0; i<16; ++i) {
-            s.push(`<th class="addr_header">_${toHex(i, 1)}</th>`);
-            if(i == 7) s.push('<th class="noborder"></th>');
-        }
-        s.push('<th class="noborder"></th><th class="noborder"></th></tr>');
-
-        // data
-        for(let i=0; i<16; ++i) {
-            let chars = [];
-            s.push('<tr>');
-            s.push(`<td class="addr">${toHex(pos, 8)}</td>`);
-            s.push('<td class="noborder"></td>');
-            for(let x=0; x<16; ++x) {
-                s.push(`<td class="data">${this.dataHTML(pos)}</td>`);
-                const c = this.get(pos);
-                chars.push(c >= 32 ? String.fromCharCode(c) : '.');
-                if(x == 7) s.push('<td class="noborder"></td>');
+   _updateBaseAddress(base) {
+        let pos = base * 0x100;
+        for(let i=0; i<0x10; ++i) {
+            this._elements.row_header[i].innerHTML = '0x' + toHex(pos >> 4, 7) + '_';
+            for(let x=0; x<0x10; ++x) {
+                const md = this._elements.data[(i*0x10)+x].memoryData;
+                md.changeAddress(pos);
                 ++pos;
             }
-            s.push('<td class="noborder"></td>');
-            s.push(`<td class="data">${chars.join('')}</td>`);
-            s.push('</tr>');
         }
-
-        s.push('</table>');
-        document.getElementById(id).innerHTML = s.join('');
-    }
-
-    dataHTML(addr) {
-        //return toHex(this.get(addr), 2);
-        return `<input class="data_input" type="text" value="${toHex(this.get(addr), 2)}">`
-    }
+        for(let c of this._elements.chars) {
+            this._updateChars(c);
+        }
+   }
 
 }
-*/
+
 
 // vim: ts=4:sw=4:sts=4:expandtab

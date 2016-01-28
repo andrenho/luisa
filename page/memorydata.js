@@ -30,6 +30,12 @@ class NumberData {
     }
 
 
+    // called after changing the data
+    afterUpdate(newValue) {
+        // this can be implemented by the instances
+    }
+
+
     _set(value) {
         this.value = value;
     }
@@ -41,6 +47,7 @@ class NumberData {
 
         // create data
         this.data = document.createElement('span');
+        this.data.className = 'editable';
         this.parent.appendChild(this.data);
 
         if(this.writable) {
@@ -75,6 +82,7 @@ class NumberData {
                 this.update();
                 this.data.style.display = 'inline';
                 this.input.style.display = 'none';
+                this.afterUpdate(value);
             };
         }
 
@@ -86,12 +94,27 @@ class NumberData {
 
 class MemoryData extends NumberData {
 
+    constructor(parent) {
+        super(parent)
+        this.data.title = '0x' + toHex(this.addr, 8);
+    }
+
     update() {
         this.data.innerHTML = (this.prefix ? '0x' : '') + toHex(tinyvm.mboard.get(this.addr), 2);
     }
 
+    changeAddress(addr) {
+        this.addr = addr;
+        this.data.title = '0x' + toHex(this.addr, 8);
+        this.update();
+    }
+
     _set(value) {
         tinyvm.mboard.set(this.addr, value);
+    }
+
+    memoryValue() {
+        return tinyvm.mboard.get(this.addr);
     }
 
 }
