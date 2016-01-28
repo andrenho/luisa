@@ -4,12 +4,12 @@ class NumberData {
 
     constructor(parent) {
         this.parent = parent;
-        this.value = 0;
 
         // read parameters
         const pars = parent.innerHTML.split(',');
         this.addr = parseInt(pars[0]);
         this.size = parseInt(pars[1]);
+        this.value = this.addr;
         this.maxValue = Math.pow(16, this.size) - 1;
         this.prefix = false;
         this.writable = false;
@@ -47,10 +47,11 @@ class NumberData {
 
         // create data
         this.data = document.createElement('span');
-        this.data.className = 'editable';
         this.parent.appendChild(this.data);
 
         if(this.writable) {
+            this.data.className = 'editable';
+            
             // create input
             this.input = document.createElement('input');
             this.input.type = 'text';
@@ -62,7 +63,7 @@ class NumberData {
             this.parent.appendChild(this.input);
             
             // event for double-clicking text
-            this.data.ondblclick = () => {
+            this.data.onclick = () => {
                 if(this.prefix) {
                     this.input.value = this.data.innerHTML.substring(2);
                 } else {
@@ -91,8 +92,13 @@ class NumberData {
 
             this.input.onkeydown = () => {
                 let e = event || window.event;
-                if(e.keyCode == 13) {
+                if(e.keyCode == 13) {  // return
                     this.input.onAccept();
+                    return false;
+                } else if(e.keyCode == 27) {  // ESC
+                    this.input.value = this.data.value;
+                    this.data.style.display = 'inline';
+                    this.input.style.display = 'none';
                     return false;
                 }
                 return true;

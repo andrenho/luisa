@@ -11,9 +11,9 @@ class MemoryTable {
         const pars = parent.innerHTML.split(',');
         this.start = parseInt(pars[0]);
         if(pars[1] == 'physical_memory_size') {
-            this.end = tinyvm.mboard.ram.memSize - this.start;
+            this.end = tinyvm.mboard.ram.memSize - 1;
         } else {
-            this.end = parseInt(pars[1]) - this.start;
+            this.end = parseInt(pars[1]);
         }
         this.physical = false;
         for(let i=2; i<pars.length; ++i) {
@@ -48,16 +48,16 @@ class MemoryTable {
         p.innerHTML = 'Base address: ';
 
         const base = document.createElement('span');
-        base.innerHTML = '0,6,prefix,rw';
+        base.innerHTML = Math.floor(this.start / 0x100) + ',6,prefix,rw';
         base.numberData = new NumberData(base);
         base.style.paddingRight = '5px';
         p.appendChild(base);
         this.numberData = base.numberData;
         this.numberData.afterUpdate = v => {
             if(v * 0x100 < this.start) {
-                this.numberData.value = this.start / 0x100;
+                this.numberData.value = Math.floor(this.start / 0x100);
             } else if(v * 0x100 >= this.end) {
-                this.numberData.value = (this.end / 0x100) - 1;
+                this.numberData.value = Math.floor(this.end / 0x100);
             }
             this.numberData.update();
             this._updateBaseAddress(base.numberData.value);
@@ -69,7 +69,7 @@ class MemoryTable {
         back.innerHTML = '&#9664;';
         p.appendChild(back);
         back.onclick = () => {
-            if(this.numberData.value > this.start / 0x100) {
+            if(this.numberData.value > Math.floor(this.start / 0x100)) {
                 --this.numberData.value;
                 this.numberData.update();
                 this._updateBaseAddress(base.numberData.value);
@@ -81,7 +81,7 @@ class MemoryTable {
         forward.innerHTML = '&#9654;';
         p.appendChild(forward);
         forward.onclick = () => {
-            if(this.numberData.value < (this.end / 0x100 - 1)) {
+            if(this.numberData.value < Math.floor(this.end / 0x100)) {
                 ++this.numberData.value;
                 this.numberData.update();
                 this._updateBaseAddress(base.numberData.value);
@@ -124,10 +124,10 @@ class MemoryTable {
             return t;
         }
 
-        let pos = this.numberData.value;
+        let pos = this.numberData.value * 0x100;
         for(let i=0; i<16; ++i) {
             const row = document.createElement('tr');
-            let row_header = td("addr", '0x' + toHex(pos >> 4, 7) + '_');
+            let row_header = td("addr", '0x' + toHex(pos / 0x10, 7) + '_');
             row.appendChild(row_header);
             this._elements.row_header.push(row_header);
 
@@ -189,7 +189,7 @@ class MemoryTable {
    _updateBaseAddress(base) {
         let pos = base * 0x100;
         for(let i=0; i<0x10; ++i) {
-            this._elements.row_header[i].innerHTML = '0x' + toHex(pos >> 4, 7) + '_';
+            this._elements.row_header[i].innerHTML = '0x' + toHex(pos / 0x10, 7) + '_';
             for(let x=0; x<0x10; ++x) {
                 const md = this._elements.data[(i*0x10)+x].memoryData;
                 md.changeAddress(pos);

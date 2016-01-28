@@ -30,7 +30,7 @@ Some explanations:
   <!-- emulator code -->
   <script src="tinyvm/motherboard.js"></script>
   <script src="tinyvm/ram.js"></script>
-  <!--<script src="tinyvm/bios.js"></script>-->
+  <script src="tinyvm/bios.js"></script>
   <script src="tinyvm/tinyvm.js"></script>
 
   <title>tinyvm 0.0.1</title>
@@ -67,6 +67,7 @@ Some explanations:
       <nav id="leftmenu" class="leftmenu">
         <span onclick="page.menuSelected(this.id);" id="mboard">Motherboard</span>
         <span onclick="page.menuSelected(this.id);" id="ram">RAM</span>
+        <span onclick="page.menuSelected(this.id);" id="bios">BIOS</span>
         <span onclick="page.menuSelected(this.id);" id="about" class="selected">About</span>
       </nav>
 
@@ -241,6 +242,71 @@ class MMU extends Device {
         <section id="ram_test">
           <button class="test" onclick="(new RAM(4)).runTests('ram_tests');">Run tests</button>
           <section id="ram_tests"></section>
+        </section>
+
+        <!--      -->
+        <!-- BIOS -->
+        <!--      -->
+
+        <section id="bios_doc">
+          <h2>BIOS</h2>
+          <p>The BIOS is a read-only block of memory that is the first code 
+             executed when the computer is turned on.</p>
+          <p>It contains code that will check errors and look for disks present, 
+             loading the booting code and excuting it.</p>
+          <p>When the CPU is turned on, it will point to <b>0xF0000000</b>, (in the BIOS
+             area), that will contain simply a jump to a larger code area starting in
+             <b>0xF0010000</b>.</p>
+        </section>
+
+        <section id="bios_debug">
+          <h2>Registers</h2>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Register</th>
+                <th>Description</th>
+                <th>Address</th>
+                <th>Current value</th>
+              </tr>
+              <tr>
+                <td class="register"></td>
+                <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
+                <td>0xF0000000</td>
+                <td class="value">
+                  <span class="memory_data">0xF0000000,2</span>
+                  <span class="memory_data">0xF0000001,2</span>
+                  <span class="memory_data">0xF0000002,2</span>
+                  <span class="memory_data">0xF0000003,2</span>
+                  <span class="memory_data">0xF0000004,2</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="register">BMIN</td>
+                <td>BIOS version (minor)</td>
+                <td>0xF0000010</td>
+                <td class="value"><span class="memory_data">0xF0000010,2,prefix</span></td>
+              </tr>
+              <tr>
+                <td class="register">BMAJ</td>
+                <td>BIOS version (major)</td>
+                <td>0xF0000011</td>
+                <td class="value"><span class="memory_data">0xF0000011,2,prefix</span></td>
+              </tr>
+            </table>
+          </section>
+
+          <h2>Source code</h2>
+          <p>// TODO</p>
+
+          <h2>Binary data</h2>
+          <section class="memory_table">0xF0010000,0xF001FFFF</section>
+
+        </section>
+
+        <section id="bios_test">
+          <button class="test" onclick="().runTests('bios_tests');">Run tests</button>
+          <section id="bios_tests"></section>
         </section>
 
       </section>
