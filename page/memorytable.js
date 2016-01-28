@@ -54,9 +54,9 @@ class MemoryTable {
         p.appendChild(base);
         this.numberData = base.numberData;
         this.numberData.afterUpdate = v => {
-            if(v < this.start) {
+            if(v * 0x100 < this.start) {
                 this.numberData.value = this.start / 0x100;
-            } else if(v >= this.end) {
+            } else if(v * 0x100 >= this.end) {
                 this.numberData.value = (this.end / 0x100) - 1;
             }
             this.numberData.update();

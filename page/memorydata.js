@@ -74,7 +74,7 @@ class NumberData {
             };
 
             // event for leaving text field
-            this.input.onblur = () => {
+            this.input.onAccept = () => {
                 const value = parseInt(this.input.value, 16);
                 if(!isNaN(value) && value >= 0 && value <= this.maxValue) {
                     this._set(value);
@@ -83,7 +83,21 @@ class NumberData {
                 this.data.style.display = 'inline';
                 this.input.style.display = 'none';
                 this.afterUpdate(value);
+            }
+
+            this.input.onblur = () => {
+                this.input.onAccept();
             };
+
+            this.input.onkeydown = () => {
+                let e = event || window.event;
+                if(e.keyCode == 13) {
+                    this.input.onAccept();
+                    return false;
+                }
+                return true;
+            };
+
         }
 
         this.update();

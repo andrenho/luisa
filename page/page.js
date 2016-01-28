@@ -37,6 +37,7 @@ class Page {
     {
         // initialize empty sections
         document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
+        document.getElementById('ram_debug').innerHTML = tinyvm.mboard.ram.debug();
 
         // initialize tag "memory_table"
         [].forEach.call(document.getElementsByClassName('memory_table'), e => {

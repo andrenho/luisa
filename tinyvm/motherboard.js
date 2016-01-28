@@ -195,16 +195,18 @@ class Motherboard {
         let s = ['<table class="mmap">'];
 
         // TODO - check if virtual memory is active
-        s.push(`<tr>
-                  <td class="area ram">RAM (physical memory)</td>
-                  <td class="beginning"></td>
-                  <td class="address">0x00000000</td>
-                </tr>`);
-        if(this.memSize < 0xf0000000) {
+        if(this.ram) {
+            s.push(`<tr>
+                      <td class="area ram">RAM (physical memory)</td>
+                      <td class="beginning"></td>
+                      <td class="address">0x00000000</td>
+                    </tr>`);
+        }
+        if(this.ram.memSize < 0xf0000000) {
             s.push(`<tr>
                       <td class="area invalid">Invalid access area</td>
                       <td class="beginning"></td>
-                      <td class="address">0x` + toHex(this.memSize, 8) + `
+                      <td class="address">0x` + toHex(this.ram.memSize, 8) + `
                     </tr>`);
         }
 
@@ -261,9 +263,10 @@ class Motherboard {
     runTests(section) {
         const te = new TestEnvironment(section);
 
+        const old_ram = this.ram;
+        this.setRAM(new RAM(4));
+
         // test memory
-        te.test('Memory amount (kB)',
-                [ [ t => t.memSizeKb, '=', 4, this ] ]);
         te.test('Getting/setting data (8-bit)',
                 [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
         te.test('Getting/setting data (32-bit)',
@@ -327,6 +330,8 @@ class Motherboard {
             [ t => t.devices[1].reg_area, '=', DEV_REG_ADDR + 256, this ],
             [ t => t.devices[1].ram_area, '=', DEV_RAM_ADDR, this ],
         ]);
+
+        this.ram = old_ram;
     }
 
 }

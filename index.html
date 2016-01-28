@@ -221,14 +221,21 @@ class MMU extends Device {
         <!--     -->
 
         <section id="ram_doc">
-          TODO
+          <h2>RAM</h2>
+          <p>The RAM (random access memory) store the information used by the programs running in the computer.</p>
+          <p>It is important to notice that the RAM is never accessed directly. The motherboard will determine the address,
+             usually following these rules:</p>
+          <ol>
+            <li>If the address is &ge; <b>0xF0000000</b>, the access is redirected to the devices;</li>
+            <li>If the address is &lt; <b>0xF0000000</b> and virtual memory is <b>active</b>, 
+                the address is rerouted via the MMU;</li>
+            <li>If the address is &lt; <b>0xF0000000</b> and virtual memory is <b>not active</b>, 
+                then the address is accessed directly in the RAM.</li>
+          </ol>
+          <p>When the memory is being accessed directly (option 3), the RAM is also called <b>physical memory</b>.</p>
         </section>
 
         <section id="ram_debug">
-          <h2>Physical memory</h2>
-          <section class="memory_table">0x0,physical_memory_size,physical</section>        
-          <p>Notice that this is access to the <b>physical memory</b>. When virtual memory is active,
-             this is not the memory that the CPU sees.</p>
         </section>
 
         <section id="ram_test">

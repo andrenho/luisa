@@ -6,7 +6,7 @@ class RAM {
         this.memSizeKb = memSizeKb;
         this.memSize = memSizeKb * 1024;
 
-        this.data = new Uint8Array(this.size);
+        this.data = new Uint8Array(this.memSize);
     }
 
 
@@ -30,6 +30,16 @@ class RAM {
         } else {
             return this.data[addr];
         }
+    }
+
+    debug() {
+        return `
+            <p>The memory size is <b>${this.memSizeKb} Kb</b>. The maximum addressable address 
+               is <b>0x${toHex(this.memSize-1)}</b>.</p>
+            <h2>Physical memory</h2>
+            <section class="memory_table">0x0,physical_memory_size,physical</section>
+            <p>Notice that this is access to the <b>physical memory</b>. When virtual memory is active,
+               this is not the memory that the CPU sees.</p>`
     }
 
     //
