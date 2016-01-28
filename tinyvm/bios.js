@@ -3,7 +3,18 @@
 class BIOS {
     
     constructor() {
+        // prepare register data
         this.reg_data = [ 0x6C, 0x00, 0x00, 0x01, 0xF0 ];
+
+        // TODO - version information
+
+        // load source
+        let client = new XMLHttpRequest();
+        client.open('GET', 'bios/bios.asm');
+        client.onreadystatechange = () => console.log(client);
+        client.send();
+
+        // load binary
     }
 
     name() { 
