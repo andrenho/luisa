@@ -31,6 +31,7 @@ Some explanations:
   <script src="tinyvm/motherboard.js"></script>
   <script src="tinyvm/ram.js"></script>
   <script src="tinyvm/bios.js"></script>
+  <script src="tinyvm/mmu.js"></script>
   <script src="tinyvm/tinyvm.js"></script>
 
   <title>tinyvm 0.0.1</title>
@@ -162,7 +163,7 @@ class Device {
     interruptCount()  : int         [optional]
     get(addr)         : uint8_t
     set(addr, uint_8)
-    avaliable         : bool
+    avaliable()       : bool
     doc()             : html_string [optional]
     debug()           : html_string [optional]
 }
