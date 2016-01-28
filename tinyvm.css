@@ -56,6 +56,10 @@ th, td {
     text-align: left;
 }
 
+.dev_mode {
+    display: none;
+}
+
 /*
  * MENUS
  */

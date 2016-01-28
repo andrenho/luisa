@@ -6,7 +6,12 @@
 let page;
 
 window.onload = function() {
-    page = new Page();
+    let timer = window.setInterval(() => {
+        if(tinyvm.avaliable()) {
+            page = new Page();
+            window.clearInterval(timer);
+        }
+    }, 50);    
 }
 
 
@@ -16,6 +21,9 @@ class Page {
     constructor() {
         this.page = 'about';
         this.block = 'doc';
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('choose_dev_mode').style.display = 'block';
 
         // are we in development mode?
         if(this._getQueryString('dev')) {
@@ -38,6 +46,7 @@ class Page {
         // initialize empty sections
         document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
         document.getElementById('ram_debug').innerHTML = tinyvm.mboard.ram.debug();
+        document.getElementById('bios_source').innerHTML = tinyvm.mboard.devices[0].dev.source;
 
         // initialize tag "memory_table"
         [].forEach.call(document.getElementsByClassName('memory_table'), e => {

@@ -46,10 +46,13 @@ Some explanations:
     <!--          -->
 
     <section id="computer">
+      <span id="loading"><p>Loading...</p></span>
       <section id="screen"></section>
-      <label>
-        <input type="checkbox" id="dev_mode" onchange="page.developmentModeUpdated(this.checked);">Development mode
-      </label>
+      <section id="choose_dev_mode" class="dev_mode">
+        <label>
+          <input type="checkbox" id="dev_mode" onchange="page.developmentModeUpdated(this.checked);">Development mode
+        </label>
+      </section>
     </section>
 
     <!--       -->
@@ -159,6 +162,7 @@ class Device {
     interruptCount()  : int         [optional]
     get(addr)         : uint8_t
     set(addr, uint_8)
+    avaliable         : bool
     doc()             : html_string [optional]
     debug()           : html_string [optional]
 }
@@ -274,30 +278,30 @@ class MMU extends Device {
                 <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
                 <td>0xF0000000</td>
                 <td class="value">
-                  <span class="memory_data">0xF0000000,2</span>
-                  <span class="memory_data">0xF0000001,2</span>
-                  <span class="memory_data">0xF0000002,2</span>
-                  <span class="memory_data">0xF0000003,2</span>
-                  <span class="memory_data">0xF0000004,2</span>
+                  <span class="memory_data">0xF0000000,2,rw</span>
+                  <span class="memory_data">0xF0000001,2,rw</span>
+                  <span class="memory_data">0xF0000002,2,rw</span>
+                  <span class="memory_data">0xF0000003,2,rw</span>
+                  <span class="memory_data">0xF0000004,2,rw</span>
                 </td>
               </tr>
               <tr>
                 <td class="register">BMIN</td>
                 <td>BIOS version (minor)</td>
                 <td>0xF0000010</td>
-                <td class="value"><span class="memory_data">0xF0000010,2,prefix</span></td>
+                <td class="value"><span class="memory_data">0xF0000010,2,prefix,rw</span></td>
               </tr>
               <tr>
                 <td class="register">BMAJ</td>
                 <td>BIOS version (major)</td>
                 <td>0xF0000011</td>
-                <td class="value"><span class="memory_data">0xF0000011,2,prefix</span></td>
+                <td class="value"><span class="memory_data">0xF0000011,2,prefix,rw</span></td>
               </tr>
             </table>
           </section>
 
           <h2>Source code</h2>
-          <p>// TODO</p>
+          <section id="bios_source"></section>
 
           <h2>Binary data</h2>
           <section class="memory_table">0xF0010000,0xF001FFFF</section>
