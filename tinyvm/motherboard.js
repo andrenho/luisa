@@ -6,9 +6,7 @@ const OUT_OF_BOUNDS_REG = 0xFFFFFFFF;
 
 class Motherboard {
 
-    constructor(memSizeKb) {
-        this.memSizeKb = memSizeKb;
-        this.memSize = memSizeKb * 1024;
+    constructor() {
         this.reset();
     }
 
@@ -17,9 +15,9 @@ class Motherboard {
     //
 
     reset() {
-        this.mem = new Uint8Array(this.memSizeKb * 1024);
         this.outOfBounds = false;
         this.devices = [];
+        this.ram = null;
         this.mmu = null;
 
         this._current = { reg: DEV_REG_ADDR, ram: DEV_RAM_ADDR }     // used for calculating the device memory areas
@@ -31,7 +29,7 @@ class Motherboard {
 
     set(addr, value) {
         if(addr === OUT_OF_BOUNDS_REG) {
-            this.outOfBounds = ((value == 0) ? false : true);
+            this.outOfBounds = value ? 1 : 0;
         } else if(addr >= DEV_REG_ADDR && addr < DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(addr >= d.reg_area && addr < (d.reg_area + d.reg_size)) {
@@ -53,7 +51,15 @@ class Motherboard {
         } else if(addr >= this.memSize) { 
             this.outOfBounds = true;
         } else {
-            this.mem[addr] = value;
+            try {
+                this.ram.set(addr, value);
+            } catch(e) {
+                if(e == 'out of bounds') {
+                    this.outOfBounds = true;
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -80,7 +86,16 @@ class Motherboard {
             this.outOfBounds = true;
             return 0;
         } else {
-            return this.mem[addr];
+            try {
+                return this.ram.get(addr);
+            } catch(e) {
+                if(e == 'out of bounds') {
+                    this.outOfBounds = true;
+                    return 0;
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -117,6 +132,17 @@ class Motherboard {
     //
     // DEVICE MANAGEMENT
     //
+
+    setRAM(dev) {
+        const type = this._deviceType(dev);
+        if(type == 'invalid') {
+            throw 'Invalid device ' + dev;
+        }
+        if(this.devices.length === 255) {
+            throw 'Maximum number of devices is 255.';
+        }
+        this.ram = dev;
+    }
 
     addDevice(dev) {
         const type = this._deviceType(dev);

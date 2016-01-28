@@ -28,8 +28,9 @@ Some explanations:
   <script src="page/tests.js"></script>
 
   <!-- emulator code -->
-  <script src="tinyvm/bios.js"></script>
   <script src="tinyvm/motherboard.js"></script>
+  <script src="tinyvm/ram.js"></script>
+  <!--<script src="tinyvm/bios.js"></script>-->
   <script src="tinyvm/tinyvm.js"></script>
 
   <title>tinyvm 0.0.1</title>
@@ -65,6 +66,7 @@ Some explanations:
 
       <nav id="leftmenu" class="leftmenu">
         <span onclick="page.menuSelected(this.id);" id="mboard">Motherboard</span>
+        <span onclick="page.menuSelected(this.id);" id="ram">RAM</span>
         <span onclick="page.menuSelected(this.id);" id="about" class="selected">About</span>
       </nav>
 
@@ -207,12 +209,30 @@ class MMU extends Device {
             </table>
           </section>
 
-          <h2>Physical memory</h2>
-          <section class="memory_table">0x0,physical_memory_size,physical</section>
         </section>
 
         <section id="mboard_test">
-          <button class="test" onclick="(new Motherboard(4)).runTests('mboard_tests');">Run tests</button>
+          <button class="test" onclick="(new Motherboard()).runTests('mboard_tests');">Run tests</button>
+          <section id="mboard_tests"></section>
+        </section>
+
+        <!--     -->
+        <!-- RAM -->
+        <!--     -->
+
+        <section id="ram_doc">
+          TODO
+        </section>
+
+        <section id="ram_debug">
+          <h2>Physical memory</h2>
+          <section class="memory_table">0x0,physical_memory_size,physical</section>        
+          <p>Notice that this is access to the <b>physical memory</b>. When virtual memory is active,
+             this is not the memory that the CPU sees.</p>
+        </section>
+
+        <section id="ram_test">
+          <button class="test" onclick="(new RAM(4)).runTests('ram_test');">Run tests</button>
           <section id="mboard_tests"></section>
         </section>
 

@@ -11,7 +11,7 @@ class MemoryTable {
         const pars = parent.innerHTML.split(',');
         this.start = parseInt(pars[0]);
         if(pars[1] == 'physical_memory_size') {
-            this.end = tinyvm.mboard.memSize - this.start;
+            this.end = tinyvm.mboard.ram.memSize - this.start;
         } else {
             this.end = parseInt(pars[1]) - this.start;
         }
