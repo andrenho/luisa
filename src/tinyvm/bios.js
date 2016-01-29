@@ -42,7 +42,7 @@ class BIOS {
         cb.send();
     }
 
-    avaliable() {
+    available() {
         return this._loaded.asm && this._loaded.bin;
     }
 

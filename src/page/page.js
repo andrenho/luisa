@@ -7,7 +7,7 @@ let page;
 
 window.onload = function() {
     let timer = window.setInterval(() => {
-        if(tinyvm.avaliable()) {
+        if(tinyvm.available()) {
             page = new Page();
             window.clearInterval(timer);
         }

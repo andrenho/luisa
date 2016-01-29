@@ -21,18 +21,19 @@ Some explanations:
   <link rel="stylesheet" href="tinyvm.css">
   
   <!-- management code -->
-  <script src="page/util.js"></script>
-  <script src="page/memorydata.js"></script>
-  <script src="page/memorytable.js"></script>
-  <script src="page/page.js"></script>
-  <script src="page/tests.js"></script>
+  <script src="src/page/util.js"></script>
+  <script src="src/page/memorydata.js"></script>
+  <script src="src/page/memorytable.js"></script>
+  <script src="src/page/tests.js"></script>
 
   <!-- emulator code -->
-  <script src="tinyvm/motherboard.js"></script>
-  <script src="tinyvm/ram.js"></script>
-  <script src="tinyvm/bios.js"></script>
-  <script src="tinyvm/mmu.js"></script>
-  <script src="tinyvm/tinyvm.js"></script>
+  <script src="src/tinyvm/motherboard.js"></script>
+  <script src="src/tinyvm/ram.js"></script>
+  <script src="src/tinyvm/bios.js"></script>
+  <script src="src/tinyvm/mmu.js"></script>
+  <script src="src/tinyvm/tinyvm.js"></script>
+
+  <script src="src/page/page.js"></script>
 
   <title>tinyvm 0.0.1</title>
 
@@ -318,18 +319,33 @@ class MMU extends Device {
           <p>The MMU (memory management unit) controls the access to the RAM. 
              If the MMU is <b>disabled</b>, any memory address is mapped
              directly to the same adress in RAM (this is called 
-             <b><i>physical access</i></b>). If the MMU is <b>enabled</b>, however,
-             the access is then translated by the MMU. This allows for a more
-             sophisticated memory management, allowing the operating system to:</p>
+             <b><i>physical memory</i></b>). If the MMU is <b>enabled</b>, however,
+             a memory access to any address is translated by the MMU. This allows
+             for more sophisticated memory management technique called <b>virtual 
+             memory</b>.</p>
+
+          <h2>Virtual Memory</h2>
+          <p>It is possible to activate the memory indirectly through <b>virtual 
+             memory</b>. In this case, the MMU will access the memory indirectly. 
+             When the CPU request a memory byte from the MMU, the MMU will lookup 
+             the position in a page table to search for the physical position. 
+             This has the following advantages:</p>
           <ul>
-            <li>create read-only areas of memory;</li>
-            <li>create non-executable areas of memory;</li>
-            <li>partition the memory in a way that each process "thinks" it 
-                controls the whole memory, easing the development of new applications;</li>
-            <li>provide an addressable space bigger than the physical memory present,
-                allowing the use of swap files and other gimmicks.</li>   
+            <li>By creating several page tables, it is possible to make that several 
+                processes see the full memory as if were their own, easing the 
+                development and avoiding that processes access memory from other 
+                processes;</li>
+            <li>It is possible to establish different permissions for different 
+                memory pages. A page, for example, might be only accessible by the kernel;</li>
+            <li>It is possible to create pages outside of the memory, thus allowing more 
+                memory to be addressable than what is available in the device.</li>
           </ul>
 
+          <h2>Memory address translation</h2>
+          <p>The image below illustrates how the logical access works. The VMEM register 
+             contains the <b>Page directory</b> address. The page directory points 
+             to multiple page tables, and the page table points to a page in memory.</p>
+          <img alt="VMEM register" src="img/vmem.png">
 
         </section>
       </section>

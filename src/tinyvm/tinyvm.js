@@ -10,9 +10,9 @@ class TinyVM {
         this.mboard.addDevice(bios);
     }
 
-    avaliable() {
+    available() {
         for(let d of this.mboard.devices) {
-            if(d.avaliable && !d.avaliable()) {
+            if(d.dev.available && !d.dev.available()) {
                 return false;
             }
         }
