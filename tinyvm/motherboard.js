@@ -164,6 +164,7 @@ class Motherboard {
         if(type == 'RAMDevice') {
             this._current.ram += dev.areaRequested();
         }
+        dev.mboard = this;
         // TODO - area, mmu
         return type;
     }
