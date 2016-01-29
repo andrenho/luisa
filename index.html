@@ -310,12 +310,27 @@ class MMU extends Device {
 
         </section>
 
-        <!--      -->
-        <!-- BIOS -->
-        <!--      -->
-        <section id="bios_doc">
+        <!--     -->
+        <!-- MMU -->
+        <!--     -->
+        <section id="mmu_doc">
           <h2>MMU</h2>
-          
+          <p>The MMU (memory management unit) controls the access to the RAM. 
+             If the MMU is <b>disabled</b>, any memory address is mapped
+             directly to the same adress in RAM (this is called 
+             <b><i>physical access</i></b>). If the MMU is <b>enabled</b>, however,
+             the access is then translated by the MMU. This allows for a more
+             sophisticated memory management, allowing the operating system to:</p>
+          <ul>
+            <li>create read-only areas of memory;</li>
+            <li>create non-executable areas of memory;</li>
+            <li>partition the memory in a way that each process "thinks" it 
+                controls the whole memory, easing the development of new applications;</li>
+            <li>provide an addressable space bigger than the physical memory present,
+                allowing the use of swap files and other gimmicks.</li>   
+          </ul>
+
+
         </section>
       </section>
 
