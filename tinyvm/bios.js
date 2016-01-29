@@ -70,7 +70,13 @@ class BIOS {
         }
     }
 
-    setRAM(a, v) { }
+    setRAM(a, v) {
+        if(a >= this.bios_size) {
+            // TODO
+        } else {
+            this.bin[a] = v;
+        }
+    }
 }
 
 

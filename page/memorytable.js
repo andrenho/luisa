@@ -144,7 +144,7 @@ class MemoryTable {
 
                 const base = document.createElement('span');
                 base.innerHTML = addr + ',2,rw';
-                base.memoryData = new MemoryData(base);
+                base.memoryData = this.physical ? new PhysicalMemoryData(base) : new LogicalMemoryData(base);
                 base.memoryData.afterUpdate = v => {
                     this._updateChars(base.chars);
                 };

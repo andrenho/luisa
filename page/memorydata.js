@@ -120,7 +120,7 @@ class MemoryData extends NumberData {
     }
 
     update() {
-        this.data.innerHTML = (this.prefix ? '0x' : '') + toHex(tinyvm.mboard.get(this.addr), 2);
+        this.data.innerHTML = (this.prefix ? '0x' : '') + toHex(this._get(), 2);
     }
 
     changeAddress(addr) {
@@ -129,12 +129,34 @@ class MemoryData extends NumberData {
         this.update();
     }
 
-    _set(value) {
-        tinyvm.mboard.set(this.addr, value);
+    memoryValue() {
+        return this._get();
     }
 
-    memoryValue() {
+}
+
+
+class PhysicalMemoryData extends MemoryData {
+
+    _get() {
+        return tinyvm.mboard.ram.get(this.addr);
+    }
+
+    _set(value) {
+        tinyvm.mboard.ram.set(this.addr, value);
+    }
+
+}
+
+
+class LogicalMemoryData extends MemoryData {
+
+    _get() {
         return tinyvm.mboard.get(this.addr);
+    }
+
+    _set(value) {
+        tinyvm.mboard.set(this.addr, value);
     }
 
 }

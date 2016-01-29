@@ -54,7 +54,7 @@ class Page {
         });
 
         // initialize tag "memory_data"
-        this._forEachMemoryData(e => { e.memoryData = new MemoryData(e); });
+        this._forEachMemoryData(e => { e.memoryData = new LogicalMemoryData(e); });
     }
 
 
