@@ -323,11 +323,14 @@ class MMU extends Device {
              a memory access to any address is translated by the MMU. This allows
              for more sophisticated memory management technique called <b>virtual 
              memory</b>.</p>
+          <p>The virtual memory can be activated by setting the bit 16 of the VMEM register, 
+             like this:</p>
+          <pre>      movd    [MMU_VMEM], (1 << 16) | 0xFAB</pre>
+          <p>This will activate the virtual memory and set the memory page to <b>0xFAB</b>.</p>
 
           <h2>Virtual Memory</h2>
-          <p>It is possible to activate the memory indirectly through <b>virtual 
-             memory</b>. In this case, the MMU will access the memory indirectly. 
-             When the CPU request a memory byte from the MMU, the MMU will lookup 
+          <p>The <b>virtual memory</b> makes possible to access the memory indirectly.
+             If active, when the CPU requests a memory byte from the MMU, the MMU lookups 
              the position in a page table to search for the physical position. 
              This has the following advantages:</p>
           <ul>
@@ -337,8 +340,9 @@ class MMU extends Device {
                 processes;</li>
             <li>It is possible to establish different permissions for different 
                 memory pages. A page, for example, might be only accessible by the kernel;</li>
-            <li>It is possible to create pages outside of the memory, thus allowing more 
-                memory to be addressable than what is available in the device.</li>
+            <li>It is possible to create pages outside of the memory (in a swap file, for 
+                example), thus allowing more memory to be addressable than what is 
+                available in the device.</li>
           </ul>
 
           <h2>Memory address translation</h2>
@@ -346,6 +350,76 @@ class MMU extends Device {
              contains the <b>Page directory</b> address. The page directory points 
              to multiple page tables, and the page table points to a page in memory.</p>
           <img alt="VMEM register" src="img/vmem.png">
+          <p>The way the access works is exemplified below.</p>
+          <img alt="Example" src="img/example.png">
+          <p>The VMEM register can be changed every time the OS changes the active process.
+             This way, each process can have its own memory.</p>
+
+          <h2>Page details</h2>
+          <p>Each page contains <b>0x1000 bytes</b> (4 kB, or 4096 bytes). Since each 
+             index is 4 bytes long, there are 1024 indexes in each page.</p>
+          <img alt="Page details" src="img/page.png">
+
+          <h2>Addresses above 0xF0000000</h2>
+          <p>Memory positions above 0xF0000000 will access the devices' memories. This means 
+             that the maximum addressable space for RAM is 3GB. See Memory map for the details
+             on which device will use each block of memory.</p>
+
+          <h2>Registers and special commands</h2>
+          <p>The MMU contains a set of registers that help managing memory. A list of these registers
+             along with their description and current values can be seen in the <b>debug</b> page.</p>
+          <p>Of particlar interest, is the <b>fast memory copy</b>. Using it, the MMU can fast copy 
+             a block of memory (<b>memcpy</b>). It is called by filling the parameters <b>MMU_MCPY_ORIG</b>, 
+             <b>MMU_MCPY_DEST</b> and <b>MMU_MCPY_SZ</b>, and setting <b>MMU_MCPY</b> to <b>0x1</b>. 
+             Example: copy 256 bytes from 0x1234 to 0xABCD:</p>
+          <pre>
+      movd    [MMU_MCPY_ORIG], 0x1234
+      movd    [MMU_MCPY_DEST], 0xABCD
+      movd    [MMU_MCPY_SZ], 256
+      movb    [MMU_CPY], 1
+          </pre>
+          <p>This command can be used even if the virtual memory is disabled.</p>
+          
+          <h2>Errors</h2>
+          <p>If an error happens during a MMU operation, the interrupt defined in <b>MMU_INTERRUPT</b> 
+             will be called, and <b>MMU_ERROR</b> will contain one of the following:</p>
+          <table>
+            <tr>
+              <th>Value</th>
+              <th>Constant</th>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td class="value">0x00</td>
+              <td class="register">MMU_NO_ERRORS</td>
+              <td>No errors happened</td>
+            </tr>
+            <tr>
+              <td class="value">0x01</td>
+              <td class="register">MMU_OUT_OF_BOUNDS</td>
+              <td>Memory addressed above the memory size</td>
+            </tr>
+            <tr>
+              <td class="value">0x04</td>
+              <td class="register">MMU_PAGE_FAULT</td>
+              <td>Memory addressed above the memory size</td>
+            </tr>
+            <tr>
+              <td class="value">0x08</td>
+              <td class="register">MMU_UNAUTH_WRITE</td>
+              <td>Tried to write read-only memory address</td>
+            </tr>
+            <tr>
+              <td class="value">0x10</td>
+              <td class="register">MMU_UNAUTH_EXEC</td>
+              <td>Tried to load non-executable memory address for execution</td>
+            </tr>
+            <tr>
+              <td class="value">0x20</td>
+              <td class="register">MMU_UNAUTH_ACCESS</td>
+              <td>Tried to access supervisor-only memory address in user mode</td>
+            </tr>
+          </table>
 
         </section>
       </section>
