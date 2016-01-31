@@ -7,6 +7,17 @@ let page;
 
 window.onload = function() {
     let timer = window.setInterval(() => {
+
+        // avoid infinite loop on errors
+        try {
+            tinyvm;
+        } catch(e) {
+            window.clearInterval(timer);
+            document.getElementById('loading').innerHTML = 'Error: ' + e;
+            return;
+        }
+
+        // initialize page
         if(tinyvm.available()) {
             page = new Page();
             window.clearInterval(timer);
