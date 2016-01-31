@@ -4,7 +4,7 @@ class TinyVM {
 
     constructor(ram_kb) {
         this.mboard = new Motherboard();
-        this.mboard.setRAM(new RAM(ram_kb));
+        this.mboard.addDevice(new MMU(ram_kb));
 
         const bios = new BIOS();
         this.mboard.addDevice(bios);

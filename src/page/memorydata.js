@@ -139,11 +139,11 @@ class MemoryData extends NumberData {
 class PhysicalMemoryData extends MemoryData {
 
     _get() {
-        return tinyvm.mboard.ram.get(this.addr);
+        return tinyvm.mboard.mmu.ram.get(this.addr);
     }
 
     _set(value) {
-        tinyvm.mboard.ram.set(this.addr, value);
+        tinyvm.mboard.mmu.ram.set(this.addr, value);
     }
 
 }

@@ -56,7 +56,7 @@ class Page {
     {
         // initialize empty sections
         document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
-        document.getElementById('ram_debug').innerHTML = tinyvm.mboard.ram.debug();
+        document.getElementById('ram_debug').innerHTML = tinyvm.mboard.mmu.ram.debug();
         document.getElementById('bios_source').innerHTML = tinyvm.mboard.devices[0].dev.source;
 
         // initialize tag "memory_table"

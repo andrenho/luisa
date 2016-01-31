@@ -54,6 +54,11 @@ class RAM {
                 [ [ t => t.memSizeKb, '=', 4, this ] ]);
         te.test('Getting/setting data',
                 [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
+        te.test('Out of bounds',
+                [ 
+                    [ t => t.get(0xF0), '!exception', 0, this ],
+                    [ t => t.get(0xE000000), 'exception', 'out of bounds', this ],
+                ]);
     }
 
 }
