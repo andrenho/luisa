@@ -60,12 +60,14 @@ class Page {
         document.getElementById('bios_source').innerHTML = tinyvm.mboard.devices[0].dev.source;
 
         // initialize tag "memory_table"
+        /*
         [].forEach.call(document.getElementsByClassName('memory_table'), e => {
             e.memoryTable = new MemoryTable(e);
         });
+        */
 
         // initialize tag "memory_data"
-        this._forEachMemoryData(e => { e.memoryData = new LogicalMemoryData(e); });
+        //this._forEachMemoryData(e => { e.memoryData = new LogicalMemoryData(e); });
     }
 
 

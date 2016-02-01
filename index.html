@@ -220,7 +220,7 @@ class MMU extends Device {
         </section>
 
         <section id="mboard_test">
-          <button class="test" onclick="(new Motherboard()).runTests('mboard_tests');">Run tests</button>
+          <button class="test" onclick="(new TinyVM(4)).mboard.runTests('mboard_tests');">Run tests</button>
           <section id="mboard_tests"></section>
         </section>
 

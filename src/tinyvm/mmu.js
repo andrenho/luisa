@@ -33,12 +33,12 @@ class MMU {
     }
 
 
-    set(addr, uint_8) {
+    set(addr, value) {
         if(this.active) {
             throw 'TODO'; // TODO
         } else {
             try {
-                this.ram.set(addr);
+                this.ram.set(addr, value);
             } catch(e) {
                 if(e === 'out of bounds') {
                     throw 'TODO'; // TODO
