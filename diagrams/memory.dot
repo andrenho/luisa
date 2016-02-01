@@ -1,44 +1,44 @@
 digraph {
     //splines = false;
 
-    node [fontname="Sudo"];
-    edge [fontname="Sudo"];
+    node [fontname="helvetica"];
+    edge [fontname="helvetica"];
 
     {
         node [shape=diamond, label="", width=0.25, height=0.25];
         X3; X1; X2; 
     }
 
-    node [fontsize=11, shape=box];
-    edge [fontsize=10];
+    node [fontsize=10, shape=box];
+    edge [fontsize=9];
 
     "Memory\nAccess" -> X3 [label = "< 0xF0000000"];
     X3 -> "Look up\npage\ndirectory" [label="MMU\nactive"];
     "Look up\npage\ndirectory" -> "Look up\npage\ntable" [label="Other"];
-    MMU_PAGE_FAULT [fillcolor=lightpink1, style=filled];
-    "Look up\npage\ndirectory" -> MMU_PAGE_FAULT [label="Page\ninactive"];
-    MMU_UNAUTH_ACCESS [fillcolor=lightpink1, style=filled];
-    "Look up\npage\ndirectory" -> MMU_UNAUTH_ACCESS [label="In user mode\nand page directory is\nsupervisor-only"];
+    "MMU_\nPAGE_FAULT" [fillcolor=lightpink1, style=filled];
+    "Look up\npage\ndirectory" -> "MMU_\nPAGE_FAULT" [label="Page\ninactive"];
+    "MMU_\nUNAUTH_ACCESS" [fillcolor=lightpink1, style=filled];
+    "Look up\npage\ndirectory" -> "MMU_\nUNAUTH_ACCESS" [label="In user mode\nand page directory is\nsupervisor-only"];
 
     "Look up\npage\ntable" -> "Find page physical\naddress and add\noffset" [label="Other"];
-    MMU_UNAUTH_WRITE [fillcolor=lightpink1, style=filled];
-    "Look up\npage\ntable" -> MMU_UNAUTH_WRITE [label="Requested for writing\nand page table is\nread-only"];
-    MMU_UNAUTH_EXEC [fillcolor=lightpink1, style=filled];
-    "Look up\npage\ntable" -> MMU_UNAUTH_EXEC [label="Requested for execution\nand page table is\ndata-only"];
+    "MMU_\nUNAUTH_WRITE" [fillcolor=lightpink1, style=filled];
+    "Look up\npage\ntable" -> "MMU_\nUNAUTH_WRITE" [label="Requested for writing\nand page table is\nread-only"];
+    "MMU_\nUNAUTH_EXEC" [fillcolor=lightpink1, style=filled];
+    "Look up\npage\ntable" -> "MMU_\nUNAUTH_EXEC" [label="Requested for execution\nand page table is\ndata-only"];
     "Find page physical\naddress and add\noffset" -> X1;
 
     "Access\ndevice\nregister" [fillcolor=darkolivegreen2, style=filled];
     "Access\ndevice\nRAM" [fillcolor=darkolivegreen2, style=filled];
-    "MMU_OUT_OF_BOUNDS" [fillcolor=lightpink1, style=filled];
+    "MMU_\nOUT_OF_BOUNDS" [fillcolor=lightpink1, style=filled];
 
     X3 -> X1 [label="MMU\ninactive"];
     X1 -> "Access\nRAM\ndirectly" [label="< RAM size"];
-    X1 -> "MMU_OUT_OF_BOUNDS" [label=">= RAM size"];
+    X1 -> "MMU_\nOUT_OF_BOUNDS" [label=">= RAM size"];
 
     "Memory\nAccess" -> X2 [label = ">= 0xF0000000"];
     X2 -> "Access\ndevice\nregister" [label="Register\nmemory\narea"];
     X2 -> "Access\ndevice\nRAM" [label="RAM device\nmemory\narea"];
-    X2 -> "MMU_OUT_OF_BOUNDS" [label="Other"];
+    X2 -> "MMU_\nOUT_OF_BOUNDS" [label="Other"];
 
     "Access\nRAM\ndirectly" [fillcolor=darkolivegreen2, style=filled];
 

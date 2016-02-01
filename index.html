@@ -49,7 +49,7 @@ Some explanations:
     <!--          -->
 
     <section id="computer">
-      <span id="loading"><p>Loading...</p></span>
+      <span id="loading">Loading...</span>
       <section id="screen"></section>
       <section id="choose_dev_mode" class="dev_mode">
         <label>
@@ -298,13 +298,13 @@ class RAMDevice extends Device {
              memory</b>.</p>
           <p>The virtual memory can be activated by setting the bit 16 of the VMEM register, 
              like this:</p>
-          <pre>      movd    [MMU_VMEM], (1 << 16) | 0xFAB</pre>
+          <pre>      movd    [MMU_VMEM], (1 &lt;&lt; 16) | 0xFAB</pre>
           <p>This will activate the virtual memory and set the memory page to <b>0xFAB</b>.</p>
 
           <h2>Algorithm for memory addressing</h2>
           <p>When a memory address is selected, the motherboard and MMU will use the following
              algorithm to determine the final memory location:</p>
-          <img src="diagrams/memory.png" alt="Memory address algorithm">
+          <img src="diagrams/memory.svg" alt="Memory address algorithm">
 
           <h2>Virtual Memory</h2>
           <p>The <b>virtual memory</b> makes possible to access the memory indirectly.
