@@ -34,7 +34,7 @@ class RAM {
 
     debug() {
         return `
-            <p>The memory size is <b>${this.memSizeKb} Kb</b>. The maximum addressable address 
+            <p>The physical memory size is <b>${this.memSizeKb} Kb</b>. The maximum addressable address 
                is <b>0x${toHex(this.memSize-1)}</b>.</p>
             <h2>Physical memory</h2>
             <section class="memory_table">0x0,physical_memory_size,physical</section>

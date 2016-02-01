@@ -134,14 +134,6 @@ class MemoryData extends NumberData {
         return this._get();
     }
 
-    _get() {
-        return tinyvm.mboard.mmu.ram.get(this.addr);
-    }
-
-    _set(value) {
-        tinyvm.mboard.mmu.ram.set(this.addr, value);
-    }
-
 }
 
 

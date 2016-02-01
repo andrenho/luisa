@@ -77,6 +77,10 @@ class BIOS {
             this.bin[a] = v;
         }
     }
+
+    isBIOS() { 
+        return true; 
+    }
 }
 
 

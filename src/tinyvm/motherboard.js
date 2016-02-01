@@ -16,6 +16,7 @@ class Motherboard {
     reset() {
         this.devices = [];
         this.mmu = null;
+        this.bios = null;
 
         this._current = { reg: DEV_REG_ADDR, ram: DEV_RAM_ADDR }     // used for calculating the device memory areas
     }
@@ -56,6 +57,7 @@ class Motherboard {
                 }
             }
             this.fireOutOfBoundsException();  // if not found
+            return 0;
         } else if(addr >= DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(d.has_ram) {
@@ -65,6 +67,7 @@ class Motherboard {
                 }
             }
             this.fireOutOfBoundsException();  // if not found
+            return 0;
         } else {
             return this.mmu.get(addr);
         }
@@ -134,6 +137,8 @@ class Motherboard {
         
         if(typeof dev.isMMU === 'function' && dev.isMMU()) {
             this.mmu = dev;
+        } else if(typeof dev.isBIOS === 'function' && dev.isBIOS()) {
+            this.bios = dev;
         }
 
         return type;
@@ -215,7 +220,7 @@ class Motherboard {
                   <td class="address">0x` + toHex(pos, 8) + `
                 </tr>
                 <tr>
-                  <td class="area ob">OB register</td>
+                  <td class="noborder"></td>
                   <td class="beginning"></td>
                   <td class="address">0xFFFFFFFF</td>
                 </tr>
@@ -267,7 +272,7 @@ class Motherboard {
                 t.set(DEV_REG_ADDR + 0, 42);
                 return t.get(DEV_REG_ADDR + 0);
             }, '=', 42, this ],
-            [ t => t.outOfBounds, '=', false, this ],
+            // TODO - test out of bounds access
         ]);
 
         class RAMDevice {
@@ -285,7 +290,7 @@ class Motherboard {
                 t.set(DEV_RAM_ADDR + 0, 42);
                 return t.get(DEV_RAM_ADDR + 0);
             }, '=', 42, this ],
-            [ t => t.outOfBounds, '=', false, this ],
+            // TODO - test out of bounds access
         ]);
 
         te.test('Devices addresses', [
