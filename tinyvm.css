@@ -23,6 +23,10 @@
  * BODY
  */
 
+html {
+    overflow-y: scroll;
+}
+
 body {
     font-family: Sudo, monospace;
     max-width: 800px;

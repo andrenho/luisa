@@ -301,6 +301,11 @@ class RAMDevice extends Device {
           <pre>      movd    [MMU_VMEM], (1 << 16) | 0xFAB</pre>
           <p>This will activate the virtual memory and set the memory page to <b>0xFAB</b>.</p>
 
+          <h2>Algorithm for memory addressing</h2>
+          <p>When a memory address is selected, the motherboard and MMU will use the following
+             algorithm to determine the final memory location:</p>
+          <img src="diagrams/memory.png" alt="Memory address algorithm">
+
           <h2>Virtual Memory</h2>
           <p>The <b>virtual memory</b> makes possible to access the memory indirectly.
              If active, when the CPU requests a memory byte from the MMU, the MMU lookups 

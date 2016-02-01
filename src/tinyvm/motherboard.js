@@ -171,7 +171,7 @@ class Motherboard {
         let s = ['<table class="mmap">'];
 
         // TODO - check if virtual memory is active
-        if(this.ram) {
+        if(this.mmu.ram) {
             s.push(`<tr>
                       <td class="area ram">RAM (physical memory)</td>
                       <td class="beginning"></td>
