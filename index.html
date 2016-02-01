@@ -127,7 +127,7 @@ Some explanations:
             <li>set the <b>OB</b> (<i>out of bounds</i>) register. This register can be accessed
               at 0xFFFFFFFF.</li>
           </ol>
-          <p>This means that, without a MMU active, the memory map will look like this:</p>
+          <p>This means that, without a MMU active, the memory map will something look like this:</p>
           <table class="mmap">
             <tr>
               <td class="area ram">RAM (physical memory)</td>
@@ -150,11 +150,12 @@ Some explanations:
               <td class="address">0xF0010000</td>
             </tr>
             <tr>
-              <td class="area ob">OB</td>
+              <td class="noborder"></td>
               <td class="beginning"></td>
               <td class="address">0xFFFFFFFF</td>
             </tr>
           </table>
+          <p>(see the debug page for the current actual implementation)</p>
 
           <h2>Implementing new devices</h2>
           <p>New devices can be created in javascript and connected to the motherboard.
@@ -181,42 +182,13 @@ class RAMDevice extends Device {
     setRAM(addr, uint8_t)
 } 
           </pre>
-          <p>The MMU is a special kind of devices that manages virtual memory
-             addresses. There can be only one MMU attached to the motherboard,
-             and it follows this interface:</p>
-          <pre class="code">
-class MMU extends Device {
-    translate(uint32_t) : uint32_t
-}
-          </pre>
         </section>
 
         <section id="mboard_debug">
 
           <h2>Memory map</h2>
+          <p>This is the current memory map for the computer.</p>
           <section id="mmap"></section>
-
-          <h2>Registers</h2>
-          <section id="registers">
-            <table>
-              <tr>
-                <th>Register</th>
-                <th>Description</th>
-                <th>Address</th>
-                <th>Current value</th>
-              </tr>
-              <tr>
-                <td class="register">OB</td>
-                <td>
-                  <b>Out of bounds.</b>
-                  Set to 1 when an access was made to a memory address outside of bounds.
-                  Needs to be reset to 0 manually.
-                </td>
-                <td>0xFFFFFFFF</td>
-                <td class="value"><span class="memory_data">0xFFFFFFFF,2,prefix,rw</span></td>
-              </tr>
-            </table>
-          </section>
 
         </section>
 
@@ -262,7 +234,7 @@ class MMU extends Device {
              executed when the computer is turned on.</p>
           <p>It contains code that will check errors and look for disks present, 
              loading the booting code and excuting it.</p>
-          <p>When the CPU is turned on, it will point to <b>0xF0000000</b>, (in the BIOS
+          <p>When the CPU is turned on, it will point to <b>0xF0000100</b>, (in the BIOS
              area), that will contain simply a jump to a larger code area starting in
              <b>0xF0010000</b>.</p>
         </section>
@@ -282,24 +254,24 @@ class MMU extends Device {
                 <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
                 <td>0xF0000000</td>
                 <td class="value">
-                  <span class="memory_data">0xF0000000,2,rw</span>
-                  <span class="memory_data">0xF0000001,2,rw</span>
-                  <span class="memory_data">0xF0000002,2,rw</span>
-                  <span class="memory_data">0xF0000003,2,rw</span>
-                  <span class="memory_data">0xF0000004,2,rw</span>
+                  <span class="memory_data">0xF0000100,2,rw</span>
+                  <span class="memory_data">0xF0000101,2,rw</span>
+                  <span class="memory_data">0xF0000102,2,rw</span>
+                  <span class="memory_data">0xF0000103,2,rw</span>
+                  <span class="memory_data">0xF0000104,2,rw</span>
                 </td>
               </tr>
               <tr>
                 <td class="register">BMIN</td>
                 <td>BIOS version (minor)</td>
                 <td>0xF0000010</td>
-                <td class="value"><span class="memory_data">0xF0000010,2,prefix,rw</span></td>
+                <td class="value"><span class="memory_data">0xF0000110,2,prefix,rw</span></td>
               </tr>
               <tr>
                 <td class="register">BMAJ</td>
                 <td>BIOS version (major)</td>
                 <td>0xF0000011</td>
-                <td class="value"><span class="memory_data">0xF0000011,2,prefix,rw</span></td>
+                <td class="value"><span class="memory_data">0xF0000111,2,prefix,rw</span></td>
               </tr>
             </table>
           </section>

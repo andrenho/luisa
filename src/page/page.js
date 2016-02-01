@@ -57,17 +57,17 @@ class Page {
         // initialize empty sections
         document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
         document.getElementById('ram_debug').innerHTML = tinyvm.mboard.mmu.ram.debug();
-        document.getElementById('bios_source').innerHTML = tinyvm.mboard.devices[0].dev.source;
+        document.getElementById('bios_source').innerHTML = tinyvm.mboard.bios.source;
 
         // initialize tag "memory_table"
-        /*
         [].forEach.call(document.getElementsByClassName('memory_table'), e => {
             e.memoryTable = new MemoryTable(e);
         });
-        */
 
         // initialize tag "memory_data"
-        //this._forEachMemoryData(e => { e.memoryData = new LogicalMemoryData(e); });
+        [].forEach.call(document.getElementsByClassName('memory_data'), e => {
+            e.memoryData = new LogicalMemoryData(e);
+        });
     }
 
 
@@ -137,13 +137,6 @@ class Page {
     // return a letiable from a query string
     _getQueryString(key) {  
         return unescape(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + escape(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
-    }
-
-    // execute a function `f` for each tag of the type memory_data
-    _forEachMemoryData(f, data) {
-        [].forEach.call(document.getElementsByClassName('memory_data'), e => {
-            f(e, data);
-        });
     }
 
 }
