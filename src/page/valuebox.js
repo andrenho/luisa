@@ -1,32 +1,58 @@
 'use strict';
 
-class NumberData {
+class HexBox {
 
-    constructor(parent) {
-        this.parent = parent;
-
-        // read parameters
-        const pars = parent.innerHTML.split(',');
-        this.addr = parseInt(pars[0]);
-        this.size = parseInt(pars[1]);
-        this.value = this.addr;
-        this.maxValue = Math.pow(16, this.size) - 1;
-        this.prefix = false;
-        this.writable = false;
-        for(let i=2; i<pars.length; ++i) {
-            if(pars[i] === 'prefix') {
-                this.prefix = true;
-            } else if(pars[i] == 'rw') {
-                this.writable = true;
-            }
+    constructor(parent, model) {
+        if(new.target === HexBox) throw 'abstract class';
+        
+        // verify types
+        if(!(model.get && model.set)) {
+            throw 'model must have "get" and "set"';
         }
 
+        this.parent = parent;
+        this.model = model;
+        this.parameters = this._parseParameters(parent.innerHTML);
+
+        // read parameters
+        this.size = this.parameters.size || 2;
+        this.addr = this.parameters.addr || 0;
+        this.maxValue = Math.pow(16, this.size) - 1;
+        this.prefix = this.parameters.prefix || false;
+        this.rw = this.parameters.rw || false;
+        
         this._setupField();
     }
 
 
+    value() {
+        return this.model.get(this.addr);
+    }
+
+
+    setValue(v) {
+        this.model.set(this.addr, v);
+    }
+
+
+    _parseParameters(p) {
+        const pars = p.split(',');
+        let r = {};
+        for(let pr of pars) {
+            const n = pr.split('=');
+            if(n[1]) {
+                const v = parseInt(n[1]);
+                r[n[0]] = (v !== NaN) ? v : n[1];
+            } else {
+                r[pr] = true;
+            }
+        }
+        return r;
+    }
+
+
     update() {
-        this.data.innerHTML = (this.prefix ? '0x' : '') + toHex(this.value, this.size);
+        this.data.innerHTML = (this.prefix ? '0x' : '') + toHex(this.model.get(this.addr), this.size);
     }
 
 
@@ -36,12 +62,11 @@ class NumberData {
     }
 
 
-    _set(value) {
-        this.value = value;
-    }
-
-
     _setupField() {
+        if(!this.model) {
+            throw "a model is needed";
+        }
+
         this.parent.innerHTML = '';
         this.parent.style.display = 'inline';
 
@@ -49,7 +74,7 @@ class NumberData {
         this.data = document.createElement('span');
         this.parent.appendChild(this.data);
 
-        if(this.writable) {
+        if(this.rw) {
             this.data.className = 'editable';
             
             // create input
@@ -57,6 +82,7 @@ class NumberData {
             this.input.type = 'text';
             this.input.className = 'data_input';
             this.input.autocomplete = 'off';
+            this.input.object = this;
             this.input.maxLength = this.input.size = this.size;
             if(this.prefix) this.input.size += 2;
             this.input.style.display = 'none';
@@ -78,7 +104,7 @@ class NumberData {
             this.input.onAccept = () => {
                 const value = parseInt(this.input.value, 16);
                 if(!isNaN(value) && value >= 0 && value <= this.maxValue) {
-                    this._set(value);
+                    this.model.set(this.addr, value);
                 }
                 this.update();
                 this.data.style.display = 'inline';
@@ -112,52 +138,48 @@ class NumberData {
 }
 
 
-class MemoryData extends NumberData {
+class HexValueBox extends HexBox {
 
     constructor(parent) {
-        super(parent)
-        this.data.title = '0x' + toHex(this.addr, 8);
-    }
+        class ValueModel {
+            constructor(initial_value) {
+                this.value = initial_value || 0;
+            }
 
-    update() {
-        const d = this._get();
-        this.data.innerHTML = (this.prefix ? '0x' : '') + toHex(d, 2);
-    }
+            get(addr) {
+                return this.value;
+            }
 
-    changeAddress(addr) {
-        this.addr = addr;
-        this.data.title = '0x' + toHex(this.addr, 8);
+            set(addr, value) {
+                this.value = value;
+            }
+        };
+        super(parent, new ValueModel());
+        if(this.parameters.value) {
+            this.model.set(0, this.parameters.value);
+        }
         this.update();
     }
 
-    memoryValue() {
-        return this._get();
+};
+
+
+class MemoryDataBox extends HexBox {
+
+    constructor(parent, model) {
+        super(parent, model);
+        if(this.parameters.addr !== undefined) {
+            this.addr = this.parameters.addr;
+        } else {
+            throw 'expected address';
+        }
+        this.update();
     }
 
-}
 
-
-class PhysicalMemoryData extends MemoryData {
-
-    _get() {
-        return tinyvm.mboard.mmu.ram.get(this.addr);
-    }
-
-    _set(value) {
-        tinyvm.mboard.mmu.ram.set(this.addr, value);
-    }
-
-}
-
-
-class LogicalMemoryData extends MemoryData {
-
-    _get() {
-        return tinyvm.mboard.get(this.addr);
-    }
-
-    _set(value) {
-        tinyvm.mboard.set(this.addr, value);
+    changeAddress(addr) {
+        this.addr = addr;
+        this.update();
     }
 
 }

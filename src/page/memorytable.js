@@ -2,30 +2,42 @@
 
 class MemoryTable {
 
-    constructor(parent) {
+    constructor(parent, model) {
         this.parent = parent;
+        this.model = model;
 
         this._elements = { data: [], chars: [], row_header: [] };
 
         // read parameters
-        const pars = parent.innerHTML.split(',');
-        this.start = parseInt(pars[0]);
-        if(pars[1] == 'physical_memory_size') {
-            this.end = tinyvm.mboard.mmu.ram.memSize - 1;
+        this.parameters = this._parseParameters(parent.innerHTML);
+        this.start = this.parameters.start || 0;
+        if(this.parameters.end == 'physical_memory_size') {
+            this.end = model.memSize - 1;
+        } else if(this.parameters.end) {
+            this.end = this.parameters.end;
         } else {
-            this.end = parseInt(pars[1]);
+            throw 'end required';
         }
-        this.physical = false;
-        for(let i=2; i<pars.length; ++i) {
-            if(pars[i] === 'physical') {
-                this.physical = true;
-            }
-        }
-
+        
         this._setupHeader();
         this._setupTable();
 
         this.update();
+    }
+
+
+    _parseParameters(p) {
+        const pars = p.split(',');
+        let r = {};
+        for(let pr of pars) {
+            const n = pr.split('=');
+            if(n[1]) {
+                r[n[0]] = n[1];
+            } else {
+                r[pr] = true;
+            }
+        }
+        return r;
     }
 
 
@@ -48,19 +60,19 @@ class MemoryTable {
         p.innerHTML = 'Base address: ';
 
         const base = document.createElement('span');
-        base.innerHTML = Math.floor(this.start / 0x100) + ',6,prefix,rw';
-        base.numberData = new NumberData(base);
+        base.innerHTML = 'value=' + Math.floor(this.start / 0x100) + ',size=6,prefix,rw';
+        base.numberData = new HexValueBox(base);
         base.style.paddingRight = '5px';
         p.appendChild(base);
         this.numberData = base.numberData;
         this.numberData.afterUpdate = v => {
             if(v * 0x100 < this.start) {
-                this.numberData.value = Math.floor(this.start / 0x100);
+                this.numberData.setValue(Math.floor(this.start / 0x100));
             } else if(v * 0x100 >= this.end) {
-                this.numberData.value = Math.floor(this.end / 0x100);
+                this.numberData.setValue(Math.floor(this.end / 0x100));
             }
             this.numberData.update();
-            this._updateBaseAddress(base.numberData.value);
+            this._updateBaseAddress(base.numberData.value());
         };
 
         // buttons
@@ -69,10 +81,10 @@ class MemoryTable {
         back.innerHTML = '&#9664;';
         p.appendChild(back);
         back.onclick = () => {
-            if(this.numberData.value > Math.floor(this.start / 0x100)) {
-                --this.numberData.value;
+            if(this.numberData.value() > Math.floor(this.start / 0x100)) {
+                this.numberData.setValue(this.numberData.value() - 1);
                 this.numberData.update();
-                this._updateBaseAddress(base.numberData.value);
+                this._updateBaseAddress(base.numberData.value());
             }
         };
 
@@ -81,10 +93,10 @@ class MemoryTable {
         forward.innerHTML = '&#9654;';
         p.appendChild(forward);
         forward.onclick = () => {
-            if(this.numberData.value < Math.floor(this.end / 0x100)) {
-                ++this.numberData.value;
+            if(this.numberData.value() < Math.floor(this.end / 0x100)) {
+                this.numberData.setValue(this.numberData.value() + 1);
                 this.numberData.update();
-                this._updateBaseAddress(base.numberData.value);
+                this._updateBaseAddress(base.numberData.value());
             }
         };
 
@@ -124,7 +136,7 @@ class MemoryTable {
             return t;
         }
 
-        let pos = this.numberData.value * 0x100;
+        let pos = this.numberData.value() * 0x100;
         for(let i=0; i<16; ++i) {
             const row = document.createElement('tr');
             let row_header = td("addr", '0x' + toHex(pos / 0x10, 7) + '_');
@@ -143,8 +155,8 @@ class MemoryTable {
                 cell.addr = addr;
 
                 const base = document.createElement('span');
-                base.innerHTML = addr + ',2,rw';
-                base.memoryData = this.physical ? new PhysicalMemoryData(base) : new LogicalMemoryData(base);
+                base.innerHTML = "addr=" + addr + ',rw';
+                base.memoryData = new MemoryDataBox(base, this.model);
                 base.memoryData.afterUpdate = v => {
                     this._updateChars(base.chars);
                 };
@@ -179,7 +191,7 @@ class MemoryTable {
     _updateChars(chars) {
         let cs = [];
         for(let b of chars.origins) {
-            const c = b.memoryData.memoryValue();
+            const c = b.memoryData.value();
             cs.push(c >= 32 ? String.fromCharCode(c) : '.');
         }
         chars.innerHTML = cs.join('');

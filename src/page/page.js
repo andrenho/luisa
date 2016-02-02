@@ -33,6 +33,7 @@ class Page {
         this.page = 'about';
         this.block = 'doc';
 
+        // hide "Loading...", show page
         document.getElementById('loading').style.display = 'none';
         document.getElementById('choose_dev_mode').style.display = 'block';
 
@@ -47,7 +48,7 @@ class Page {
         }
 
         this.initializePage();
-        this.updatePage();
+        this.updatePageContents();
     }
 
 
@@ -60,19 +61,25 @@ class Page {
         document.getElementById('bios_source').innerHTML = tinyvm.mboard.bios.source;
 
         // initialize tag "memory_table"
-        [].forEach.call(document.getElementsByClassName('memory_table'), e => {
-            e.memoryTable = new MemoryTable(e);
+        [].forEach.call(document.getElementsByClassName('mboard_memory_table'), e => {
+            e.memoryTable = new MemoryTable(e, tinyvm.mboard);
+        });
+        [].forEach.call(document.getElementsByClassName('physical_memory_table'), e => {
+            e.memoryTable = new MemoryTable(e, tinyvm.mboard.mmu.ram);
         });
 
         // initialize tag "memory_data"
+        [].forEach.call(document.getElementsByClassName('hex_data'), e => {
+            e.memoryData = new HexValueBox(e);
+        });
         [].forEach.call(document.getElementsByClassName('memory_data'), e => {
-            e.memoryData = new LogicalMemoryData(e);
+            e.memoryData = new MemoryDataBox(e, tinyvm.mboard);
         });
     }
 
 
     // update contents based on the selected page
-    updatePage()
+    updatePageContents()
     {
         // update menus
         const ch = document.getElementById('topmenu').children;
@@ -117,7 +124,7 @@ class Page {
         } else {
             this.page = id;
         }
-        this.updatePage();
+        this.updatePageContents();
         window.sessionStorage.setItem('last_page', this.page);
         window.sessionStorage.setItem('last_block', this.block);
     }
