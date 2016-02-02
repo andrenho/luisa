@@ -25,13 +25,24 @@ class HexBox {
     }
 
 
+    value() {
+        return this.model.get(this.addr);
+    }
+
+
+    setValue(v) {
+        this.model.set(this.addr, v);
+    }
+
+
     _parseParameters(p) {
         const pars = p.split(',');
         let r = {};
         for(let pr of pars) {
             const n = pr.split('=');
             if(n[1]) {
-                r[n[0]] = n[1];
+                const v = parseInt(n[1]);
+                r[n[0]] = (v !== NaN) ? v : n[1];
             } else {
                 r[pr] = true;
             }
@@ -157,11 +168,17 @@ class MemoryDataBox extends HexBox {
 
     constructor(parent, model) {
         super(parent, model);
-        if(this.parameters.addr) {
+        if(this.parameters.addr !== undefined) {
             this.addr = this.parameters.addr;
         } else {
             throw 'expected address';
         }
+        this.update();
+    }
+
+
+    changeAddress(addr) {
+        this.addr = addr;
         this.update();
     }
 

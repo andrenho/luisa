@@ -23,7 +23,7 @@ Some explanations:
   
   <!-- management code -->
   <script src="src/page/util.js"></script>
-  <script src="src/page/memorydata.js"></script>
+  <script src="src/page/valuebox.js"></script>
   <script src="src/page/memorytable.js"></script>
   <script src="src/page/tests.js"></script>
 
@@ -240,6 +240,9 @@ class RAMDevice extends Device {
         </section>
 
         <section id="bios_debug">
+
+          <span class="hex_data">value=15728896,size=6,prefix,rw</span>
+        
           <h2>Registers</h2>
           <section id="registers">
             <table>
@@ -280,7 +283,7 @@ class RAMDevice extends Device {
           <section id="bios_source"></section>
 
           <h2>Binary data</h2>
-          <!--<section class="memory_table">0xF0010000,0xF001FFFF</section>-->
+          <section class="mboard_memory_table">start=0xF0010000,end=0xF001FFFF</section>
 
         </section>
 
