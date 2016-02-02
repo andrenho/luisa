@@ -66,16 +66,13 @@ class MemoryTable {
         p.appendChild(base);
         this.numberData = base.numberData;
         this.numberData.afterUpdate = v => {
-            console.log(v);
-            console.log(this.start);
-            console.log(this.end);
             if(v * 0x100 < this.start) {
                 this.numberData.setValue(Math.floor(this.start / 0x100));
             } else if(v * 0x100 >= this.end) {
                 this.numberData.setValue(Math.floor(this.end / 0x100));
             }
             this.numberData.update();
-            this._updateBaseAddress(base.numberData.value);
+            this._updateBaseAddress(base.numberData.value());
         };
 
         // buttons
