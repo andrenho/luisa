@@ -33,6 +33,7 @@ class RAM {
     }
 
     debug() {
+        return '';
         return `
             <p>The physical memory size is <b>${this.memSizeKb} Kb</b>. The maximum addressable address 
                is <b>0x${toHex(this.memSize-1)}</b>.</p>

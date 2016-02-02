@@ -49,7 +49,7 @@ class MemoryTable {
 
         const base = document.createElement('span');
         base.innerHTML = Math.floor(this.start / 0x100) + ',6,prefix,rw';
-        base.numberData = new NumberData(base);
+        base.numberData = new HexValueBox(base);
         base.style.paddingRight = '5px';
         p.appendChild(base);
         this.numberData = base.numberData;
