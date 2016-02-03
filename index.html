@@ -87,6 +87,7 @@ Some explanations:
         <!--            -->
         <!-- ABOUT PAGE -->
         <!--            -->
+
         <section id="about_doc">
           <p><b>tinyvm</b> is a emulator for a 32-bit computer that aims to be 
             as powerful as a modern computer, but as simple as 8-bit computer
@@ -182,6 +183,73 @@ class RAMDevice extends Device {
     setRAM(addr, uint8_t)
 } 
           </pre>
+ 
+          <h3>Registers</h3>
+
+          <p>Each device must implement, at least, the following set of registers:</p>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Description</th>
+                <th style="min-width:130px;">Address</th>
+                <th>Size (bytes)</th>
+                <th>Access</th>
+              </tr>
+              <tr>
+                <td>
+                  Device type:
+                  <table style="border-style: hidden;">
+                    <tr><td>0x00</td><td>No device</td></tr>
+                    <tr><td>0x01</td><td>MMU</td></tr>
+                    <tr><td>0x02</td><td>BIOS</td></tr>
+                    <tr><td>0x03</td><td>CPU</td></tr>
+                    <tr><td>0x04</td><td>Video</td></tr>
+                    <tr><td>0x05</td><td>Audio</td></tr>
+                    <tr><td>0x06</td><td>Timer</td></tr>
+                    <tr><td>0x07</td><td>Keyboard</td></tr>
+                    <tr><td>0x08</td><td>Input device</td></tr>
+                    <tr><td>0x09</td><td>Output device</td></tr>
+                    <tr><td>0x0A</td><td>External device</td></tr>
+                  </table>
+                </td>
+                <td>Device addr + 0x00</td>
+                <td class="access">1</td>
+                <td class="access">R</td>
+              </tr>
+              <tr>
+                <td>Device version</td>
+                <td>Device addr + 0x01</td>
+                <td class="access">1</td>
+                <td class="access">R</td>
+              </tr>
+              <tr>
+                <td>Interrupt number (this number is set by the motherboard)</td>
+                <td>Device addr + 0x02</td>
+                <td class="access">1</td>
+                <td class="access">RW</td>
+              </tr>
+              <tr>
+                <td>Reserved</td>
+                <td>Device addr + 0x03</td>
+                <td class="access">1</td>
+                <td class="access">R</td>
+              </tr>
+              <tr style="background-color: #e8ffe8;">
+                <td>Free</td>
+                <td>Device addr + 0x04</td>
+                <td class="access">220</td>
+                <td class="access">RW</td>
+              </tr>
+              <tr>
+                <td>Device name</td>
+                <td>Device addr + 0xE0</td>
+                <td class="access">31</td>
+                <td class="access">R</td>
+              </tr>
+            </table>
+          </section>
+          <p>Addresses <b>between 0x05 and 0xDF are free</b> to be used by the devices for other pourposes.</p>
+
         </section>
 
         <section id="mboard_debug">
@@ -252,31 +320,34 @@ class RAMDevice extends Device {
                 <th>Current value</th>
               </tr>
               <tr>
-                <td class="register">BJMP</td>
-                <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
-                <td>0xF0000000</td>
+                <td class="register">BDEV</td>
+                <td>Device code</td>
+                <td>0xF0000100</td>
                 <td class="access">R</td>
+                <td class="value"><span class="memory_data">addr=0xF0000100,prefix,rw</span></td>
+                <!--
                 <td class="value" style="min-width: 110px">
-                  <span class="memory_data">addr=0xF0000100</span>
-                  <span class="memory_data">addr=0xF0000101</span>
-                  <span class="memory_data">addr=0xF0000102</span>
-                  <span class="memory_data">addr=0xF0000103</span>
-                  <span class="memory_data">addr=0xF0000104</span>
+                  <span class="memory_data">addr=0xF0000100,rw</span>
+                  <span class="memory_data">addr=0xF0000101,rw</span>
+                  <span class="memory_data">addr=0xF0000102,rw</span>
+                  <span class="memory_data">addr=0xF0000103,rw</span>
+                  <span class="memory_data">addr=0xF0000104,rw</span>
                 </td>
+                -->
               </tr>
               <tr>
-                <td class="register">BMIN</td>
-                <td>BIOS version (minor)</td>
-                <td>0xF0000010</td>
+                <td class="register">BVER</td>
+                <td>BIOS version</td>
+                <td>0xF0000101</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000110,prefix</span></td>
+                <td class="value"><span class="memory_data">addr=0xF0000101,prefix,rw</span></td>
               </tr>
               <tr>
-                <td class="register">BMAJ</td>
-                <td>BIOS version (major)</td>
-                <td>0xF0000011</td>
+                <td class="register">BNAME</td>
+                <td>BIOS name</td>
+                <td>0xF00001E0</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000111,prefix</span></td>
+                <td class="value"><span class="memory_data_str">addr=0xF00001Eo,size=16,rw</span></td>
               </tr>
             </table>
           </section>
@@ -405,6 +476,37 @@ class RAMDevice extends Device {
           </table>
 
         </section>
+
+        <section id="mmu_debug">
+
+          <h2>Registers</h2>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Register</th>
+                <th>Description</th>
+                <th>Address</th>
+                <th>Access</th>
+                <th>Current value</th>
+              </tr>
+              <tr>
+                <td class="register">BJMP</td>
+                <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
+                <td>0xF0000000</td>
+                <td class="access">R</td>
+                <td class="value" style="min-width: 110px">
+                  <span class="memory_data">addr=0xF0000100,rw</span>
+                  <span class="memory_data">addr=0xF0000101,rw</span>
+                  <span class="memory_data">addr=0xF0000102,rw</span>
+                  <span class="memory_data">addr=0xF0000103,rw</span>
+                  <span class="memory_data">addr=0xF0000104,rw</span>
+                </td>
+              </tr>
+            </table>
+          </section>
+
+        </section>
+
       </section>
 
     </section>

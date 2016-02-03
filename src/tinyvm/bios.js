@@ -3,10 +3,9 @@
 class BIOS {
     
     constructor() {
-        // prepare register data
-        this.reg_data = [ 0x6C, 0x00, 0x00, 0x01, 0xF0 ];
-
         // TODO - version information
+        this.version = 1;
+        this.dev_name = 'TinyBIOS';
 
         this._loaded = { asm: false, bin: false };
 
@@ -51,10 +50,14 @@ class BIOS {
     }
 
     get(a) {
-        if(a >= this.reg_data.length) {
-            return 0;
+        if(a == 0) {
+            return 0x02;  // BIOS
+        } else if(a == 1) {
+            return this.version;
+        } else if(a >= 0xE0 && a < (0xE0 + this.dev_name.length)) {
+            return this.dev_name[a - 0xE0].charCodeAt();
         } else {
-            return this.reg_data[a];
+            return 0;
         }
     }
 
