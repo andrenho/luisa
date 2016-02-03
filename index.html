@@ -241,8 +241,6 @@ class RAMDevice extends Device {
 
         <section id="bios_debug">
 
-          <span class="hex_data">value=15728896,size=6,prefix,rw</span>
-        
           <h2>Registers</h2>
           <section id="registers">
             <table>
@@ -250,31 +248,35 @@ class RAMDevice extends Device {
                 <th>Register</th>
                 <th>Description</th>
                 <th>Address</th>
+                <th>Access</th>
                 <th>Current value</th>
               </tr>
               <tr>
-                <td class="register"></td>
+                <td class="register">BJMP</td>
                 <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
                 <td>0xF0000000</td>
-                <td class="value">
-                  <span class="memory_data">addr=0xF0000100,rw</span>
-                  <span class="memory_data">addr=0xF0000101,rw</span>
-                  <span class="memory_data">addr=0xF0000102,rw</span>
-                  <span class="memory_data">addr=0xF0000103,rw</span>
-                  <span class="memory_data">addr=0xF0000104,rw</span>
+                <td class="access">R</td>
+                <td class="value" style="min-width: 110px">
+                  <span class="memory_data">addr=0xF0000100</span>
+                  <span class="memory_data">addr=0xF0000101</span>
+                  <span class="memory_data">addr=0xF0000102</span>
+                  <span class="memory_data">addr=0xF0000103</span>
+                  <span class="memory_data">addr=0xF0000104</span>
                 </td>
               </tr>
               <tr>
                 <td class="register">BMIN</td>
                 <td>BIOS version (minor)</td>
                 <td>0xF0000010</td>
-                <td class="value"><span class="memory_data">addr=0xF0000110,prefix,rw</span></td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data">addr=0xF0000110,prefix</span></td>
               </tr>
               <tr>
                 <td class="register">BMAJ</td>
                 <td>BIOS version (major)</td>
                 <td>0xF0000011</td>
-                <td class="value"><span class="memory_data">addr=0xF0000111,prefix,rw</span></td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data">addr=0xF0000111,prefix</span></td>
               </tr>
             </table>
           </section>
@@ -343,7 +345,7 @@ class RAMDevice extends Device {
 
           <h2>Addresses above 0xF0000000</h2>
           <p>Memory positions above 0xF0000000 will access the devices' memories. This means 
-             that the maximum addressable space for RAM is 3GB. See Memory map for the details
+             that the maximum addressable space for RAM is 3GB. See <b>Motherboard/Debug</b> for the details
              on which device will use each block of memory.</p>
 
           <h2>Registers and special commands</h2>
@@ -381,22 +383,22 @@ class RAMDevice extends Device {
               <td>Memory addressed above the memory size</td>
             </tr>
             <tr>
-              <td class="value">0x04</td>
+              <td class="value">0x02</td>
               <td class="register">MMU_PAGE_FAULT</td>
               <td>Memory position is not paged</td>
             </tr>
             <tr>
-              <td class="value">0x08</td>
+              <td class="value">0x04</td>
               <td class="register">MMU_UNAUTH_WRITE</td>
               <td>Tried to write read-only memory address</td>
             </tr>
             <tr>
-              <td class="value">0x10</td>
+              <td class="value">0x08</td>
               <td class="register">MMU_UNAUTH_EXEC</td>
               <td>Tried to load non-executable memory address for execution</td>
             </tr>
             <tr>
-              <td class="value">0x20</td>
+              <td class="value">0x10</td>
               <td class="register">MMU_UNAUTH_ACCESS</td>
               <td>Tried to access supervisor-only memory address in user mode</td>
             </tr>

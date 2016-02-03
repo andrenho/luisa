@@ -239,6 +239,10 @@ td.value {
     text-align: center;
 }
 
+td.access {
+    text-align: center;
+}
+
 /*
  * SPECIAL TAGS
  */
