@@ -72,6 +72,9 @@ class Page {
         [].forEach.call(document.getElementsByClassName('hex_data'), e => {
             e.memoryData = new HexValueBox(e);
         });
+        [].forEach.call(document.getElementsByClassName('memory_data_str'), e => {
+            e.memoryData = new StrBox(e, tinyvm.mboard);
+        });
         [].forEach.call(document.getElementsByClassName('memory_data'), e => {
             e.memoryData = new MemoryDataBox(e, tinyvm.mboard);
         });

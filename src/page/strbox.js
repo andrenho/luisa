@@ -114,8 +114,18 @@ class StrBox {
 
     update() {
         let s = [];
-        
-        this.data.innerHTML = '"' + toHex(this.model.get(this.addr), this.size) '"';
+        for(let i=0; i<this.size; ++i) {
+            const c = this.model.get(this.addr + i);
+            if(c == 0) {
+                break;
+            } else if(c < 32) {
+                s.push('?');
+            } else {
+                s.push(c.charCodeAt());
+            }
+        }
+
+        this.data.innerHTML = '"' + s.join('') + '"';
     }
 }
 
