@@ -41,14 +41,13 @@ class StrBox {
 
 
     _setupField() {
-        this.parent.innerHTML = '';
+        this.parent.innerHTML = '"';
         this.parent.style.display = 'inline';
 
         // create data
         this.data = document.createElement('span');
         this.parent.appendChild(this.data);
 
-        /*
         if(this.rw) {
             this.data.className = 'editable';
             
@@ -56,20 +55,16 @@ class StrBox {
             this.input = document.createElement('input');
             this.input.type = 'text';
             this.input.className = 'data_input';
+            this.input.style.textAlign = 'left';
             this.input.autocomplete = 'off';
             this.input.object = this;
             this.input.maxLength = this.input.size = this.size;
-            if(this.prefix) this.input.size += 2;
             this.input.style.display = 'none';
             this.parent.appendChild(this.input);
             
             // event for double-clicking text
             this.data.onclick = () => {
-                if(this.prefix) {
-                    this.input.value = this.data.innerHTML.substring(2);
-                } else {
-                    this.input.value = this.data.innerHTML;
-                }
+                this.input.value = this.data.innerHTML;
                 this.data.style.display = 'none';
                 this.input.style.display = 'inline';
                 this.input.select();
@@ -77,14 +72,14 @@ class StrBox {
 
             // event for leaving text field
             this.input.onAccept = () => {
-                const value = parseInt(this.input.value, 16);
-                if(!isNaN(value) && value >= 0 && value <= this.maxValue) {
-                    this.model.set(this.addr, value);
+                for(let a=0; a<this.size; ++a) {
+                    this.model.set(a + this.addr, 
+                        (a >= this.input.value.length) ? 0 : this.input.value[a].charCodeAt());
                 }
                 this.update();
                 this.data.style.display = 'inline';
                 this.input.style.display = 'none';
-                this.afterUpdate(value);
+                this.afterUpdate(this.input.value);
             }
 
             this.input.onblur = () => {
@@ -106,8 +101,8 @@ class StrBox {
             };
 
         }
-        */
 
+        this.parent.appendChild(document.createTextNode('"'));
         this.update();
     }
 
@@ -121,11 +116,17 @@ class StrBox {
             } else if(c < 32) {
                 s.push('?');
             } else {
-                s.push(c.charCodeAt());
+                s.push(String.fromCharCode(c));
             }
         }
 
-        this.data.innerHTML = '"' + s.join('') + '"';
+        this.data.innerHTML = s.join('');
+    }
+
+
+    // called after changing the data
+    afterUpdate(newValue) {
+        // this can be implemented by the instances
     }
 }
 
