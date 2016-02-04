@@ -3,7 +3,7 @@
 // this source file contains everything that is necessary for managing
 // the web page
 
-let page;
+var page;
 
 window.onload = function() {
     let timer = window.setInterval(() => {
@@ -111,8 +111,18 @@ class Page {
     }
 
 
-    updateDebuggers()
+    update(except)
     {
+        [].forEach.call(document.getElementsByClassName('memory_data_str'), e => {
+            if(e.memoryData !== except) {
+                e.memoryData.update();
+            }
+        });
+        [].forEach.call(document.getElementsByClassName('memory_data'), e => {
+            if(e.memoryData !== except) {
+                e.memoryData.update();
+            }
+        });        
     }
 
 

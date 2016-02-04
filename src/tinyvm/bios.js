@@ -49,7 +49,7 @@ class BIOS {
         return "BIOS"; 
     }
 
-    get(a) {
+    getReg(a) {
         if(a == 0) {
             return 0x02;  // BIOS
         } else if(a == 1) {
@@ -61,7 +61,7 @@ class BIOS {
         }
     }
 
-    set(a,v) { }
+    setReg(a,v) { }
 
     areaRequested() { return 64 * 1024; }
 

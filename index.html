@@ -74,8 +74,8 @@ Some explanations:
       <nav id="leftmenu" class="leftmenu">
         <span onclick="page.menuSelected(this.id);" id="mboard">Motherboard</span>
         <span onclick="page.menuSelected(this.id);" id="ram">RAM</span>
-        <span onclick="page.menuSelected(this.id);" id="bios">BIOS</span>
         <span onclick="page.menuSelected(this.id);" id="mmu">MMU</span>
+        <span onclick="page.menuSelected(this.id);" id="bios">BIOS</span>
         <span onclick="page.menuSelected(this.id);" id="about" class="selected">About</span>
       </nav>
 
@@ -167,8 +167,8 @@ class Device {
     constructor(interrupts...)
     name()            : string
     interruptCount()  : int         [optional]
-    get(addr)         : uint8_t
-    set(addr, uint_8)
+    getReg(addr)      : uint8_t
+    setReg(addr, uint_8)
     avaliable()       : bool
     doc()             : html_string [optional]
     debug()           : html_string [optional]
@@ -420,20 +420,9 @@ class RAMDevice extends Device {
              that the maximum addressable space for RAM is 3GB. See <b>Motherboard/Debug</b> for the details
              on which device will use each block of memory.</p>
 
-          <h2>Registers and special commands</h2>
+          <h2>Registers</h2>
           <p>The MMU contains a set of registers that help managing memory. A list of these registers
              along with their description and current values can be seen in the <b>debug</b> page.</p>
-          <p>Of particlar interest, is the <b>fast memory copy</b>. Using it, the MMU can fast copy 
-             a block of memory (<b>memcpy</b>). It is called by filling the parameters <b>MMU_MCPY_ORIG</b>, 
-             <b>MMU_MCPY_DEST</b> and <b>MMU_MCPY_SZ</b>, and setting <b>MMU_MCPY</b> to <b>0x1</b>. 
-             Example: copy 256 bytes from 0x1234 to 0xABCD:</p>
-          <pre>
-      movd    [MMU_MCPY_ORIG], 0x1234
-      movd    [MMU_MCPY_DEST], 0xABCD
-      movd    [MMU_MCPY_SZ], 256
-      movb    [MMU_CPY], 1
-          </pre>
-          <p>This command can be used even if the virtual memory is disabled.</p>
           
           <h2>Errors</h2>
           <p>If an error happens during a MMU operation, the interrupt defined in <b>MMU_INTERRUPT</b> 
@@ -480,6 +469,23 @@ class RAMDevice extends Device {
 
         <section id="mmu_debug">
 
+          <h2>Information</h2>
+          <p>
+            Virtual memory is
+            <select class="editable">
+              <option value='0'>inactive</option>
+              <option value='1'>active</option>
+            </select>
+            and the page directory is
+            <span class="hex_data">value=0,size=4,prefix,rw</span>.
+          </p>
+          <p>
+            Test translation from MMU address to RAM (physical) address: 
+            <span class="hex_data">value=0,size=8,prefix,rw</span>
+            ->
+            <span id="mmu_translated">0x00000000</span>
+          </p>
+
           <h2>Registers</h2>
           <section id="registers">
             <table>
@@ -491,20 +497,66 @@ class RAMDevice extends Device {
                 <th>Current value</th>
               </tr>
               <tr>
-                <td class="register">BJMP</td>
-                <td>Jumps to beginning of BIOS code. (jmp 0xF0010000)</td>
+                <td class="register">MDEV</td>
+                <td>Device code</td>
                 <td>0xF0000000</td>
                 <td class="access">R</td>
-                <td class="value" style="min-width: 110px">
-                  <span class="memory_data">addr=0xF0000100,rw</span>
-                  <span class="memory_data">addr=0xF0000101,rw</span>
-                  <span class="memory_data">addr=0xF0000102,rw</span>
-                  <span class="memory_data">addr=0xF0000103,rw</span>
-                  <span class="memory_data">addr=0xF0000104,rw</span>
-                </td>
+                <td class="value"><span class="memory_data">addr=0xF0000000,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">MVER</td>
+                <td>MMU version</td>
+                <td>0xF0000001</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data">addr=0xF0000001,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">MINT</td>
+                <td>Set the interrupt used by the MMU when an error ocurrs</td>
+                <td>0xF0000002</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data">addr=0xF0000002,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">MERR</td>
+                <td>Last error</td>
+                <td>0xF0000004</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data">addr=0xF0000004,prefix,rw,domain=0:MMU_NO_ERRORS;1:MMU_OUT_OF_BOUNDS;2:MMU_PAGE_FAULT;4:MMU_UNAUTH_WRITE;8:MMU_UNAUTH_EXEC,16;MMU_UNAUTH_ACCESS</span></td>
+              </tr>
+              <tr>
+                <td class="register">MSUP</td>
+                <td>Supervisor mode (active when != 0)</td>
+                <td>0xF0000005</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data">addr=0xF0000005,prefix,rw,domain=0:Inactive;*:Active</span></td>
+              </tr>
+              <tr>
+                <td class="register">RAMSZ</td>
+                <td>RAM memory size</td>
+                <td>0xF0000008</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data">addr=0xF0000008,prefix,rw,size=8</span></td>
+              </tr>
+              <tr>
+                <td class="register">VMEM</td>
+                <td>Virtual memory (bits 0~14: directory location, bit 15: active/inactive)</td>
+                <td>0xF000000C</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data">addr=0xF000000C,prefix,rw,size=8</span></td>
+              </tr>
+              <tr>
+                <td class="register">MNAME</td>
+                <td>MMU name</td>
+                <td>0xF00000E0</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data_str">addr=0xF00000E0,size=16,rw</span></td>
               </tr>
             </table>
           </section>
+
+          <h2>Memory</h2>
+          <section class="mboard_memory_table">start=0x0,end=0xEFFFFFFF</section>
 
         </section>
 

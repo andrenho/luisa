@@ -29,7 +29,7 @@ class Motherboard {
         if(addr >= DEV_REG_ADDR && addr < DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(addr >= d.reg_area && addr < (d.reg_area + d.reg_size)) {
-                    d.dev.set(addr - d.reg_area, value);
+                    d.dev.setReg(addr - d.reg_area, value);
                     return;
                 }
             }
@@ -53,7 +53,7 @@ class Motherboard {
         if(addr >= DEV_REG_ADDR && addr < DEV_RAM_ADDR) {
             for(let d of this.devices) {
                 if(addr >= d.reg_area && addr < (d.reg_area + d.reg_size)) {
-                    return d.dev.get(addr - d.reg_area);
+                    return d.dev.getReg(addr - d.reg_area);
                 }
             }
             this.fireOutOfBoundsException();  // if not found
@@ -146,8 +146,8 @@ class Motherboard {
 
     _deviceType(dev) {
         if(dev.name && typeof dev.name === 'function' &&
-           dev.get  && typeof dev.get  === 'function' &&
-           dev.set  && typeof dev.set  === 'function') {
+           dev.getReg  && typeof dev.getReg  === 'function' &&
+           dev.setReg  && typeof dev.setReg  === 'function') {
             if(dev.areaRequested && typeof dev.areaRequested === 'function' &&
                dev.getRAM && typeof dev.getRAM === 'function' &&
                dev.setRAM && typeof dev.setRAM === 'function') {

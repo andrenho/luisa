@@ -256,6 +256,8 @@ td.access {
 
 .editable {
     color: #0000ff;
+    font-family: Sudo, monospace;
+    font-size: 100%;
 }
 
 .data_input {
