@@ -61,7 +61,7 @@ class BIOS {
         }
     }
 
-    setReg(a,v) { }
+    setReg(a,v) { /* read-only */ }
 
     areaRequested() { return 64 * 1024; }
 
@@ -83,6 +83,18 @@ class BIOS {
 
     isBIOS() { 
         return true; 
+    }
+
+
+	//
+	// DEBUG
+	//
+
+    updateDebug() {
+        [].forEach.call(document.getElementsByClassName('bios_reg'), e => {
+            e.memoryData.update();
+        });
+        document.getElementById("bios_memory").memoryTable.update();
     }
 }
 

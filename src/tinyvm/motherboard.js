@@ -87,24 +87,6 @@ class Motherboard {
                this.get(addr);
     }
 
-    /*
-    physicalSet(addr, value) {
-        if(addr >= this.memSize) { 
-            throw 'out of bounds';
-        } else {
-            this.mem[addr] = value;
-        }
-    }
-
-    physicalGet(addr) {
-        if(addr >= this.memSize) { 
-            throw 'out of bounds';
-        } else {
-            return this.mem[addr];
-        }
-    }
-    */
-
     fireOutOfBoundsException() {
         // TODO
     }

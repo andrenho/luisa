@@ -46,8 +46,14 @@ class MMU {
     }
 
 
-    setReg(addr, value) {
-        console.log(addr, value);
+    setReg(a, v) {
+        if(a == 0x2) {
+            this.interrupt = v;
+        } else if(a == 0x4) {
+            this.last_error = v;
+        } else if(a == 0x5) {
+            this.supervisorMode = (v ? true : false);
+        }
     }
 
 
@@ -75,10 +81,33 @@ class MMU {
                 this.ram.set(addr, value);
             } catch(e) {
                 if(e === 'out of bounds') {
-                    throw 'TODO'; // TODO
+                    // TODO
                 }
             }
         }
+    }
+
+
+    vmemChanged() {
+        console.log('x'); // TODO
+    }
+
+
+    //
+    // DEBUG
+    //
+
+    updateDebug()
+    {
+        this.ram.updateDebug();
+
+        [].forEach.call(document.getElementsByClassName('mmu_reg'), e => {
+            e.memoryData.update();
+        });
+        document.getElementById('mmu_memory').memoryTable.update();
+
+        document.getElementById('vmem_active').value = this.vmem.active ? '1' : '0';
+        document.getElementById('vmem_directory').memoryData = this.vmem.directory;
     }
     
 }

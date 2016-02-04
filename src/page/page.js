@@ -21,7 +21,15 @@ window.onload = function() {
         if(tinyvm.available()) {
             page = new Page();
             window.clearInterval(timer);
+            tinyvm.updateDebug();
+            window.setInterval(() => {
+                if(page._update) {
+                    page.updateDebuggers();
+                    console.log('update');
+                }
+            }, 500);
         }
+
     }, 50);    
 }
 
@@ -57,7 +65,6 @@ class Page {
     {
         // initialize empty sections
         document.getElementById('mmap').innerHTML = tinyvm.mboard.mmapDebug();
-        document.getElementById('ram_debug').innerHTML = tinyvm.mboard.mmu.ram.debug();
         document.getElementById('bios_source').innerHTML = tinyvm.mboard.bios.source;
 
         // initialize tag "memory_table"
@@ -111,18 +118,15 @@ class Page {
     }
 
 
-    update(except)
+    updateDebuggers()
     {
-        [].forEach.call(document.getElementsByClassName('memory_data_str'), e => {
-            if(e.memoryData !== except) {
-                e.memoryData.update();
-            }
-        });
-        [].forEach.call(document.getElementsByClassName('memory_data'), e => {
-            if(e.memoryData !== except) {
-                e.memoryData.update();
-            }
-        });        
+        tinyvm.updateDebug();
+        this._update = false;
+    }
+
+
+    update() {
+        this._update = true;
     }
 
 

@@ -286,6 +286,12 @@ class RAMDevice extends Device {
         </section>
 
         <section id="ram_debug">
+          <p>The physical memory size is <b><span id="ram_size_kb"></span> Kb</b>. The maximum addressable address 
+             is <b><span id="ram_max_address"></span></b>.</p>
+          <h2>Physical memory</h2>
+          <section id="ram_memory_debug" class="physical_memory_table">start=0x0,end=physical_memory_size</section>
+          <p>Notice that this is access to the <b>physical memory</b>. When virtual memory is active,
+             this is not the memory that the CPU sees.</p>
         </section>
 
         <section id="ram_test">
@@ -325,7 +331,7 @@ class RAMDevice extends Device {
                 <td>Device code</td>
                 <td>0xF0000100</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000100,prefix,rw</span></td>
+                <td class="value"><span class="memory_data bios_reg">addr=0xF0000100,prefix,rw</span></td>
                 <!--
                 <td class="value" style="min-width: 110px">
                   <span class="memory_data">addr=0xF0000100,rw</span>
@@ -341,14 +347,14 @@ class RAMDevice extends Device {
                 <td>BIOS version</td>
                 <td>0xF0000101</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000101,prefix,rw</span></td>
+                <td class="value"><span class="memory_data bios_reg">addr=0xF0000101,prefix,rw</span></td>
               </tr>
               <tr>
                 <td class="register">BNAME</td>
                 <td>BIOS name</td>
                 <td>0xF00001E0</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data_str">addr=0xF00001E0,size=16,rw</span></td>
+                <td class="value"><span class="memory_data_str bios_reg">addr=0xF00001E0,size=16,rw</span></td>
               </tr>
             </table>
           </section>
@@ -357,7 +363,7 @@ class RAMDevice extends Device {
           <section id="bios_source"></section>
 
           <h2>Binary data</h2>
-          <section class="mboard_memory_table">start=0xF0010000,end=0xF001FFFF</section>
+          <section id="bios_memory" class="mboard_memory_table">start=0xF0010000,end=0xF001FFFF</section>
 
         </section>
 
@@ -472,12 +478,12 @@ class RAMDevice extends Device {
           <h2>Information</h2>
           <p>
             Virtual memory is
-            <select class="editable">
+            <select id="vmem_active" class="editable" onchange="tinyvm.mboard.mmu.vmemChanged();">
               <option value='0'>inactive</option>
               <option value='1'>active</option>
             </select>
             and the page directory is
-            <span class="hex_data">value=0,size=4,prefix,rw</span>.
+            <span id="vmem_directory" class="hex_data" onchange="tinyvm.mboard.mmu.vmemChanged();">value=0,size=4,prefix,rw</span>.
           </p>
           <p>
             Test translation from MMU address to RAM (physical) address: 
@@ -501,62 +507,62 @@ class RAMDevice extends Device {
                 <td>Device code</td>
                 <td>0xF0000000</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000000,prefix,rw</span></td>
+                <td class="value"><span class="memory_data mmu">addr=0xF0000000,prefix,rw</span></td>
               </tr>
               <tr>
                 <td class="register">MVER</td>
                 <td>MMU version</td>
                 <td>0xF0000001</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000001,prefix,rw</span></td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000001,prefix,rw</span></td>
               </tr>
               <tr>
                 <td class="register">MINT</td>
                 <td>Set the interrupt used by the MMU when an error ocurrs</td>
                 <td>0xF0000002</td>
                 <td class="access">RW</td>
-                <td class="value"><span class="memory_data">addr=0xF0000002,prefix,rw</span></td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000002,prefix,rw</span></td>
               </tr>
               <tr>
                 <td class="register">MERR</td>
                 <td>Last error</td>
                 <td>0xF0000004</td>
                 <td class="access">RW</td>
-                <td class="value"><span class="memory_data">addr=0xF0000004,prefix,rw,domain=0:MMU_NO_ERRORS;1:MMU_OUT_OF_BOUNDS;2:MMU_PAGE_FAULT;4:MMU_UNAUTH_WRITE;8:MMU_UNAUTH_EXEC,16;MMU_UNAUTH_ACCESS</span></td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000004,prefix,rw,domain=0:MMU_NO_ERRORS;1:MMU_OUT_OF_BOUNDS;2:MMU_PAGE_FAULT;4:MMU_UNAUTH_WRITE;8:MMU_UNAUTH_EXEC,16;MMU_UNAUTH_ACCESS</span></td>
               </tr>
               <tr>
                 <td class="register">MSUP</td>
                 <td>Supervisor mode (active when != 0)</td>
                 <td>0xF0000005</td>
                 <td class="access">RW</td>
-                <td class="value"><span class="memory_data">addr=0xF0000005,prefix,rw,domain=0:Inactive;*:Active</span></td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000005,prefix,rw,domain=0:Inactive;*:Active</span></td>
               </tr>
               <tr>
                 <td class="register">RAMSZ</td>
                 <td>RAM memory size</td>
                 <td>0xF0000008</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data">addr=0xF0000008,prefix,rw,size=8</span></td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000008,prefix,rw,size=8</span></td>
               </tr>
               <tr>
                 <td class="register">VMEM</td>
                 <td>Virtual memory (bits 0~14: directory location, bit 15: active/inactive)</td>
                 <td>0xF000000C</td>
                 <td class="access">RW</td>
-                <td class="value"><span class="memory_data">addr=0xF000000C,prefix,rw,size=8</span></td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF000000C,prefix,rw,size=8</span></td>
               </tr>
               <tr>
                 <td class="register">MNAME</td>
                 <td>MMU name</td>
                 <td>0xF00000E0</td>
                 <td class="access">R</td>
-                <td class="value"><span class="memory_data_str">addr=0xF00000E0,size=16,rw</span></td>
+                <td class="value"><span class="memory_data_str mmu_reg">addr=0xF00000E0,size=16,rw</span></td>
               </tr>
             </table>
           </section>
 
           <h2>Memory</h2>
-          <section class="mboard_memory_table">start=0x0,end=0xEFFFFFFF</section>
+          <section id="mmu_memory" class="mboard_memory_table">start=0x0,end=0xEFFFFFFF</section>
 
         </section>
 

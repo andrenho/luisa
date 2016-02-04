@@ -19,6 +19,22 @@ class TinyVM {
         return true;
     }
 
+
+    // 
+    // DEBUG
+    //
+
+    updateDebug() {
+        if(this.mboard.updateDebug) {
+            this.mboard.updateDebug();
+        }
+        for(let d of this.mboard.devices) {
+            if(d.dev.updateDebug) {
+                d.dev.updateDebug();
+            }
+        }
+    }
+
 }
 
 const tinyvm = new TinyVM(256);

@@ -71,7 +71,6 @@ class HexBox {
                 this.domain_data.innerHTML = '?';
             }
         }
-        if(page) page.update(this);  // update everything in the page
     }
 
 
@@ -125,6 +124,7 @@ class HexBox {
                 this.data.style.display = 'inline';
                 this.input.style.display = 'none';
                 this.afterUpdate(value);
+                if(page) page.update(this);  // update everything in the page
             }
 
             this.input.onblur = () => {
@@ -206,7 +206,7 @@ class MemoryDataBox extends HexBox {
 
     _get() {
         let n = 0;
-        for(let i=(this.size/2); i>=0; --i) {
+        for(let i=(this.size/2)-1; i>=0; --i) {
             n <<= 8;
             try {
                 n |= this.model.get(this.addr + i);
