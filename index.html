@@ -483,7 +483,7 @@ class RAMDevice extends Device {
               <option value='1'>active</option>
             </select>
             and the page directory is
-            <span id="vmem_directory" class="hex_data" onchange="tinyvm.mboard.mmu.vmemChanged();">value=0,size=4,prefix,rw</span>.
+            <span id="vmem_directory" class="hex_data">value=0,size=4,prefix,rw</span>.
           </p>
           <p>
             Test translation from MMU address to RAM (physical) address: 
@@ -546,7 +546,7 @@ class RAMDevice extends Device {
               </tr>
               <tr>
                 <td class="register">VMEM</td>
-                <td>Virtual memory (bits 0~14: directory location, bit 15: active/inactive)</td>
+                <td>Virtual memory (bits 0~15: directory location, bit 16: active/inactive)</td>
                 <td>0xF000000C</td>
                 <td class="access">RW</td>
                 <td class="value"><span class="memory_data mmu_reg">addr=0xF000000C,prefix,rw,size=8</span></td>

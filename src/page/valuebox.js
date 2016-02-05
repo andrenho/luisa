@@ -27,6 +27,7 @@ class HexBox {
 
     setValue(v) {
         this._set(v);
+        this.update();
     }
 
 

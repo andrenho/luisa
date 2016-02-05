@@ -21,6 +21,7 @@ window.onload = function() {
         if(tinyvm.available()) {
             page = new Page();
             window.clearInterval(timer);
+            tinyvm.initDebug();
             tinyvm.updateDebug();
             window.setInterval(() => {
                 if(page._update) {

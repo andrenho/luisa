@@ -24,20 +24,20 @@ class MMU {
 
 
     getReg(a) {
-        if(a == 0x0) {
+        if(a === 0x0) {
             return 0x01;  // MMU
-        } else if(a == 0x1) {
+        } else if(a === 0x1) {
             return this.version;
-        } else if(a == 0x2) {
+        } else if(a === 0x2) {
             return this.interrupt;
-        } else if(a == 0x4) {
+        } else if(a === 0x4) {
             return this.last_error;
-        } else if(a == 0x5) {
+        } else if(a === 0x5) {
             return this.supervisorMode ? 0x1 : 0x0;
         } else if(a >= 0x08 && a <= 0x0B) {
             return toU32(this.ram.memSize)[a - 0x8];
         } else if(a >= 0x0C && a <= 0x0F) {
-            return toU32(this.vmem.directory | ((this.vmem.active ? 1 : 0) << 15))[a - 0xC];
+            return toU32(this.vmem.directory | ((this.vmem.active ? 1 : 0) << 16))[a - 0xC];
         } else if(a >= 0xE0 && a < (0xE0 + this.dev_name.length)) {
             return this.dev_name[a - 0xE0].charCodeAt();
         } else {
@@ -47,12 +47,18 @@ class MMU {
 
 
     setReg(a, v) {
-        if(a == 0x2) {
+        if(a === 0x2) {
             this.interrupt = v;
-        } else if(a == 0x4) {
+        } else if(a === 0x4) {
             this.last_error = v;
-        } else if(a == 0x5) {
+        } else if(a === 0x5) {
             this.supervisorMode = (v ? true : false);
+        } else if(a === 0xC) {
+            this.vmem.directory = v | (this.vmem.directory & 0xFF00);
+        } else if(a === 0xD) {
+            this.vmem.directory = (this.vmem.directory & 0xFF) | (v << 8);
+        } else if(a === 0xE) {
+            this.vmem.active = (v > 0) ? 1 : 0;
         }
     }
 
@@ -88,14 +94,21 @@ class MMU {
     }
 
 
-    vmemChanged() {
-        console.log('x'); // TODO
-    }
-
-
     //
     // DEBUG
     //
+
+    initDebug() {
+        document.getElementById('vmem_directory').memoryData.afterUpdate = n => this.vmemChanged();
+    }
+
+
+    vmemChanged() {
+        this.vmem.active = document.getElementById('vmem_active').value == '1' ? true : false;
+        this.vmem.directory = document.getElementById('vmem_directory').memoryData.value();
+        this.updateDebug();
+    }
+
 
     updateDebug()
     {
@@ -107,7 +120,7 @@ class MMU {
         document.getElementById('mmu_memory').memoryTable.update();
 
         document.getElementById('vmem_active').value = this.vmem.active ? '1' : '0';
-        document.getElementById('vmem_directory').memoryData = this.vmem.directory;
+        document.getElementById('vmem_directory').memoryData.setValue(this.vmem.directory);
     }
     
 }

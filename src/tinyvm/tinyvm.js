@@ -24,6 +24,17 @@ class TinyVM {
     // DEBUG
     //
 
+    initDebug() {
+        if(this.mboard.initDebug) {
+            this.mboard.initDebug();
+        }
+        for(let d of this.mboard.devices) {
+            if(d.dev.initDebug) {
+                d.dev.initDebug();
+            }
+        }
+    }
+
     updateDebug() {
         if(this.mboard.updateDebug) {
             this.mboard.updateDebug();
