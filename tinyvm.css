@@ -270,5 +270,25 @@ td.access {
     border-width: 0;
 }
 
+/* 
+ * MMU PAGE TABLE
+ */
+
+.page_set {
+    border:0; 
+    vertical-align: top;
+}
+
+td.page {
+    width: 7px;
+    height: 7px;
+    border-color: #a0a0a0;
+    padding: 0;
+}
+
+td.mmu_inactive {
+}
+
+
 /* vim: ts=4:sw=4:sts=4:expandtab
  */

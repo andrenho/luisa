@@ -94,12 +94,65 @@ class MMU {
     }
 
 
+    translate(addr) {
+        return {
+            addr: 0,
+            active: true,
+            supervisorOnly: false,
+            writable: true,
+            executable: false,
+        }
+    }
+
+
     //
     // DEBUG
     //
 
     initDebug() {
+        // setup vmem_directory field
         document.getElementById('vmem_directory').memoryData.afterUpdate = n => this.vmemChanged();
+
+        //document.getElementById('
+
+        // create memory map table
+        /*
+        this.vpages_td = [];
+        let vpages = document.getElementById('mmu_virtual_pages');
+        for(let y=0; y<(32*32); ++y) {
+            let tr = vpages.appendChild(document.createElement('tr'));
+            for(let x=0; x<32; ++x) {
+                let td = document.createElement('td');
+                td.className = 'page mmu_inactive';
+                td.title = 'MMU page: 0x' + toHex(y * 32 + x) + '   /   MMU address: 0x' + toHex((y * 32 + x) * 0x1000);
+                tr.appendChild(td);
+                this.vpages_td.push(td);
+            }
+            vpages.appendChild(tr);
+        }
+
+        // create RAM table
+        let r = 0;
+        this.ram_pages_td = [];
+        let rpages = document.getElementById('mmu_ram_pages');
+        while(1) {
+            let tr = rpages.appendChild(document.createElement('tr'));
+            for(let x=0; x<32; ++x) {
+                let td = document.createElement('td');
+                td.className = 'page mmu_inactive';
+                tr.appendChild(td);
+                this.ram_pages_td.push(td);
+                r += 0x1000;
+                if(r > this.ram.memSize) {
+                    break;
+                }
+            }
+            rpages.appendChild(tr);
+            if(r > this.ram.memSize) {
+                break;
+            }
+        }
+        */
     }
 
 
@@ -121,8 +174,34 @@ class MMU {
 
         document.getElementById('vmem_active').value = this.vmem.active ? '1' : '0';
         document.getElementById('vmem_directory').memoryData.setValue(this.vmem.directory);
+
+        //document.getElementById('mmu_disabled').style.display = this.vmem.active ? 'none' : 'block';
+        //document.getElementById('mmu_enabled').style.display = this.vmem.active ? 'block' : 'none';
+
+        // this.updatePages();
+    }
+
+
+    updatePages()
+    {
+        for(let i in this.vpages_td) {
+            // TODO
+        }
     }
     
+
+    //
+    // TESTS
+    //
+
+    runTests(section) {
+        const te = new TestEnvironment(section);
+
+        // test memory
+        te.test('Basic translation (VMem inactive)',
+                [ [ t => mmu.translate(0xABCD), '=', 0xABCD, this ] ]);
+    }
+
 }
 
 // vim: ts=4:sw=4:sts=4:expandtab

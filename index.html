@@ -487,7 +487,7 @@ class RAMDevice extends Device {
           </p>
           <p>
             Test translation from MMU address to RAM (physical) address: 
-            <span class="hex_data">value=0,size=8,prefix,rw</span>
+            <span id="mmu_translation" class="hex_data">value=0,size=8,prefix,rw</span>
             ->
             <span id="mmu_translated">0x00000000</span>
           </p>
@@ -564,6 +564,28 @@ class RAMDevice extends Device {
           <h2>Memory</h2>
           <section id="mmu_memory" class="mboard_memory_table">start=0x0,end=0xEFFFFFFF</section>
 
+          <!--
+          <h2>Pages</h2>
+          <div id="mmu_disabled"><p>Virtual memory is <b>disabled</b>.</p></div>
+          <div id="mmu_enabled" style="display:none;">
+            <table>
+              <tr>
+                <th class="page_set">Virtual pages (MMU)</th>
+                <th class="page_set">Physical pages (RAM)</th>
+              </tr>
+              <tr>
+                <td class="page_set"><span id="mmu_virtual_pages"></td>
+                <td class="page_set"><span id="mmu_ram_pages"></td>
+              </tr>
+            </table>
+          </div>
+          -->
+
+        </section>
+
+        <section id="mmu_test">
+          <button class="test" onclick="(new MMU(16)).runTests('mmu_tests');">Run tests</button>
+          <section id="mmu_tests"></section>
         </section>
 
       </section>
