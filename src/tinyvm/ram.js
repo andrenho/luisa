@@ -24,6 +24,14 @@ class RAM {
     }
 
 
+    set32(addr, value) {
+        this.set(addr, value & 0xff);
+        this.set(addr+1, (value >> 8) & 0xff);
+        this.set(addr+2, (value >> 16) & 0xff);
+        this.set(addr+3, value >> 24);
+    }
+
+
     get(addr) {
         if(addr > this.memSize) {
             throw 'out of bounds';
@@ -48,18 +56,20 @@ class RAM {
     // TESTS
     //
 
-    runTests(section) {
+    static runTests(section) {
         const te = new TestEnvironment(section);
+
+        let r = new RAM(4);
 
         // test memory
         te.test('Memory amount (kB)',
-                [ [ t => t.memSizeKb, '=', 4, this ] ]);
+                [ [ t => t.memSizeKb, '=', 4, r ] ]);
         te.test('Getting/setting data',
-                [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
+                [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, r ] ]);
         te.test('Out of bounds',
                 [ 
-                    [ t => t.get(0xF0), '!exception', 0, this ],
-                    [ t => t.get(0xE000000), 'exception', 'out of bounds', this ],
+                    [ t => t.get(0xF0), '!exception', 0, r ],
+                    [ t => t.get(0xE000000), 'exception', 'out of bounds', r ],
                 ]);
     }
 

@@ -1,5 +1,23 @@
 'use strict';
 
+// registers
+const MDEV  = 0xF0000000,
+      MVER  = 0xF0000001,
+      MINT  = 0xF0000002,
+      MERR  = 0xF0000004,
+      MSUP  = 0xF0000005,
+      RAMSZ = 0xF0000008,
+      VMEM  = 0xF000000C,
+      MNAME = 0xF00000E0;
+
+// errors
+const MMU_NO_ERRORS     = 0x0,
+      MMU_OUT_OF_BOUNDS = 0x1,
+      MMU_PAGE_FAULT    = 0x2,
+      MMU_UNAUTH_WRITE  = 0x4,
+      MMU_UNAUTH_EXEC   = 0x8,
+      MMU_UNAUTH_ACCESS = 0x10;
+
 class MMU {
     
     constructor(ram_size_kb) {
@@ -24,21 +42,21 @@ class MMU {
 
 
     getReg(a) {
-        if(a === 0x0) {
+        if(a === (MDEV - DEV_REG_ADDR)) {
             return 0x01;  // MMU
-        } else if(a === 0x1) {
+        } else if(a === (MVER - DEV_REG_ADDR)) {
             return this.version;
-        } else if(a === 0x2) {
+        } else if(a === (MINT - DEV_REG_ADDR)) {
             return this.interrupt;
-        } else if(a === 0x4) {
+        } else if(a === (MERR - DEV_REG_ADDR)) {
             return this.last_error;
-        } else if(a === 0x5) {
+        } else if(a === (MSUP - DEV_REG_ADDR)) {
             return this.supervisorMode ? 0x1 : 0x0;
-        } else if(a >= 0x08 && a <= 0x0B) {
+        } else if(a >= (RAMSZ - DEV_REG_ADDR) && a <= (RAMSZ - DEV_REG_ADDR + 4)) {
             return toU32(this.ram.memSize)[a - 0x8];
-        } else if(a >= 0x0C && a <= 0x0F) {
+        } else if(a >= (VMEM - DEV_REG_ADDR) && a <= (VMEM - DEV_REG_ADDR + 4)) {
             return toU32(this.vmem.directory | ((this.vmem.active ? 1 : 0) << 16))[a - 0xC];
-        } else if(a >= 0xE0 && a < (0xE0 + this.dev_name.length)) {
+        } else if(a >= (MNAME - DEV_REG_ADDR) && a < (MNAME - DEV_REG_ADDR + this.dev_name.length)) {
             return this.dev_name[a - 0xE0].charCodeAt();
         } else {
             return 0;
@@ -47,19 +65,27 @@ class MMU {
 
 
     setReg(a, v) {
-        if(a === 0x2) {
+        if(a === (MINT - DEV_REG_ADDR)) {
             this.interrupt = v;
-        } else if(a === 0x4) {
+        } else if(a === (MERR - DEV_REG_ADDR)) {
             this.last_error = v;
-        } else if(a === 0x5) {
+        } else if(a === (MSUP - DEV_REG_ADDR)) {
             this.supervisorMode = (v ? true : false);
-        } else if(a === 0xC) {
+        } else if(a === (VMEM - DEV_REG_ADDR)) {
             this.vmem.directory = v | (this.vmem.directory & 0xFF00);
-        } else if(a === 0xD) {
+        } else if(a === (VMEM - DEV_REG_ADDR + 1)) {
             this.vmem.directory = (this.vmem.directory & 0xFF) | (v << 8);
-        } else if(a === 0xE) {
+        } else if(a === (VMEM - DEV_REG_ADDR + 2)) {
             this.vmem.active = (v > 0) ? 1 : 0;
         }
+    }
+
+
+    setReg32(addr, value) {
+        this.setReg(addr, value & 0xff);
+        this.setReg(addr+1, (value >> 8) & 0xff);
+        this.setReg(addr+2, (value >> 16) & 0xff);
+        this.setReg(addr+3, value >> 24);
     }
 
 
@@ -91,6 +117,14 @@ class MMU {
                 }
             }
         }
+    }
+
+
+    set32(addr, value) {
+        this.set(addr, value & 0xff);
+        this.set(addr+1, (value >> 8) & 0xff);
+        this.set(addr+2, (value >> 16) & 0xff);
+        this.set(addr+3, value >> 24);
     }
 
 
@@ -194,12 +228,63 @@ class MMU {
     // TESTS
     //
 
-    runTests(section) {
+    static runTests(section) {
         const te = new TestEnvironment(section);
+
+        let m = new MMU(256);
 
         // test memory
         te.test('Basic translation (VMem inactive)',
-                [ [ t => mmu.translate(0xABCD), '=', 0xABCD, this ] ]);
+                [ [ t => t.translate(0xABCD).addr, '=', 0xABCD, m ] ]);
+        
+        te.test('Activate virtual memory',
+                [ [ t => { 
+                    t.setReg32((VMEM - DEV_REG_ADDR), 0x4 | (1 << 16));
+                    return t.vmem.active;
+                  }, '=', true, m ] ]);
+
+        m.ram.set32(0x4ABC, 0x1F | (1 << 16));
+        m.ram.set32(0x1F344, 0x2B | (1 << 16));
+
+        te.test('Memory location translation',
+                [ [ t => t.translate(0xABCD1234).addr, '=', 0x2B234, m ] ]);
+
+        te.test('Accessing virtual memory', [
+            [ t => { 
+                t.set(0xABCD1234, 0x42);
+                return t.ram.get(0x2B234);
+            }, '=', 0x42, m ],
+            [ t => t.get(0xABCD1234), '=', 0x42, m ]
+        ]);
+
+        te.test('Set supervisor mode', [
+            [ t => {
+                t.setReg((MSUP - DEV_REG_ADDR), 0x1);
+                return t.supervisorMode;
+            }, '=', true, m ]
+        ]);
+
+        te.test('Access data in supervisor mode', [
+            [ t => {
+                t.get(0xABCD1234);
+                return t.getReg(MERR - DEV_REG_ADDR);
+            }, '=', MMU_UNAUTH_WRITE, m ],
+            [ t => {
+                t.setReg(MERR - DEV_REG_ADDR, MMU_NO_ERRORS);
+                t.ram.set32(0x4ABC, t.ram.get32(0x4ABC) | (1 << 17));
+                return t.getReg(MERR - DEV_REG_ADDR);
+            }, '=', MMU_NO_ERRORS, m ]
+        ]);
+
+        t.setReg((MSUP - DEV_REG_ADDR), 0x0);
+
+        /*
+        te.test('Write data in unwritable', [
+            [ t => {
+                m.ram.set32(0x1F344, 0x2B | (1 << 16)); */
+                
+
+        // TODO - test supervisor, writable, executable
     }
 
 }

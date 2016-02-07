@@ -218,12 +218,26 @@ class Motherboard {
     // TESTS
     //
 
-    runTests(section) {
+    static runTests(section) {
         const te = new TestEnvironment(section);
+
+        let m = new Motherboard();
+
+        class FakeMMU {
+            constructor(n) { this.a = new Uint8Array(n * 1024); }
+            name() { return ''; }
+            getReg() { return 0; }
+            setReg() {}
+            avaliable() { return true; }
+            isMMU() { return true; }
+            get(n) { return this.a[n]; }
+            set(n, v) { this.a[n] = v; }
+        };
+        m.addDevice(new FakeMMU(4));
 
         // test memory
         te.test('Getting/setting data (8-bit)',
-                [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, this ] ]);
+                [ [ t => { t.set(0xAB, 42); return t.get(0xAB); }, '=', 42, m ] ]);
         te.test('Getting/setting data (32-bit)',
                 [ [ t => {
                         t.set(0x4, 0x01);
@@ -231,54 +245,53 @@ class Motherboard {
                         t.set(0x6, 0x45);
                         t.set(0x7, 0x67);
                         return t.get32(0x4);
-                }, '=', 0x67452301, this ],
+                }, '=', 0x67452301, m ],
                 [ t => {
                         t.set32(0x8, 0x89ABCDEF);
                         return [ t.get(0x8), t.get(0xB) ];
-                }, '=', [0xEF, 0x89], this ] ]);
-        this.reset();
+                }, '=', [0xEF, 0x89], m ] ]);
 
         // test devices
         class FakeDevice {};
-        te.test('Invalid device', [[ t => t.addDevice(new FakeDevice()), 'exception', null, this ]]);
+        te.test('Invalid device', [[ t => t.addDevice(new FakeDevice()), 'exception', null, m ]]);
 
         class Device {
-            constructor() { this.x = 0; }
+            constructor() { m.x = 0; }
             name() { return "test"; }
-            get(a) { if(a === 0) return this.x; else return 0; }
-            set(a, v) { if(a === 0) this.x = v; }
+            getReg(a) { if(a === 0) return m.x; else return 0; }
+            setReg(a, v) { if(a === 0) m.x = v; }
         };
         te.test('Device memory access', [
-            [ t => t.addDevice(new Device()), '=', 'Device', this ],
+            [ t => t.addDevice(new Device()), '=', 'Device', m ],
             [ t => {
-                t.set(DEV_REG_ADDR + 0, 42);
-                return t.get(DEV_REG_ADDR + 0);
-            }, '=', 42, this ],
+                t.set(DEV_REG_ADDR + 256, 42);
+                return t.get(DEV_REG_ADDR + 256);
+            }, '=', 42, m ],
             // TODO - test out of bounds access
         ]);
 
         class RAMDevice {
-            constructor() { this.x = 0; }
+            constructor() { m.x = 0; }
             name() { return ""; }
-            get(a) { return 0; }
-            set(a,v) { }
+            getReg(a) { return 0; }
+            setReg(a,v) { }
             areaRequested() { return 256; }
             getRAM(a) { if(a === 0) return this.x; else return 0; }
             setRAM(a, v) { if(a === 0) this.x = v; }
         }
         te.test('RAM Device memory access', [
-            [ t => t.addDevice(new RAMDevice()), '=', 'RAMDevice', this ],
+            [ t => t.addDevice(new RAMDevice()), '=', 'RAMDevice', m ],
             [ t => {
                 t.set(DEV_RAM_ADDR + 0, 42);
                 return t.get(DEV_RAM_ADDR + 0);
-            }, '=', 42, this ],
+            }, '=', 42, m ],
             // TODO - test out of bounds access
         ]);
 
         te.test('Devices addresses', [
-            [ t => t.devices[0].reg_area, '=', DEV_REG_ADDR, this ],
-            [ t => t.devices[1].reg_area, '=', DEV_REG_ADDR + 256, this ],
-            [ t => t.devices[1].ram_area, '=', DEV_RAM_ADDR, this ],
+            [ t => t.devices[0].reg_area, '=', DEV_REG_ADDR, m ],
+            [ t => t.devices[1].reg_area, '=', DEV_REG_ADDR + 256, m ],
+            [ t => t.devices[1].ram_area, '=', DEV_RAM_ADDR, m ],
         ]);
 
     }

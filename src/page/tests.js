@@ -32,7 +32,7 @@ class TestEnvironment {
             }
         }
 
-        let s = ['<tr><td rowspan="' + tests.length + '">' + desc + '</td>'];
+        let s = ['<tr><td rowspan="' + tests.length + '" class="test_desc">' + desc + '</td>'];
 
         let fst = true;
         tests.forEach(t => {

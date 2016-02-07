@@ -68,7 +68,6 @@ Some explanations:
       <nav id="topmenu" class="topmenu">
         <span onclick="page.menuSelected(this.id);" id="doc" class="selected">doc</span>
         <span onclick="page.menuSelected(this.id);" id="debug">debug</span>
-        <span onclick="page.menuSelected(this.id);" id="test">test</span>
       </nav>
 
       <nav id="leftmenu" class="leftmenu">
@@ -76,6 +75,8 @@ Some explanations:
         <span onclick="page.menuSelected(this.id);" id="ram">RAM</span>
         <span onclick="page.menuSelected(this.id);" id="mmu">MMU</span>
         <span onclick="page.menuSelected(this.id);" id="bios">BIOS</span>
+        <hr>
+        <span onclick="page.menuSelected(this.id);" id="tests">Tests</span>
         <span onclick="page.menuSelected(this.id);" id="about" class="selected">About</span>
       </nav>
 
@@ -261,11 +262,6 @@ class RAMDevice extends Device {
 
         </section>
 
-        <section id="mboard_test">
-          <button class="test" onclick="(new TinyVM(4)).mboard.runTests('mboard_tests');">Run tests</button>
-          <section id="mboard_tests"></section>
-        </section>
-
         <!--     -->
         <!-- RAM -->
         <!--     -->
@@ -292,11 +288,6 @@ class RAMDevice extends Device {
           <section id="ram_memory_debug" class="physical_memory_table">start=0x0,end=physical_memory_size</section>
           <p>Notice that this is access to the <b>physical memory</b>. When virtual memory is active,
              this is not the memory that the CPU sees.</p>
-        </section>
-
-        <section id="ram_test">
-          <button class="test" onclick="(new RAM(4)).runTests('ram_tests');">Run tests</button>
-          <section id="ram_tests"></section>
         </section>
 
         <!--      -->
@@ -583,15 +574,30 @@ class RAMDevice extends Device {
 
         </section>
 
-        <section id="mmu_test">
-          <button class="test" onclick="(new MMU(16)).runTests('mmu_tests');">Run tests</button>
+        <!--       -->
+        <!-- TESTS -->
+        <!--       -->
+        <section id="tests_doc">
+          <p>Choose the tab <b><i>debug</i></b> to run the unit tests.</p>
+        </section>
+
+        <section id="tests_debug">
+          <button class="test" onclick="
+            Motherboard.runTests('mboard_tests');
+            RAM.runTests('ram_tests');
+            MMU.runTests('mmu_tests');
+          ">Run tests</button>
+          <h2>Motherboard</h2>
+          <section id="mboard_tests"></section>
+          <h2>RAM</h2>
+          <section id="ram_tests"></section>
+          <h2>MMU</h2>
           <section id="mmu_tests"></section>
         </section>
 
       </section>
 
     </section>
-
 
     <footer>
       <hr>
