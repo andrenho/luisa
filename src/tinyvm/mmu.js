@@ -76,7 +76,7 @@ class MMU {
         } else if(a === (VMEM - DEV_REG_ADDR + 1)) {
             this.vmem.directory = (this.vmem.directory & 0xFF) | (v << 8);
         } else if(a === (VMEM - DEV_REG_ADDR + 2)) {
-            this.vmem.active = (v > 0) ? 1 : 0;
+            this.vmem.active = (v > 0) ? true : false;
         }
     }
 
@@ -233,9 +233,14 @@ class MMU {
 
         let m = new MMU(256);
 
-        // test memory
         te.test('Basic translation (VMem inactive)',
                 [ [ t => t.translate(0xABCD).addr, '=', 0xABCD, m ] ]);
+        
+        te.test('Out of bounds',
+                [ [ t => {
+                    t.get(0xE0000000);
+                    return t.getReg(MERR - DEV_REG_ADDR);
+                }, '=', MMU_OUT_OF_BOUNDS, m ] ]);
         
         te.test('Activate virtual memory',
                 [ [ t => { 
@@ -243,8 +248,14 @@ class MMU {
                     return t.vmem.active;
                   }, '=', true, m ] ]);
 
+        te.test('Page fault',
+                [ [ t => {
+                    t.get(0xE0000000);
+                    return t.getReg(MERR - DEV_REG_ADDR);
+                }, '=', MMU_PAGE_FAULT, m ] ]);
+        
         m.ram.set32(0x4ABC, 0x1F | (1 << 16));
-        m.ram.set32(0x1F344, 0x2B | (1 << 16));
+        m.ram.set32(0x1F344, 0x2B | (1 << 16) | (1 << 18));
 
         te.test('Memory location translation',
                 [ [ t => t.translate(0xABCD1234).addr, '=', 0x2B234, m ] ]);
@@ -276,13 +287,29 @@ class MMU {
             }, '=', MMU_NO_ERRORS, m ]
         ]);
 
-        t.setReg((MSUP - DEV_REG_ADDR), 0x0);
+        m.setReg((MSUP - DEV_REG_ADDR), 0x0);
 
-        /*
         te.test('Write data in unwritable', [
             [ t => {
-                m.ram.set32(0x1F344, 0x2B | (1 << 16)); */
+                t.ram.set32(0x1F344, 0x2B | (1 << 16));
+                t.set(0xABCD1234, 0xFF);
+                return t.getReg(MERR - DEV_REG_ADDR);
+            }, '=', MMU_UNAUTH_WRITE, m ],
+            [ t => t.get(0xABCD1234), '=', 0x42, m ]
+        ]);
                 
+        te.test('Non-executable area', [
+            [ t => {
+                t.get(0xABCD1234, true);
+                return t.getReg(MERR - DEV_REG_ADDR);
+            }, '=', MMU_UNAUTH_EXEC, m ],
+            [ t => {
+                m.ram.set32(0x1F344, 0x2B | (1 << 16) | (1 << 18) | (1 << 19));
+                t.get(0xABCD1234, true);
+                return t.getReg(MERR - DEV_REG_ADDR);
+            }, '=', MMU_NO_ERRORS, m ],
+        ]);
+
 
         // TODO - test supervisor, writable, executable
     }
