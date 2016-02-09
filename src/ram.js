@@ -5,9 +5,11 @@ export default class RAM {
     this._data = new Uint8Array(this._size);
   }
 
+
   get size() {
     return this._size;
   }
+
 
   get(a) {
     if (a < 0 || a >= this._size) {
@@ -18,6 +20,7 @@ export default class RAM {
       return this._data[a];
     }
   }
+
 
   set(a, v) {
     if (a < 0 || a >= this._size) {

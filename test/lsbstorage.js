@@ -31,4 +31,12 @@ test('LSBStorage: 32 bits', t => {
   t.end();
 });
 
+test('LSBStorage: string', t => {
+  let m = new MockStorage();
+  m.setString(0, 'abcd');
+  t.equal(m.z[1], 'b'.charCodeAt(0));
+  t.equal(m.getString(0, 4), 'abcd');
+  t.end();
+});
+
 // vim: ts=2:sw=2:sts=2:expandtab
