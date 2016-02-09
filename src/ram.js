@@ -24,7 +24,7 @@ export default class RAM {
       let e = new Error();
       e.name = 'out of bounds';
       throw e;
-    } else if(v < 0 || v > 0xFF) {
+    } else if (v < 0 || v > 0xFF) {
       let e = new Error();
       e.name = 'invalid data';
       throw e;
