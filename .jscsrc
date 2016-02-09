@@ -1,0 +1,7 @@
+{
+  "preset": "airbnb",
+  "esnext": true
+  //'requireSpaceAfterKeywords': false,
+  //'validateIndentation': false,
+  //'disallowTrailingWhitespace': false,
+}
