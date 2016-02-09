@@ -1,12 +1,16 @@
 export default class RAM {
 
-  constructor(sizeKb) {
-    this.size = sizeKb * 1024;
-    this._data = new Uint8Array(this.size);
+  constructor(_sizeKb) {
+    this._size = _sizeKb * 1024;
+    this._data = new Uint8Array(this._size);
+  }
+
+  get size() {
+    return this._size;
   }
 
   get(a) {
-    if (a < 0 || a >= this.size) {
+    if (a < 0 || a >= this._size) {
       let e = new Error();
       e.name = 'out of bounds';
       throw e;
@@ -16,7 +20,7 @@ export default class RAM {
   }
 
   set(a, v) {
-    if (a < 0 || a >= this.size) {
+    if (a < 0 || a >= this._size) {
       let e = new Error();
       e.name = 'out of bounds';
       throw e;

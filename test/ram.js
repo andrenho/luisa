@@ -10,6 +10,12 @@ test('RAM: Get/set', t => {
   t.end();
 });
 
+test('RAM: Size', t => {
+  let r = new RAM(4);
+  t.equal(r.size, 4 * 1024);
+  t.end()
+});
+
 test('RAM: Invalid value', t => {
   let r = new RAM(4);
   try {
