@@ -60,7 +60,7 @@ export default class MMU extends Device {
     this._ram = ram;
     this._active = false;
 
-    this._last_error = 0;
+    this._lastError = 0;
     this._vmem = {
       active: false,
       page: 0,
@@ -95,7 +95,7 @@ export default class MMU extends Device {
 
 
   translate(a) {
-    if(this._active) {
+    if (this._active) {
       // TODO
       throw new Error('TODO');
     } else {
@@ -105,7 +105,7 @@ export default class MMU extends Device {
 
 
   get(a) {
-    switch(a) {
+    switch (a) {
       // MMU_RAM_SZ
       case 0x10: return this._ram.size & 0xFF;
       case 0x11: return (this._ram.size >> 8) & 0xFF;
@@ -117,10 +117,10 @@ export default class MMU extends Device {
       case 0x16: return 0;
       case 0x17: return this._vmem.active ? 0x80 : 0x0;
       // MMU_ERR
-      case 0x18: return this._last_error & 0xFF;
-      case 0x19: return (this._last_error >> 8) & 0xFF;
-      case 0x1A: return (this._last_error >> 16) & 0xFF;
-      case 0x1B: return (this._last_error >> 24) & 0xFF;
+      case 0x18: return this._lastError & 0xFF;
+      case 0x19: return (this._lastError >> 8) & 0xFF;
+      case 0x1A: return (this._lastError >> 16) & 0xFF;
+      case 0x1B: return (this._lastError >> 24) & 0xFF;
       // others
       default:
         return super.get(a);
@@ -129,7 +129,7 @@ export default class MMU extends Device {
 
 
   set(a, v) {
-    switch(a) {
+    switch (a) {
       // MMU_VMEM
       case 0x14: 
         this._vmem.page &= ~0xFF;
@@ -144,20 +144,20 @@ export default class MMU extends Device {
         break;
       // MMU_ERR
       case 0x18: 
-        this._last_error &= ~0xFF;
-        this._last_error |= (v & 0xFF);
+        this._lastError &= ~0xFF;
+        this._lastError |= (v & 0xFF);
         break;
       case 0x19:
-        this._last_error &= ~0xFF00;
-        this._last_error |= (v << 8);
+        this._lastError &= ~0xFF00;
+        this._lastError |= (v << 8);
         break;
       case 0x1A:
-        this._last_error &= ~0xFF0000;
-        this._last_error |= (v << 16);
+        this._lastError &= ~0xFF0000;
+        this._lastError |= (v << 16);
         break;
       case 0x1B:
-        this._last_error &= ~0xFF000000;
-        this._last_error |= (v << 24);
+        this._lastError &= ~0xFF000000;
+        this._lastError |= (v << 24);
         break;
       default:
         super.set(a, v);
@@ -166,13 +166,13 @@ export default class MMU extends Device {
 
 
   getMemory(a) {
-    if(this._active) {
+    if (this._active) {
       // TODO
       throw new Error('TODO');
     } else {
       try {
         return this._ram.get(a);
-      } catch(e) {
+      } catch (e) {
         if (e.name === 'out of bounds') {
           this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
         } else {
@@ -184,13 +184,13 @@ export default class MMU extends Device {
 
 
   setMemory(a, v) {
-    if(this._active) {
+    if (this._active) {
       // TODO
       throw new Error('TODO');
     } else {
       try {
         this._ram.set(a, v);
-      } catch(e) {
+      } catch (e) {
         if (e.name === 'out of bounds') {
           this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
         } else {
@@ -202,7 +202,7 @@ export default class MMU extends Device {
 
 
   fireInterrupt(err) {
-    this._last_error |= err;
+    this._lastError |= err;
     super.fireInterrupt();
   }
 
