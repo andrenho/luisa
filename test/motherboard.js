@@ -4,7 +4,7 @@ import Motherboard from '../src/motherboard';
 import Device from '../src/device';
 
 class MockMMU extends Device {
-  constructor() { super(); this.x = {}; }
+  constructor() { super(); this.x = {}; this.y = {}; }
   name() { return 'MockMMU'; }
   deviceType() { return Device.Type.MMU; }
   version() { return 0; }
@@ -12,6 +12,8 @@ class MockMMU extends Device {
   active() { return false; }
   get(a) { return this.x[a]; }
   set(a, v) { this.x[a] = v; }
+  getMemory(a) { return this.y[a]; }
+  setMemory(a, v) { this.y[a] = v; }
 }
 
 class MockDevice extends Device {

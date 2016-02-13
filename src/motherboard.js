@@ -98,7 +98,7 @@ export default class Motherboard extends LSBStorage {
 
   get(a) {
     if (a < 0xF0000000 && this._mmu) {
-      return this._mmu.get(a);
+      return this._mmu.getMemory(a);
     } else if (a >= 0xF0000000 && a < 0xF0001000) {
       return this._memory.get(a - 0xF0000000);
     } else {
@@ -117,7 +117,7 @@ export default class Motherboard extends LSBStorage {
 
   set(a, v) {
     if (a < 0xF0000000 && this._mmu) {
-      this._mmu.set(a, v);
+      this._mmu.setMemory(a, v);
     } else if (a == 0xF0000400) {
       this._memory[0x400] = v;
     } else if (a >= 0xF0000000 && a < 0xF0001000) {

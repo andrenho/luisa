@@ -67,7 +67,99 @@ export default class MMU extends Device {
 
 
   translate(a) {
-    return 0;
+    if(this._active) {
+      // TODO
+      throw new Error('TODO');
+    } else {
+      return a;
+    }
+  }
+
+
+  get(a) {
+    switch(a) {
+      // MMU_RAM_SZ
+      case 0x10: return this._ram.size & 0xFF;
+      case 0x11: return (this._ram.size >> 8) & 0xFF;
+      case 0x12: return (this._ram.size >> 16) & 0xFF;
+      case 0x13: return (this._ram.size >> 24) & 0xFF;
+      // MMU_VMEM
+      // TODO
+      // MMU_ERR
+      case 0x18: return this._last_error & 0xFF;
+      case 0x19: return (this._last_error >> 8) & 0xFF;
+      case 0x1A: return (this._last_error >> 16) & 0xFF;
+      case 0x1B: return (this._last_error >> 24) & 0xFF;
+      // others
+      default:
+        return super.get(a);
+    } 
+  }
+
+
+  set(a, v) {
+    switch(a) {
+      case 0x18: 
+        this._last_error &= ~0xFF;
+        this._last_error |= (v & 0xFF);
+        break;
+      case 0x19:
+        this._last_error &= ~0xFF00;
+        this._last_error |= (v << 8);
+        break;
+      case 0x1A:
+        this._last_error &= ~0xFF0000;
+        this._last_error |= (v << 16);
+        break;
+      case 0x1B:
+        this._last_error &= ~0xFF000000;
+        this._last_error |= (v << 24);
+        break;
+      default:
+        super.set(a, v);
+    }
+  }
+
+
+  getMemory(a) {
+    if(this._active) {
+      // TODO
+      throw new Error('TODO');
+    } else {
+      try {
+        return this._ram.get(a);
+      } catch(e) {
+        if (e.name === 'out of bounds') {
+          this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
+
+  setMemory(a, v) {
+    if(this._active) {
+      // TODO
+      throw new Error('TODO');
+    } else {
+      try {
+        this._ram.set(a, v);
+      } catch(e) {
+        if (e.name === 'out of bounds') {
+          this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
+
+  fireInterrupt(err) {
+    this._last_error |= err;
+    super.fireInterrupt();
   }
 
 
