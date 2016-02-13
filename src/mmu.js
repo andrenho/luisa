@@ -5,7 +5,7 @@
  * Coordinate virtual memory management and translate memory access addresses.
  *
  * - Expected position: 0xF0001000
- * - Size: ?
+ * - Size: 16 bytes
  *
  * - Interrupt: 2
  *     Fired on the following memory errors:
@@ -20,6 +20,34 @@
  *     0010..0013  MMU_RAM_SZ:  Physical memory size
  *     0014..0017  MMU_ERR:     Last error (see Interrupt for values)
  *           0018  MMU_VMEM:    Virtual memory activation
+ *
+ * 
+ * VIRTUAL MEMORY
+ * --------------
+ *
+ * Virtual memory is activated by setting the 31th bit of VMEM. If the virtual 
+ * memory is enabled, the process for finding the physical address is this:
+ *
+ * 1. Divide the accessed address and find the directory index, the page table
+ *    index and the page offset:
+ *       00..0B - Page offset (12 bits, max value 0xFFF)
+ *       0C..15 - Page table offset (10 bits, max value 0x3FF)
+ *       16..1F - Page directory offset (10 bits, max value 0x3FF)
+ *
+ * 2. Go to the page directory set in the VMEM register. Each page is 0x1000
+ *    (4096 bytes) in size, so to find the starting address of the page, the
+ *    value is multiplied by 0x1000.
+ *
+ * 3. Find the address offset in the page directory. Since each record is 4
+ *    bytes long, the offset is the beginning of the page directory + (offset * 4).
+ *    This address will contain a 4-byte value, which is the the page that 
+ *    contains the page table.
+ *
+ * 4. The page table page value is multipled by 0x1000 to find the beginning 
+ *    of the page. To that value is added the page table offset * 4. This contain
+ *    the memory page that contains the information.
+ *
+ * 5. The final data is found in page beginning + page offset.
  *
  */
 
@@ -84,7 +112,10 @@ export default class MMU extends Device {
       case 0x12: return (this._ram.size >> 16) & 0xFF;
       case 0x13: return (this._ram.size >> 24) & 0xFF;
       // MMU_VMEM
-      // TODO
+      case 0x14: return this._vmem.page & 0xFF;
+      case 0x15: return (this._vmem.page >> 8) & 0xFF;
+      case 0x16: return 0;
+      case 0x17: return this._vmem.active ? 0x80 : 0x0;
       // MMU_ERR
       case 0x18: return this._last_error & 0xFF;
       case 0x19: return (this._last_error >> 8) & 0xFF;
@@ -93,12 +124,25 @@ export default class MMU extends Device {
       // others
       default:
         return super.get(a);
-    } 
+    }
   }
 
 
   set(a, v) {
     switch(a) {
+      // MMU_VMEM
+      case 0x14: 
+        this._vmem.page &= ~0xFF;
+        this._vmem.page |= (v & 0xFF);
+        break;
+      case 0x15:
+        this._vmem.page &= ~0xFF00;
+        this._vmem.page |= (v << 8) & 0x7F;
+        break;
+      case 0x17:
+        this._vmem.active = (v >> 7) ? true : false;
+        break;
+      // MMU_ERR
       case 0x18: 
         this._last_error &= ~0xFF;
         this._last_error |= (v & 0xFF);

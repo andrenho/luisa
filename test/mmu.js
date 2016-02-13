@@ -3,6 +3,9 @@ import test from 'tape';
 import RAM from '../src/ram';
 import MMU from '../src/mmu';
 
+// 
+// VMEM disabled
+//
 
 test('MMU: translation (VMEM disabled)', t => {
   let m = new MMU(new RAM(4));
@@ -49,5 +52,26 @@ test('MMU: clear error', t => {
   t.end();
 });
 
+
+//
+// VMEM enabled
+//
+
+function mmu_vmem() {
+  let m = new MMU(new RAM(256));
+  m.initializeConstants(0);
+  m._ram.set(0x4ABC, 0x1F);
+  m._ram.set(0x1F0AC, 0x2B);
+  m.set32(m.MMU_VMEM, 0x4 | (1 << 31));
+  return m;
+}
+
+test('MMU: enabled VMEM', t => {
+  let m = mmu_vmem();
+  t.equal(m.get32(m.MMU_VMEM), (0x4 | (1 << 31)) >>> 0, 'VMEM register is correct');
+  t.ok(m._vmem.active, 'VMEM is active');
+  t.equal(m._vmem.page, 0x4, 'VMEM page is 0x4');
+  t.end();
+});
 
 // vim: ts=2:sw=2:sts=2:expandtab
