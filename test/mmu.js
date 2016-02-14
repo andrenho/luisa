@@ -70,7 +70,7 @@ function mmu_vmem() {
 test('MMU: enabled VMEM', t => {
   let m = mmu_vmem();
   t.equal(m.get32(m.MMU_VMEM), (0x4 | (1 << 31)) >>> 0, 'VMEM register is correct');
-  t.ok(m._vmem.active, 'VMEM is active');
+  t.ok(m.active, 'VMEM is active');
   t.equal(m._vmem.page, 0x4, 'VMEM page is 0x4');
   t.end();
 });
@@ -78,9 +78,25 @@ test('MMU: enabled VMEM', t => {
 
 test('MMU: VMEM memory translation', t => {
   let m = mmu_vmem();
-  t.equal(m.translate(0xABCD1234), 0x2B234);
+  t.equal(m.translate(0xABCD1234), 0x2B234, 'translation is correct');
   t.end();
 });
 
+
+test('MMU: VMEM page fault', t => {
+  let m = mmu_vmem();
+  m._ram.set32(0x4ABC, 0x1F);
+  t.throws(() => m.translate(0xABCD1234), Error, 'page fault');
+  t.end();
+});
+
+
+test('MMU: VMEM memory access', t => {
+  let m = mmu_vmem();
+  m.setMemory(0xABCD1234, 0x42);
+  t.equal(m._ram.get(0x2B234), 0x42, 'RAM address is correctly set');
+  t.equal(m.getMemory(0xABCD1234), 0x42, 'setting/fetching via VMEM works');
+  t.end();
+});
 
 // vim: ts=2:sw=2:sts=2:expandtab

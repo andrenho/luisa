@@ -102,7 +102,7 @@ export default class MMU extends Device {
   }
 
   get active() {
-    return this.vmem._active;
+    return this._vmem.active;
   }
 
 
@@ -113,19 +113,29 @@ export default class MMU extends Device {
       const page_directory_offset = (a >> 22) & 0x3FF;
       
       const page_directory_address = (this._vmem.page * 0x1000) + (page_directory_offset * 4);
-      console.log('page_directory_address: 0x' + page_directory_address.toString(16));
-      const page_table_page = this._ram.get32(page_directory_address) & 0xFFFF;
-      console.log('page_table_page: 0x' + page_table_page.toString(16));
-      const page_table_address = (page_table_page * 0x1000) + (page_table_offset * 4);
-      console.log('page_table_address: 0x' + page_table_address.toString(16));
-      const page = this._ram.get32(page_table_address) & 0xFFFF;
-      console.log('page: 0x' + page.toString(16));
+      const page_table_data = this._ram.get32(page_directory_address);
+      const page_table = {
+        page:   page_table_data & 0xFFFF,
+        active: (page_table_data >> 31) ? true : false,
+      };
+      if(!page_table.active) {
+        let e = new Error();
+        e.name = 'page fault';
+        throw e;
+      }
+      const page_table_address = (page_table.page * 0x1000) + (page_table_offset * 4);
+      const page_data = this._ram.get32(page_table_address);
+      const page = {
+        page: page_data & 0xFFFF,
+        active: (page_data >> 31) ? true : false,
+      };
+      if(!page.active) {
+        let e = new Error();
+        e.name = 'page fault';
+        throw e;
+      }
 
-      const location = (page * 0x1000) + page_offset;
-
-      // TODO - verify if pages are active
-      
-      console.log('return: 0x' + (location).toString(16));
+      const location = (page.page * 0x1000) + page_offset;
       return location;
     } else {
       return a;
