@@ -60,11 +60,12 @@ test('MMU: clear error', t => {
 function mmu_vmem() {
   let m = new MMU(new RAM(256));
   m.initializeConstants(0);
-  m._ram.set(0x4ABC, 0x1F);
-  m._ram.set(0x1F0AC, 0x2B);
+  m._ram.set32(0x4ABC, 0x1F | (1 << 31));
+  m._ram.set32(0x1F344, 0x2B | (1 << 31));
   m.set32(m.MMU_VMEM, 0x4 | (1 << 31));
   return m;
 }
+
 
 test('MMU: enabled VMEM', t => {
   let m = mmu_vmem();
@@ -73,5 +74,13 @@ test('MMU: enabled VMEM', t => {
   t.equal(m._vmem.page, 0x4, 'VMEM page is 0x4');
   t.end();
 });
+
+
+test('MMU: VMEM memory translation', t => {
+  let m = mmu_vmem();
+  t.equal(m.translate(0xABCD1234), 0x2B234);
+  t.end();
+});
+
 
 // vim: ts=2:sw=2:sts=2:expandtab

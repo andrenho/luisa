@@ -49,6 +49,18 @@
  *
  * 5. The final data is found in page beginning + page offset.
  *
+ *
+ * PAGE INDEX FORMAT
+ * -----------------
+ *
+ *     11111111111111110000000000000000
+ *     FEDCBA9876543210FEDCBA9876543210
+ *
+ *     AxxxxxxxxxPPPPPPPPPPPPPPPPPPPPPP
+ *     
+ *     A = active
+ *     x = doesn't matter
+ *     P = page index (24 bits)
  */
 
 import Device from '../src/device';
@@ -90,14 +102,31 @@ export default class MMU extends Device {
   }
 
   get active() {
-    return this._active;
+    return this.vmem._active;
   }
 
 
   translate(a) {
-    if (this._active) {
-      // TODO
-      throw new Error('TODO');
+    if (this._vmem.active) {
+      const page_offset = (a & 0xFFF);
+      const page_table_offset = (a >> 12) & 0x3FF;
+      const page_directory_offset = (a >> 22) & 0x3FF;
+      
+      const page_directory_address = (this._vmem.page * 0x1000) + (page_directory_offset * 4);
+      console.log('page_directory_address: 0x' + page_directory_address.toString(16));
+      const page_table_page = this._ram.get32(page_directory_address) & 0xFFFF;
+      console.log('page_table_page: 0x' + page_table_page.toString(16));
+      const page_table_address = (page_table_page * 0x1000) + (page_table_offset * 4);
+      console.log('page_table_address: 0x' + page_table_address.toString(16));
+      const page = this._ram.get32(page_table_address) & 0xFFFF;
+      console.log('page: 0x' + page.toString(16));
+
+      const location = (page * 0x1000) + page_offset;
+
+      // TODO - verify if pages are active
+      
+      console.log('return: 0x' + (location).toString(16));
+      return location;
     } else {
       return a;
     }
@@ -166,36 +195,26 @@ export default class MMU extends Device {
 
 
   getMemory(a) {
-    if (this._active) {
-      // TODO
-      throw new Error('TODO');
-    } else {
-      try {
-        return this._ram.get(a);
-      } catch (e) {
-        if (e.name === 'out of bounds') {
-          this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
-        } else {
-          throw e;
-        }
+    try {
+      return this._ram.get(this.translate(a));
+    } catch (e) {
+      if (e.name === 'out of bounds') {
+        this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
+      } else {
+        throw e;
       }
     }
   }
 
 
   setMemory(a, v) {
-    if (this._active) {
-      // TODO
-      throw new Error('TODO');
-    } else {
-      try {
-        this._ram.set(a, v);
-      } catch (e) {
-        if (e.name === 'out of bounds') {
-          this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
-        } else {
-          throw e;
-        }
+    try {
+      this._ram.set(this.translate(a), v);
+    } catch (e) {
+      if (e.name === 'out of bounds') {
+        this.fireInterrupt(this.MMU_ERR_OUT_OF_BOUNDS);
+      } else {
+        throw e;
       }
     }
   }
