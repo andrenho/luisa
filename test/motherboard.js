@@ -20,7 +20,7 @@ class MockDevice extends Device {
   name() { return 'MockDevice'; }
   deviceType() { return Device.Type.OTHER_OUTPUT; }
   version() { return 1; }
-  memorySize() { return 1024; }
+  memorySize() { return 0x2000; }
   constantList() { return { 'CONST': 0x123 }; }
 }
 
@@ -40,7 +40,7 @@ test('Motherboard: devices addresses', t => {
   m.addDevice(new MockDevice());
   m.addDevice(new MockDevice());
   t.equals(m.get32(0xF0000000), 0xF0001000, 'device 0 address');
-  t.equals(m.get32(0xF0000004), 0xF0001400, 'device 1 address');
+  t.equals(m.get32(0xF0000004), 0xF0003000, 'device 1 address');
   t.end();
 });
 
@@ -63,11 +63,12 @@ test('Motherboard: memory map', t => {
     { addr: 0x0,        deviceType: Device.Type.RAM,          size: 0x10000    },
     { addr: 0x10000,    deviceType: Device.Type.UNUSED,       size: 0xEFFF0000 },
     { addr: 0xF0000000, deviceType: Device.Type.MOTHERBOARD,  size: 0x1000     },
-    { addr: 0xF0001000, deviceType: Device.Type.MMU,          size: 16         },
-    { addr: 0xF0001010, deviceType: Device.Type.OTHER_OUTPUT, size: 1024       },
-    { addr: 0xF0001410, deviceType: Device.Type.UNUSED,       size: 0xFFFEBF0  }
+    { addr: 0xF0001000, deviceType: Device.Type.MMU,          size: 0x1000     },
+    { addr: 0xF0002000, deviceType: Device.Type.OTHER_OUTPUT, size: 0x2000     },
+    { addr: 0xF0004000, deviceType: Device.Type.UNUSED,       size: 0xFFFC000  }
   ];
   const memoryMap = m.memoryMap();
+  console.log(memoryMap[1].addr);
   t.equals(memoryMap.length, expectedMemoryMap.length, '# of entries in memoryMap is correct');
   for(let i = 0; i < memoryMap.length; ++i) {
     t.equals(memoryMap[i].addr, expectedMemoryMap[i].addr, 'memoryMap.address is correct (record ' + i + ')');

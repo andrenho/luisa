@@ -29,8 +29,8 @@ export default class Device extends LSBStorage {
     if (this.version() > 0xFF) {
       throw new Error('Maximum version is 0xFF');
     }
-    if (this.memorySize() < 16) {
-      throw new Error('Memory must be at least 16 bits.');
+    if (this.memorySize() < 0x1000) {
+      throw new Error('Memory must be at least 0x1000 bytes.');
     }
   }
 
@@ -59,7 +59,7 @@ export default class Device extends LSBStorage {
 
 
   memorySize() {
-    return 16;   // this method can be implement by the children
+    return 0x1000;   // this method can be implement by the children
   }
 
 

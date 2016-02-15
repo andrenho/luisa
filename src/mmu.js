@@ -5,7 +5,7 @@
  * Coordinate virtual memory management and translate memory access addresses.
  *
  * - Expected position: 0xF0001000
- * - Size: 16 bytes
+ * - Size: 32 bytes
  *
  * - Interrupt: 2
  *     Fired on the following memory errors:
@@ -88,8 +88,6 @@ export default class MMU extends Device {
   deviceType() { return Device.Type.MMU; }
 
   version() { return 0; }
-
-  memorySize() { return 16; }
 
   hasInterrupt() { return true; }
 

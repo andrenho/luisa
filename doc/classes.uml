@@ -47,6 +47,21 @@ class RAM {
   +get(a)
   +set(a, v)
 }
-Device <|-- RAM
+LSBStorage <|-- RAM
+
+class MMU {
+  +constructor(ram)
+  +active
+  +translate(a)
+  +getMemory(a)
+  +setMemory(a, v)
+  +fireInterrupt(err)
+}
+Device <|-- MMU
+MMU *-up- RAM
+
+class CPU {
+}
+Device <|-- CPU
 
 @enduml
