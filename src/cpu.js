@@ -86,10 +86,10 @@ export default class CPU extends Device {
       CPU_J:  0x34,
       CPU_K:  0x38,
       CPU_L:  0x3C,
-      CPU_FP:  0x40,
-      CPU_SP:  0x44,
-      CPU_PC:  0x48,
-      CPU_FL:  0x4C,
+      CPU_FP: 0x40,
+      CPU_SP: 0x44,
+      CPU_PC: 0x48,
+      CPU_FL: 0x4C,
     };
   }
 

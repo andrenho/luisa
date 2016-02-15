@@ -38,4 +38,10 @@ test('CPU: Get register contents from memory', t => {
 });
 
 
+test('CPU: encoder', t => {
+  t.same(CPU.encode('mov A, 0xABCD'), [0x03, 0x00, 0xCD, 0xAB]);
+  t.end();
+});
+
+
 // vim: ts=2:sw=2:sts=2:expandtab
