@@ -195,6 +195,72 @@ export default class CPU extends Device {
   set LZ(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
   // jscs:enable validateIndentation
 
+  //
+  // encode/decode
+  //
+
+  static encode(s) {
+
+    function registerValue(r) {
+      switch (r) {
+        case 'a': return 0;
+        case 'b': return 1;
+        case 'c': return 2;
+        case 'd': return 3;
+        case 'e': return 4;
+        case 'f': return 5;
+        case 'g': return 6;
+        case 'h': return 7;
+        case 'i': return 8;
+        case 'j': return 9;
+        case 'k': return 10;
+        case 'l': return 11;
+        case 'fp': return 12;
+        case 'sp': return 13;
+        case 'pc': return 14;
+        case 'fl': return 15;
+        default: throw new Error('Invalid register ' + r);
+      }
+    }
+
+    // understand command
+    // TODO - not working with one single parameter
+    const m = s.match(/^\s*([a-z]+)\s+(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|[0-9]+)\]?)\s*,\s*(\[?(?:[a-l]|fp|sp|pc|fl|0x[0-9a-f]+|[0-9]+)\]?)\s*$/i); // https://regex101.com/r/pV1pA9/2
+    if (!m) {
+      throw new Error('Invalid command `' + s + '`');
+    } else {
+      let cmd = { opcode: m[1], pars: [] };
+      for (let i = 2; i < m.length; ++i) {
+        let type;
+        let value;
+        if (m[i][0] == '[') {
+          if (m[i][0].slice(-1) !== ']') {
+            throw new Error('Unbalanced bracket');
+          }
+          if (m[i][1].charCodeAt(0) > '9'.charCodeAt(0)) {
+            type = 'indirect register';
+            value = registerValue(m[i].slice(1, -1).toLowerCase());
+          } else {
+            type = 'indirect value';
+            value = parseInt(m[i].slice(1, -1));  // TODO - doesn't work with binary
+          }
+        }
+        if (m[i].charCodeAt(0) > '9'.charCodeAt(0)) {
+          type = 'register';
+          value = registerValue(m[i].toLowerCase());
+        } else {
+          type = 'value';
+          value = parseInt(m[i]);
+        }
+        cmd.pars.push({ type, value });
+      }
+      console.log(cmd);
+    }
+
+    // parse command (TODO)
+
+    return [];
+  }
 }
 
 
