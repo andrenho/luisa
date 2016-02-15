@@ -106,34 +106,34 @@ export default class MMU extends Device {
 
   translate(a) {
     if (this._vmem.active) {
-      const page_offset = (a & 0xFFF);
-      const page_table_offset = (a >> 12) & 0x3FF;
-      const page_directory_offset = (a >> 22) & 0x3FF;
+      const pageOffset = (a & 0xFFF);
+      const pageTableOffset = (a >> 12) & 0x3FF;
+      const pageDirectoryOffset = (a >> 22) & 0x3FF;
       
-      const page_directory_address = (this._vmem.page * 0x1000) + (page_directory_offset * 4);
-      const page_table_data = this._ram.get32(page_directory_address);
-      const page_table = {
-        page:   page_table_data & 0xFFFF,
-        active: (page_table_data >> 31) ? true : false,
+      const pageDirectoryAddress = (this._vmem.page * 0x1000) + (pageDirectoryOffset * 4);
+      const pageTableData = this._ram.get32(pageDirectoryAddress);
+      const pageTable = {
+        page:   pageTableData & 0xFFFF,
+        active: (pageTableData >> 31) ? true : false,
       };
-      if(!page_table.active) {
+      if (!pageTable.active) {
         let e = new Error();
         e.name = 'page fault';
         throw e;
       }
-      const page_table_address = (page_table.page * 0x1000) + (page_table_offset * 4);
-      const page_data = this._ram.get32(page_table_address);
+      const pageTableAddress = (pageTable.page * 0x1000) + (pageTableOffset * 4);
+      const pageData = this._ram.get32(pageTableAddress);
       const page = {
-        page: page_data & 0xFFFF,
-        active: (page_data >> 31) ? true : false,
+        page: pageData & 0xFFFF,
+        active: (pageData >> 31) ? true : false,
       };
-      if(!page.active) {
+      if (!page.active) {
         let e = new Error();
         e.name = 'page fault';
         throw e;
       }
 
-      const location = (page.page * 0x1000) + page_offset;
+      const location = (page.page * 0x1000) + pageOffset;
       return location;
     } else {
       return a;

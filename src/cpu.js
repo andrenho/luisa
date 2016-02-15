@@ -45,15 +45,20 @@ import Device from '../src/device';
 
 export default class CPU extends Device {
 
+  // 
+  // DEVICE METHODS
+  //
+
   constructor(motherboard) {
     super();
     this._mb = motherboard;
     this._reg = new Uint32Array(16);
+    this.PC = motherboard.get32(motherboard.MB_CPU_INIT);
   }
 
   
   name() {
-    return "TinyCPU";
+    return 'TinyCPU';
   }
 
 
@@ -72,21 +77,73 @@ export default class CPU extends Device {
       CPU_A:  0x10,
       CPU_B:  0x14,
       CPU_C:  0x18,
-      CPU_D:  0x1B,
-      CPU_E:  0x10,
-      CPU_F:  0x14,
-      CPU_G:  0x18,
-      CPU_H:  0x1B,
-      CPU_I:  0x10,
-      CPU_J:  0x14,
-      CPU_K:  0x18,
-      CPU_L:  0x1B,
-      CPU_FP:  0x10,
-      CPU_SP:  0x14,
-      CPU_PC:  0x18,
-      CPU_FL:  0x1B,
+      CPU_D:  0x1C,
+      CPU_E:  0x20,
+      CPU_F:  0x24,
+      CPU_G:  0x28,
+      CPU_H:  0x2C,
+      CPU_I:  0x30,
+      CPU_J:  0x34,
+      CPU_K:  0x38,
+      CPU_L:  0x3C,
+      CPU_FP:  0x40,
+      CPU_SP:  0x44,
+      CPU_PC:  0x48,
+      CPU_FL:  0x4C,
     };
   }
+
+
+  get(a) {
+    if (a <= 0x10) {
+      return super.get(a);
+    } else if (a <= 0x4F) {
+      const v = this._reg[Math.floor((a - 0x10) / 4)];
+      switch (a % 4) {
+        case 0: return v & 0xFF;
+        case 1: return (v >> 8) & 0xFF;
+        case 2: return (v >> 16) & 0xFF;
+        case 3: return (v >> 24) & 0xFF;
+      }
+    }
+  }
+
+
+  set(a, v) {
+    if (a >= 0x10 && a <= 0x4F) {
+      const r = Math.floor((a - 0x10) / 4);
+      switch (a % 4) {
+        case 0: 
+          this._reg[r] &= ~0xFF;
+          this._reg[r] |= v;
+          break;
+        case 1: 
+          this._reg[r] &= ~0xFF00;
+          this._reg[r] |= (v << 8);
+          break;
+        case 2: 
+          this._reg[r] &= ~0xFF0000;
+          this._reg[r] |= (v << 16);
+          break;
+        case 3: 
+          this._reg[r] &= ~0xFF000000;
+          this._reg[r] |= (v << 24);
+          break;
+      }
+    } else {
+      super.set(a, v);
+    }
+  }
+
+
+  //
+  // STEPPING THROUGH
+  //
+
+
+  //
+  // GETTERS / SETTERS
+  //
 
   get A() { return this._reg[0]; }
   get B() { return this._reg[1]; }
@@ -129,12 +186,14 @@ export default class CPU extends Device {
   get GZ() { return ((this._reg[15] >> 4) & 0x1) ? true : false; }
   get LZ() { return ((this._reg[15] >> 5) & 0x1) ? true : false; }
 
-  set Y(v) { if(v) this._reg[15] |= (1 << 0); else this._reg[15] &= ~(1 << 0); }
-  set V(v) { if(v) this._reg[15] |= (1 << 1); else this._reg[15] &= ~(1 << 1); }
-  set Z(v) { if(v) this._reg[15] |= (1 << 2); else this._reg[15] &= ~(1 << 2); }
-  set S(v) { if(v) this._reg[15] |= (1 << 3); else this._reg[15] &= ~(1 << 3); }
-  set GZ(v) { if(v) this._reg[15] |= (1 << 4); else this._reg[15] &= ~(1 << 4); }
-  set LZ(v) { if(v) this._reg[15] |= (1 << 5); else this._reg[15] &= ~(1 << 5); }
+  // jscs:disable validateIndentation
+  set Y(v) { if (v) this._reg[15] |= (1 << 0); else this._reg[15] &= ~(1 << 0); }
+  set V(v) { if (v) this._reg[15] |= (1 << 1); else this._reg[15] &= ~(1 << 1); }
+  set Z(v) { if (v) this._reg[15] |= (1 << 2); else this._reg[15] &= ~(1 << 2); }
+  set S(v) { if (v) this._reg[15] |= (1 << 3); else this._reg[15] &= ~(1 << 3); }
+  set GZ(v) { if (v) this._reg[15] |= (1 << 4); else this._reg[15] &= ~(1 << 4); }
+  set LZ(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
+  // jscs:enable validateIndentation
 
 }
 

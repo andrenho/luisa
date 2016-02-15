@@ -15,6 +15,10 @@
  * - Registers:
  *     0000..03FF  Device address (one device each 4 bytes)
  *           0400  Interrupt reason: (MB_ERR_UNAUTH_READ, MB_ERR_UNAUTH_WRITE)
+ *
+ * - Special memory access:
+ *     FFFFFFFC..FFFFFFFF   Initial CPU address
+ *
  */
 
 import LSBStorage from './lsbstorage';
@@ -31,11 +35,13 @@ export default class Motherboard extends LSBStorage {
     this._mmu = null;
     this._cpu = null;
     this._memory = new RAM(4);  // internal memory
+    this._initialAddress = 0;   // changed when the BIOS is installed
     this.interruptActive = false;
     
     // constants
     this.MB_DEV_ADDR         = 0xF0000000;
     this.MB_ERR              = 0xF0000400;
+    this.MB_CPU_INIT         = 0xFFFFFFFD;
     this.MB_ERR_NONE         = 0x0;
     this.MB_ERR_UNAUTH_READ  = 0x1;
     this.MB_ERR_UNAUTH_WRITE = 0x2;
@@ -61,6 +67,8 @@ export default class Motherboard extends LSBStorage {
     } else if (dev.deviceType() === Device.Type.CPU) {
       this._cpu = dev;
     }
+
+    // TODO - is it a BIOS? set initial address
   }
 
 
@@ -101,6 +109,14 @@ export default class Motherboard extends LSBStorage {
       return this._mmu.getMemory(a);
     } else if (a >= 0xF0000000 && a < 0xF0001000) {
       return this._memory.get(a - 0xF0000000);
+    } else if (a >= 0xFFFFFFFC) {
+      return this._initialAddress & 0xFF;
+    } else if (a >= 0xFFFFFFFD) {
+      return (this._initialAddress >> 8) & 0xFF;
+    } else if (a >= 0xFFFFFFFE) {
+      return (this._initialAddress >> 16) & 0xFF;
+    } else if (a >= 0xFFFFFFFF) {
+      return (this._initialAddress >> 24) & 0xFF;
     } else {
       for (let d of this._devices) {
         if (a >= d.addr && a < (d.addr + d.memorySize())) {
@@ -165,5 +181,6 @@ export default class Motherboard extends LSBStorage {
   }
 
 }
+
 
 // vim: ts=2:sw=2:sts=2:expandtab
