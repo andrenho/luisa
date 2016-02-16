@@ -74,10 +74,23 @@ test('CPU: Execute valid basic commands', t => {
   // 
   // MOVB
   //
-  s = opc('mov A, [B]', () => { cpu.B = 0x1000; mb.set32(cpu.B, 0xABCDEF01); }); 
-  t.equals(cpu.A, 0xABCDEF01);
+  s = opc('movb A, [B]', () => { cpu.B = 0x1000; mb.set32(cpu.B, 0xABCDEF01); }); 
+  t.equals(cpu.A, 0xABCDEF01, s);
   
+  s = opc('movb A, [0x1000]', () => mb.set32(0x1000, 0xABCDEF01));
+  t.equals(cpu.A, 0xABCDEF01, s);
 
+  s = opc('movb [A], A', () => cpu.A = 0x64);
+  t.equals(mb.get(0x64), 0x64, s);
+
+  s = opc('movb [A], 0xFA', () => cpu.A = 0x64);
+  t.equals(mb.get(0x64), 0xFA, s);
+
+  s = opc('movb [A], [B]', () => { cpu.A = 0x32; cpu.B = 0x64; mb.set(0x64, 0xFF); });
+  t.equals(mb.get(0x32), 0xFF, s);
+
+  s = opc('movb [A], [0x64]', () => { cpu.A = 0x32; mb.set(0x64, 0xFF); });
+  t.equals(mb.get(0x32), 0xFF, s);
 
   t.end();
 });
