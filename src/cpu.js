@@ -155,7 +155,6 @@ export default class CPU extends Device {
 
   initStepFunctions() {
 
-    // helper functions
     // add invalid opcodes
     let f = [];
     for (let i = 0; i < 256; ++i) {
@@ -600,6 +599,73 @@ export default class CPU extends Device {
       return 1;
     };
 
+    // 
+    // ARITHMETIC
+    //
+
+    f[0x42] = pos => {  // add R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] + reg[p2];
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 2;
+    };
+    
+    f[0x43] = pos => {  // add R, v8
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] + p2;
+      reg[p1] = this.affectMathFlags(r, 8);
+      return 2;
+    };
+    
+    f[0x44] = pos => {  // add R, v16
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      const r = reg[p1] + p2;
+      reg[p1] = this.affectMathFlags(r, 16);
+      return 3;
+    };
+    
+    f[0x45] = pos => {  // add R, v32
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      const r = reg[p1] + p2;
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 5;
+    };
+    
+    f[0x46] = pos => {  // sub R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] - reg[p2];
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 2;
+    };
+    
+    f[0x47] = pos => {  // sub R, v8
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      const r = reg[p1] - p2;
+      reg[p1] = this.affectMathFlags(r, 8);
+      return 2;
+    };
+    
+    f[0x48] = pos => {  // sub R, v16
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
+      const r = reg[p1] - p2;
+      reg[p1] = this.affectMathFlags(r, 16);
+      return 3;
+    };
+    
+    f[0x49] = pos => {  // sub R, v32
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
+      const r = reg[p1] - p2;
+      reg[p1] = this.affectMathFlags(r, 32);
+      return 5;
+    };
     
     return f;
   }
@@ -611,7 +677,7 @@ export default class CPU extends Device {
 
 
   affectLogicFlags(value, size) {
-    if(size !== 8 && size !== 16 && size !== 32) {
+    if (size !== 8 && size !== 16 && size !== 32) {
       throw new Error('Invalid size');
     }
     this.Z = (value === 0);
@@ -621,8 +687,16 @@ export default class CPU extends Device {
     this.Y = false;
     this.GT = false;
     this.LT = false;
-    return value;
+    return value & 0xFFFFFFFF;
   }
+
+
+  affectMathFlags(value, size) {
+    const r = this.affectLogicFlags(value, size);
+    this.Y = (value > 0xFFFFFFFF);
+    return r;
+  }
+
 
   //
   // GETTERS / SETTERS

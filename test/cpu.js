@@ -274,6 +274,43 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('not A', () => { cpu.A = 0b11001010; });
   t.equals(cpu.A, 0b11111111111111111111111100110101, s);
 
+  //
+  // integer math
+  //
+
+  t.comment('Integer arithmetic');
+  
+  s = opc('add A, B', () => { cpu.A = 0x12; cpu.B = 0x20; });
+  t.equals(cpu.A, 0x32, s);
+  
+  s = opc('add A, 0x20', () => cpu.A = 0x12);
+  t.equals(cpu.A, 0x32, s);
+
+  s = opc('add A, 0x2000', () => cpu.A = 0x12);
+  t.equals(cpu.A, 0x2012, s);
+
+  s = opc('add A, 0xF0000000', () => cpu.A = 0x10000012);
+  t.equals(cpu.A, 0x12, s);
+  t.true(cpu.Y, "cpu.Y == 1");
+
+  s = opc('sub A, B', () => { cpu.A = 0x30; cpu.B = 0x20; });
+  t.equals(cpu.A, 0x10, s);
+  t.false(cpu.S, 'cpu.S == 0');
+
+  s = opc('sub A, B', () => { cpu.A = 0x20; cpu.B = 0x30; });
+  t.equals(cpu.A, 0xFFFFFFF0, 'sub A, B (negative)');
+  t.true(cpu.S, 'cpu.S == 1');
+
+  s = opc('sub A, 0x20', () => cpu.A = 0x22);
+  t.equals(cpu.A, 0x2, s);
+
+  s = opc('sub A, 0x2000', () => cpu.A = 0x12);
+  t.equals(cpu.A, 0xFFFFDFED, s);
+
+  s = opc('add A, 0xF0000000', () => cpu.A = 0x10000012);
+  t.equals(cpu.A, 0x12, s);
+  t.true(cpu.Y, "cpu.Y == 1");
+
   t.end();
 });
 
