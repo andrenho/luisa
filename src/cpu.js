@@ -36,6 +36,9 @@
  *                    bit 4 - GT (greater than zero)
  *                    bit 5 - LT (less than zero)
  *                    bit 6 - P (parity)
+ *                    bit 7 - T (interrupts active)
+ *     0100..04FF  Interrupt vector (256 interrupts of 4 bytes each)
+ *     0500..08FF  System call vector (256 system call of 4 bytes each)
  *
  * - Instruction set:
  *     (for now, see https://github.com/andrenho/tinyvm/wiki/CPU)
@@ -64,7 +67,11 @@ export default class CPU extends Device {
 
 
   reset() {
+    super.reset();
     this._reg = new Uint32Array(16);
+    this._interruptVector = new Uint32Array(256);
+    this._syscallVector = new Uint32Array(256);
+    this._interruptsPending = [];
     this.PC = this._mb.get32(this._mb.MB_CPU_INIT);
   }
 
@@ -76,6 +83,11 @@ export default class CPU extends Device {
 
   hasInterrupt() {
     return true;
+  }
+
+
+  pushInterrupt(n) {
+    this._interruptsPending.push(n);
   }
 
 
@@ -107,6 +119,8 @@ export default class CPU extends Device {
       CPU_SP: 0x44,
       CPU_PC: 0x48,
       CPU_FL: 0x4C,
+      CPU_INT_VECT:     0x100,
+      CPU_SYSCALL_VECT: 0x500,
     };
   }
 
@@ -114,41 +128,62 @@ export default class CPU extends Device {
   get(a) {
     if (a <= 0x10) {
       return super.get(a);
-    } else if (a <= 0x4F) {
-      const v = this._reg[Math.floor((a - 0x10) / 4)];
-      switch (a % 4) {
-        case 0: return v & 0xFF;
-        case 1: return (v >> 8) & 0xFF;
-        case 2: return (v >> 16) & 0xFF;
-        case 3: return (v >> 24) & 0xFF;
+    } else {
+      let v;
+      if (a <= 0x4F) {
+        v = this._reg[Math.floor((a - 0x10) / 4)];
+      } else if (a >= 0x100 && a < 0x500) {
+        v = this._interruptVector[Math.floor((a - 0x100) / 4)];
+      } else if (a >= 0x500 && a < 0x8FF) {
+        v = this._syscallVector[Math.floor((a - 0x100) / 4)];
+      }
+      if (v !== undefined) {
+        switch (a % 4) {
+          case 0: return v & 0xFF;
+          case 1: return (v >> 8) & 0xFF;
+          case 2: return (v >> 16) & 0xFF;
+          case 3: return (v >> 24) & 0xFF;
+        }
       }
     }
   }
 
 
   set(a, v) {
-    if (a >= 0x10 && a <= 0x4F) {
-      const r = Math.floor((a - 0x10) / 4);
-      switch (a % 4) {
-        case 0: 
-          this._reg[r] &= ~0xFF;
-          this._reg[r] |= v;
-          break;
-        case 1: 
-          this._reg[r] &= ~0xFF00;
-          this._reg[r] |= (v << 8);
-          break;
-        case 2: 
-          this._reg[r] &= ~0xFF0000;
-          this._reg[r] |= (v << 16);
-          break;
-        case 3: 
-          this._reg[r] &= ~0xFF000000;
-          this._reg[r] |= (v << 24);
-          break;
-      }
-    } else {
+    if (a < 0x10) {
       super.set(a, v);
+    } else {
+      let r, arr;
+      if (a >= 0x10 && a <= 0x4F) {
+        r = Math.floor((a - 0x10) / 4);
+        arr = this._reg;
+      } else if (a >= 0x100 && a < 0x500) {
+        r = Math.floor((a - 0x100) / 4);
+        arr = this._interruptVector;
+      } else if (a >= 0x500 && a < 0x8FF) {
+        r = Math.floor((a - 0x100) / 4);
+        arr = this._syscallVector;
+      }
+      if (arr) {
+        switch (a % 4) {
+          case 0: 
+            this._reg[r] &= ~0xFF;
+            this._reg[r] |= v;
+            break;
+          case 1: 
+            this._reg[r] &= ~0xFF00;
+            this._reg[r] |= (v << 8);
+            break;
+          case 2: 
+            this._reg[r] &= ~0xFF0000;
+            this._reg[r] |= (v << 16);
+            break;
+          case 3: 
+            this._reg[r] &= ~0xFF000000;
+            this._reg[r] |= (v << 24);
+            break;
+        }
+      }
     }
   }
 
@@ -1095,11 +1130,33 @@ export default class CPU extends Device {
       return 0;
     };
 
-
     f[0x74] = pos => {  // ret
       this.PC = this._pop32();
       return 0;
-    }
+    };
+
+    f[0x75] = pos => {  // sys R
+      const p1 = this._mb.get(pos);
+      // TODO - enter supervisor mode
+      this._push32(this.PC + 2);
+      this.PC = this._syscallVector[this._reg[p1] & 0xFF];
+      return 0;
+    };
+      
+    f[0x76] = pos => {  // sys v8
+      const p1 = this._mb.get(pos);
+      // TODO - enter supervisor mode
+      this._push32(this.PC + 2);
+      this.PC = this._syscallVector[p1];
+      return 0;
+    };
+      
+    f[0x77] = pos => {  // iret
+      this.PC = this._pop32();
+      this.T = true;
+      return 0;
+    };
+
 
 
     return f;
@@ -1107,9 +1164,18 @@ export default class CPU extends Device {
 
 
   step() {
+    // execute
     const n = this._stepFunction[this._mb.get(this.PC)](this.PC + 1);
     if (n) {
       this.PC += n + 1;
+    }
+
+    // check for interrupts
+    if (this.I && this._interruptsPending.length > 0) {
+      let n = this._interruptsPending.shift();
+      this._push32(this.PC);
+      this.T = false;
+      this.PC = this._interruptVector[n];
     }
   }
 
@@ -1217,6 +1283,7 @@ export default class CPU extends Device {
   get GT() { return ((this._reg[15] >> 4) & 0x1) ? true : false; }
   get LT() { return ((this._reg[15] >> 5) & 0x1) ? true : false; }
   get P() { return ((this._reg[15] >> 6) & 0x1) ? true : false; }
+  get T() { return ((this._reg[15] >> 7) & 0x1) ? true : false; }
 
   // jscs:disable validateIndentation
   set Y(v) { if (v) this._reg[15] |= (1 << 0); else this._reg[15] &= ~(1 << 0); }
@@ -1226,6 +1293,7 @@ export default class CPU extends Device {
   set GT(v) { if (v) this._reg[15] |= (1 << 4); else this._reg[15] &= ~(1 << 4); }
   set LT(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
   set P(v) { if (v) { this._reg[15] |= (1 << 6); } else { this._reg[15] &= ~(1 << 6); } }
+  set T(v) { if (v) { this._reg[15] |= (1 << 7); } else { this._reg[15] &= ~(1 << 6); } }
   // jscs:enable validateIndentation
 
 }

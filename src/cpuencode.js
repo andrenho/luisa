@@ -565,7 +565,7 @@ export default function cpuEncode(s) {
       }
       break;
 
-    case 'jsr':
+    case 'sys':
       if (t0 === 'register' && t1 === 'none') {
         return [0x75].concat(a0);
       } else if (t0 === 'value' && s0 === 8 && t1 === 'none') {
