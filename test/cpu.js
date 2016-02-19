@@ -444,4 +444,15 @@ test('CPU: Execute valid basic commands', t => {
 });
 
 
+test('CPU: interrupts', t => {
+  let [mb, cpu] = makeCPU();
+  mb.set32(cpu.CPU_INTERRUPT_VECT + 8, 0x1000);
+  mb.setArray(0x0, cpuEncode('mov A, 0xE0000000'));
+  mb.step();
+  mb.step();
+  t.equals(cpu.PC, 0x1000);
+  t.true(cpu.T, 'interrupt disabled');
+  t.end();
+});
+
 // vim: ts=2:sw=2:sts=2:expandtab

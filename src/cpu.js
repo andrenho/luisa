@@ -119,8 +119,8 @@ export default class CPU extends Device {
       CPU_SP: 0x44,
       CPU_PC: 0x48,
       CPU_FL: 0x4C,
-      CPU_INT_VECT:     0x100,
-      CPU_SYSCALL_VECT: 0x500,
+      CPU_INTERRUPT_VECT: 0x100,
+      CPU_SYSCALL_VECT:   0x500,
     };
   }
 
