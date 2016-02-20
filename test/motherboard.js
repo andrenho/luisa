@@ -92,21 +92,19 @@ test('Motherboard: step', t => {
 });
 
 
-test('Motherbaord: unauthorized read', t => {
+test('Motherboard: unauthorized read', t => {
   let m = new Motherboard();
   m.addDevice(new MockMMU());
   m.get(0xFF000000);
-  t.ok(m.interruptActive, 'interrupt is active');
   t.equals(m.get(m.MB_ERR), m.MB_ERR_UNAUTH_READ, 'MB_ERR_UNAUTH_WRITE is set');
   t.end();
 });
 
 
-test('Motherbaord: unauthorized write', t => {
+test('Motherboard: unauthorized write', t => {
   let m = new Motherboard();
   m.addDevice(new MockMMU());
   m.set(0xFF000000, 1);
-  t.ok(m.interruptActive, 'interrupt is active');
   t.equals(m.get(m.MB_ERR), m.MB_ERR_UNAUTH_WRITE, 'MB_ERR_UNAUTH_WRITE is set');
   t.end();
 });

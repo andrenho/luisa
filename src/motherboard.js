@@ -36,7 +36,6 @@ export default class Motherboard extends LSBStorage {
     this._cpu = null;
     this._memory = new RAM(4);  // internal memory
     this._initialAddress = 0;   // changed when the BIOS is installed
-    this.interruptActive = false;
     
     // constants
     this.MB_DEV_ADDR         = 0xF0000000;
@@ -50,7 +49,6 @@ export default class Motherboard extends LSBStorage {
 
   reset() {
     this._memory.reset();
-    this.interruptActive = false;
     for (let d of this.devices) {
       d.reset();
     }
@@ -62,6 +60,7 @@ export default class Motherboard extends LSBStorage {
     this._devices.push(dev);
     dev.initializeConstants(this._addr);
     dev.addr = this._addr;
+    dev.mb = this;
     this._memory.set32((this._devices.length - 1) * 4, this._addr);
     this._addr += dev.memorySize();
 
@@ -82,28 +81,14 @@ export default class Motherboard extends LSBStorage {
 
 
   step() {
-    // fire own interrupt, if aplicable
-    if (this.interruptActive) {
-      this._cpu.pushInterrupt(0x1);
-      this.interruptActive = false;
-    }
-    
-    // fire devices interrupts, and step
+    // step devices (including CPU)
     for (let d of this._devices) {
-      if (d.deviceType() !== Device.Type.CPU) {
-        d.step();
-        if (d.interruptActive) {
-          if (this._cpu) {
-            this._cpu.pushInterrupt(d.interruptNumber);
-          }
-          d.interruptActive = false;
-        }
-      }
+      d.step();
     }
 
     // step CPU
     if (this._cpu) {
-      this._cpu.step();
+      this._cpu.checkInterrupts();
     }
   }
   
@@ -134,7 +119,7 @@ export default class Motherboard extends LSBStorage {
       }
       // fire interrupt
       this._memory.set(0x400, this.MB_ERR_UNAUTH_READ);
-      this.interruptActive = true;  
+      this.pushInterrupt(0x1);
       return 0;
     }
   }
@@ -148,7 +133,7 @@ export default class Motherboard extends LSBStorage {
     } else if (a >= 0xF0000000 && a < 0xF0001000) {
       // fire interrupt
       this._memory.set(0x400, this.MB_ERR_UNAUTH_WRITE);
-      this.interruptActive = true;  
+      this.pushInterrupt(0x1);
     } else {
       for (let d of this._devices) {
         if (a >= d.addr && a < (d.addr + d.memorySize())) {
@@ -158,7 +143,14 @@ export default class Motherboard extends LSBStorage {
       }
       // fire interrupt
       this._memory.set(0x400, this.MB_ERR_UNAUTH_WRITE);
-      this.interruptActive = true;  // fire interrupt
+      this.pushInterrupt(0x1);
+    }
+  }
+
+
+  pushInterrupt(n) {
+    if(this._cpu) {
+      this._cpu.pushInterrupt(n);
     }
   }
 

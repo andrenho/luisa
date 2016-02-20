@@ -482,14 +482,14 @@ test('CPU: Execute valid basic commands', t => {
     cpu.A = 0xA1B2C3E4;
     cpu.B = 0xFFFFFFFF;
   });
-  t.equals(cpu.SP, 0xFD3, s);
+  t.equals(cpu.SP, 0xFCF, s);
   t.equals(mb.get32(0xFFC), 0xA1B2C3E4, 'A is saved');
-  t.equals(mb.get32(0xFF9), 0xFFFFFFFF, 'B is saved');
+  t.equals(mb.get32(0xFF8), 0xFFFFFFFF, 'B is saved');
   
   s = opc('pop.a', () => {
-    cpu.SP = 0xFD3;
+    cpu.SP = 0xFCF;
     mb.set32(0xFFC, 0xA1B2C3E4);
-    mb.set32(0xFF9, 0xFFFFFFFF);
+    mb.set32(0xFF8, 0xFFFFFFFF);
   });
   t.equals(cpu.SP, 0xFFF, s);
   t.equals(cpu.A, 0xA1B2C3E4, 'A is restored');
@@ -523,14 +523,15 @@ test('CPU: subroutines and system calls', t => {
 
   // sys
   mb.reset();
-  cpu.SP = 0x1000;
+  cpu.SP = 0xFFF;
   mb.setArray(0, cpuEncode('sys 2'));
-  mb.set32(cpu.CPU_SYSCALL_VECTOR + 8, 0x1000);
+  mb.set32(cpu.CPU_SYSCALL_VECT + 8, 0x1000);
+  t.equals(cpu._syscallVector[2], 0x1000, 'syscall vector');
   mb.setArray(0x1000, cpuEncode('sret'));
 
   mb.step();
   t.equals(cpu.PC, 0x1000, 'sys 2');
-  t.equals(cpu.SP, 0xFFD, 'SP = 0xFFD');
+  t.equals(cpu.SP, 0xFFB, 'SP = 0xFFD');
   mb.step();
   t.equals(cpu.PC, 0x2, 'sret');
   t.equals(cpu.SP, 0xFFF, 'SP = 0xFFF');
@@ -544,8 +545,9 @@ test('CPU: interrupts', t => {
 
   let [mb, cpu] = makeCPU();
   cpu.T = true;
+  cpu.SP = 0x800;
   mb.set32(cpu.CPU_INTERRUPT_VECT + 8, 0x1000);
-  mb.setArray(0x0, cpuEncode('mov A, 0xE0000000'));
+  mb.setArray(0x0, cpuEncode('movb A, [0xE0000000]'));
   mb.setArray(0x1000, cpuEncode('iret'));
 
   mb.step();  // cause the exception
@@ -573,5 +575,6 @@ test('CPU: invalid opcode', t => {
   t.end();
 
 });
+
 
 // vim: ts=2:sw=2:sts=2:expandtab

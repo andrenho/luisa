@@ -135,7 +135,7 @@ export default class CPU extends Device {
       } else if (a >= 0x100 && a < 0x500) {
         v = this._interruptVector[Math.floor((a - 0x100) / 4)];
       } else if (a >= 0x500 && a < 0x8FF) {
-        v = this._syscallVector[Math.floor((a - 0x100) / 4)];
+        v = this._syscallVector[Math.floor((a - 0x500) / 4)];
       }
       if (v !== undefined) {
         switch (a % 4) {
@@ -161,26 +161,26 @@ export default class CPU extends Device {
         r = Math.floor((a - 0x100) / 4);
         arr = this._interruptVector;
       } else if (a >= 0x500 && a < 0x8FF) {
-        r = Math.floor((a - 0x100) / 4);
+        r = Math.floor((a - 0x500) / 4);
         arr = this._syscallVector;
       }
       if (arr) {
         switch (a % 4) {
           case 0: 
-            this._reg[r] &= ~0xFF;
-            this._reg[r] |= v;
+            arr[r] &= ~0xFF;
+            arr[r] |= v;
             break;
           case 1: 
-            this._reg[r] &= ~0xFF00;
-            this._reg[r] |= (v << 8);
+            arr[r] &= ~0xFF00;
+            arr[r] |= (v << 8);
             break;
           case 2: 
-            this._reg[r] &= ~0xFF0000;
-            this._reg[r] |= (v << 16);
+            arr[r] &= ~0xFF0000;
+            arr[r] |= (v << 16);
             break;
           case 3: 
-            this._reg[r] &= ~0xFF000000;
-            this._reg[r] |= (v << 24);
+            arr[r] &= ~0xFF000000;
+            arr[r] |= (v << 24);
             break;
         }
       }
@@ -1237,14 +1237,15 @@ export default class CPU extends Device {
 
 
   step() {
-    // execute
     const n = this._stepFunction[this._mb.get(this.PC)](this.PC + 1);
     if (n) {
       this.PC += n + 1;
     }
+  }
 
-    // check for interrupts
-    if (this.I && this._interruptsPending.length > 0) {
+  
+  checkInterrupts() {
+    if (this.T && this._interruptsPending.length > 0) {
       let n = this._interruptsPending.shift();
       this._push32(this.PC);
       this.T = false;
