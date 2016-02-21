@@ -50,7 +50,7 @@ test('Storage: unit list', t => {
 test('Storage: read/write (poll)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
-
+  
   
   t.end();
 });
