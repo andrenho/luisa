@@ -1210,7 +1210,7 @@ export default class CPU extends Device {
 
     f[0x83] = pos => {  // popx R
       const p1 = this._mb.get(pos);
-      for(let i = 0; i < this._reg[p1]; ++i) {
+      for (let i = 0; i < this._reg[p1]; ++i) {
         this._pop();
       }
       return 1;
@@ -1218,7 +1218,7 @@ export default class CPU extends Device {
       
     f[0x84] = pos => {  // popx v8
       const p1 = this._mb.get(pos);
-      for(let i = 0; i < p1; ++i) {
+      for (let i = 0; i < p1; ++i) {
         this._pop();
       }
       return 1;
@@ -1226,7 +1226,7 @@ export default class CPU extends Device {
       
     f[0x85] = pos => {  // popx v16
       const p1 = this._mb.get16(pos);
-      for(let i = 0; i < p1; ++i) {
+      for (let i = 0; i < p1; ++i) {
         this._pop();
       }
       return 2;

@@ -149,7 +149,7 @@ export default class Motherboard extends LSBStorage {
 
 
   pushInterrupt(n) {
-    if(this._cpu) {
+    if (this._cpu) {
       this._cpu.pushInterrupt(n);
     }
   }

@@ -74,7 +74,7 @@ export default class Device extends LSBStorage {
 
 
   fireInterrupt() {
-    if(this.mb) {
+    if (this.mb) {
       this.mb.pushInterrupt(this.interruptNumber);
     }
   }
@@ -120,7 +120,7 @@ Device.Type = {
   MMU:          0x01,
   CPU:          0x02,
   VIDEO:        0x03,
-  DISK:         0x04,
+  STORAGE:      0x04,
   KEYBOARD:     0x05,
   // other
   OTHER_INPUT:  0x80,

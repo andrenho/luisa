@@ -6,4 +6,5 @@
   "requirePaddingNewLinesAfterBlocks": false,
   "requirePaddingNewLinesBeforeLineComments": false,
   "disallowTrailingWhitespace": false,
+  "disallowMultipleVarDecl": false,
 }
