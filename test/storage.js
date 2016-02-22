@@ -40,14 +40,14 @@ test('Storage: unit list', t => {
   const [mb2, cpu2, stg2] = makeStorage([new FakeDisk()]);
   t.equals(mb2.get(stg2.STG_UNIT_LIST), 0b1, 'one storage unit');
 
-  const [mb3, cpu3, stg3] = makeStorage([new FakeDisk()]);
+  const [mb3, cpu3, stg3] = makeStorage([new FakeDisk(), new FakeDisk()]);
   t.equals(mb3.get(stg3.STG_UNIT_LIST), 0b11, 'two storage units');
 
   t.end();
 });
 
 
-test('Get storage unit size', t => {
+test.only('Get storage unit size', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
   mb.set(0x0, 0x86);  // nop
@@ -57,8 +57,8 @@ test('Get storage unit size', t => {
 
   mb.step();
 
-  t.equals(mb.get(stg.STG_R0), 1024, 'lower 4 bytes == 1024');
-  t.equals(mb.get(stg.STG_R1), 0, 'upper 4 bytes == 0');
+  t.equals(mb.get32(stg.STG_R0), 1024, 'lower 4 bytes == 1024');
+  t.equals(mb.get32(stg.STG_R1), 0, 'upper 4 bytes == 0');
 
   t.end();
 });
@@ -67,12 +67,12 @@ test('Get storage unit size', t => {
 test('Storage: read (poll)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
-  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_DONE, 'initial status = done');
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
 
   mb.set(0x0, 0x86);  // nop
   stg.setString(0x100, 'abcdefghijklm');  // 13 bytes
 
-  // write data
+  // read data
 
   mb.set32(stg.STG_P0, 0x0);     // unit 0
   mb.set32(stg.STG_P1, 0x20);    // memory position: 0x20
@@ -85,7 +85,7 @@ test('Storage: read (poll)', t => {
 
   while (mb.get(stg.STG_OP_STATUS) === stg.STG_STATUS_WAITING) {}
 
-  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_DONE, 'writing successful');
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'writing successful');
   t.equals(mb.get(0x20), 'a', 'stored correctly - first byte');
   t.equals(mb.get(0x2D), 'm', 'stored correctly - last byte');
 
@@ -96,7 +96,7 @@ test('Storage: read (poll)', t => {
 test('Storage: write (poll)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
-  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_DONE, 'initial status = done');
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
 
   mb.set(0x0, 0x86);  // nop
   mb.setString(0x20, 'abcdefghijklm');  // 13 bytes
@@ -114,7 +114,7 @@ test('Storage: write (poll)', t => {
 
   while (mb.get(stg.STG_OP_STATUS) === stg.STG_STATUS_WAITING) {}
 
-  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_DONE, 'writing successful');
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'writing successful');
   t.equals(stg.get(0x100), 'a', 'stored correctly - first byte');
   t.equals(stg.get(0x10D), 'm', 'stored correctly - last byte');
 
@@ -123,13 +123,34 @@ test('Storage: write (poll)', t => {
 
 
 test('Storage: read (interrupt)', t => {
-  t.fail('test not implemented');  // TODO
+  const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
+
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
+
+  mb.set(0x0, 0x86);  // nop
+  stg.setString(0x100, 'abcdefghijklm');  // 13 bytes
+
+  // preapre interrupt
+  mb.set(stg.STG_MODE, stg.STG_MODE_INTERRUPT);
+  mb.set32(cpu.CPU_INTERRUPT_VECT + 12, 0x1000);
+
+  // read data
+  mb.set32(stg.STG_P0, 0x0);     // unit 0
+  mb.set32(stg.STG_P1, 0x20);    // memory position: 0x20
+  mb.set32(stg.STG_P2, 0x100);   // position in stg: 0x100
+  mb.set32(stg.STG_P3, 0x0);
+  mb.set32(stg.STG_P4, 13);      // size: 13 bytes
+  mb.set(stg.STG_OP, stg.STG_OP_READ);
+
+  mb.step();
+
+  t.equals(cpu.PC, 0x1000, 'interrupt was called');
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'writing successful');
+  t.equals(mb.get(0x20), 'a', 'stored correctly - first byte');
+  t.equals(mb.get(0x2D), 'm', 'stored correctly - last byte');
+
   t.end();
-});
 
-
-test('Storage: write (interrupt)', t => {
-  t.fail('test not implemented');  // TODO
   t.end();
 });
 
@@ -137,7 +158,7 @@ test('Storage: write (interrupt)', t => {
 test('Storage: invalid read (above size)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
-  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_DONE, 'initial status = done');
+  t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = ok');
 
   mb.set(0x0, 0x86);  // nop
 
