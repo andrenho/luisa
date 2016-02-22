@@ -64,14 +64,13 @@ test('Get storage unit size', t => {
 });
 
 
-test.only('Storage: read (poll)', t => {
+test('Storage: read (poll)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
 
   mb.set(0x0, 0x86);  // nop
-  stg.setString(0x100, 'abcdefghijklm');  // 13 bytes
-  t.equals(stg.get(0x100), 'a', 'everything is right');
+  stg._units[0].setString(0x100, 'abcdefghijklm');  // 13 bytes
 
   // read data
 
@@ -87,8 +86,8 @@ test.only('Storage: read (poll)', t => {
   while (mb.get(stg.STG_OP_STATUS) === stg.STG_STATUS_WAITING) {}
 
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'writing successful');
-  t.equals(mb.get(0x20), 'a', 'stored correctly - first byte');
-  t.equals(mb.get(0x2D), 'm', 'stored correctly - last byte');
+  t.equals(mb.get(0x20), 'a'.charCodeAt(0), 'stored correctly - first byte');
+  t.equals(mb.get(0x2C), 'm'.charCodeAt(0), 'stored correctly - last byte');
 
   t.end();
 });
@@ -116,30 +115,31 @@ test('Storage: write (poll)', t => {
   while (mb.get(stg.STG_OP_STATUS) === stg.STG_STATUS_WAITING) {}
 
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'writing successful');
-  t.equals(stg.get(0x100), 'a', 'stored correctly - first byte');
-  t.equals(stg.get(0x10D), 'm', 'stored correctly - last byte');
+  t.equals(stg._units[0].get(0x100), 'a'.charCodeAt(0), 'stored correctly - first byte');
+  t.equals(stg._units[0].get(0x10C), 'm'.charCodeAt(0), 'stored correctly - last byte');
 
   t.end();
 });
 
 
-test('Storage: read (interrupt)', t => {
+test.only('Storage: read (interrupt)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
 
   mb.set(0x0, 0x86);  // nop
-  stg.setString(0x100, 'abcdefghijklm');  // 13 bytes
+  stg._units[0].setString(0x100, 'abcdefghijklm');  // 13 bytes
 
   // preapre interrupt
   mb.set(stg.STG_MODE, stg.STG_MODE_INTERRUPT);
   mb.set32(cpu.CPU_INTERRUPT_VECT + 12, 0x1000);
+  cpu.T = true;
 
   // read data
   mb.set32(stg.STG_P0, 0x0);     // unit 0
-  mb.set32(stg.STG_P1, 0x20);    // memory position: 0x20
-  mb.set32(stg.STG_P2, 0x100);   // position in stg: 0x100
-  mb.set32(stg.STG_P3, 0x0);
+  mb.set32(stg.STG_P1, 0x100);   // position in stg: 0x100
+  mb.set32(stg.STG_P2, 0x0);
+  mb.set32(stg.STG_P3, 0x20);    // memory position: 0x20
   mb.set32(stg.STG_P4, 13);      // size: 13 bytes
   mb.set(stg.STG_OP, stg.STG_OP_READ);
 
@@ -147,10 +147,8 @@ test('Storage: read (interrupt)', t => {
 
   t.equals(cpu.PC, 0x1000, 'interrupt was called');
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'writing successful');
-  t.equals(mb.get(0x20), 'a', 'stored correctly - first byte');
-  t.equals(mb.get(0x2D), 'm', 'stored correctly - last byte');
-
-  t.end();
+  t.equals(mb.get(0x20), 'a'.charCodeAt(0), 'stored correctly - first byte');
+  t.equals(mb.get(0x2C), 'm'.charCodeAt(0), 'stored correctly - last byte');
 
   t.end();
 });
@@ -163,12 +161,12 @@ test('Storage: invalid read (above size)', t => {
 
   mb.set(0x0, 0x86);  // nop
 
-  // write data
+  // read data
 
   mb.set32(stg.STG_P0, 0x0);         // unit 0
-  mb.set32(stg.STG_P1, 0x20);        // memory position: 0x20
-  mb.set32(stg.STG_P2, 0xFFFF0000);  // position in stg: 0xFFFF0000
-  mb.set32(stg.STG_P3, 0x0);
+  mb.set32(stg.STG_P1, 0xFFFF0000);  // position in stg: 0x100
+  mb.set32(stg.STG_P2, 0x0);
+  mb.set32(stg.STG_P3, 0x20);        // memory position: 0x20
   mb.set32(stg.STG_P4, 1);           // size: 13 bytes
   mb.set(stg.STG_OP, stg.STG_OP_READ);
 

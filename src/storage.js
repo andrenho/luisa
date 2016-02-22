@@ -56,7 +56,7 @@ export default class Storage extends Device {
       STG_INTERRUPT: 0x02,
       STG_NAME:      0x03,
       STG_MODE:      0x10,
-      STG_DONE:      0x11,
+      STG_OP_STATUS: 0x11,
       STG_UNIT_LIST: 0x12,
       STG_OP:        0x13,
       STG_P0:        0x14,
@@ -150,8 +150,8 @@ export default class Storage extends Device {
 
   _execute(op) {
     // check if unit exists
-    if (op === this.STG_OP_READ || op === this.STG_OP_WRITE || op === this.STG_OP_READ) {
-      if (this._p[0] > this._units.length) {
+    if (op === this.STG_OP_READ || op === this.STG_OP_WRITE || op === this.STG_OP_SIZE) {
+      if (this._p[0] >= this._units.length) {
         this.fireInterrupt(this.STG_STATUS_UNAVALIABLE);
         return [0, 0];
       }
@@ -165,7 +165,7 @@ export default class Storage extends Device {
 
     } else if (op === this.STG_OP_READ) {
       const unit = this._units[this._p[0]];
-      const stg_location = (this._p[1] | Math.floor(this._p[2] * Math.pow(2, 32)));
+      const stg_location = (this._p[1] | Math.floor(this._p[2] * Math.pow(2, 32))) >>> 0;
       const mem_location = this._p[3];
       const size = this._p[4];
       if ((stg_location + size) > unit.size) {
@@ -173,8 +173,21 @@ export default class Storage extends Device {
         return [0, 0];
       }
       for (let i = 0; i < size; ++i) {
-        console.log(`${mem_location + i} = ${unit.get(stg_location + i)}`);
         this.mb.set(mem_location + i, unit.get(stg_location + i));
+      }
+      this.fireInterrupt(this.STG_STATUS_OK);
+
+    } else if (op === this.STG_OP_WRITE) {
+      const unit = this._units[this._p[0]];
+      const mem_location = this._p[1];
+      const stg_location = (this._p[2] | Math.floor(this._p[3] * Math.pow(2, 32))) >>> 0;
+      const size = this._p[4];
+      if ((stg_location + size) > unit.size) {
+        this.fireInterrupt(this.STG_STATUS_ADDRESS_ERROR);
+        return [0, 0];
+      }
+      for (let i = 0; i < size; ++i) {
+        unit.set(stg_location + i, this.mb.get(mem_location + i));
       }
       this.fireInterrupt(this.STG_STATUS_OK);
     }
