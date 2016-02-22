@@ -47,7 +47,7 @@ test('Storage: unit list', t => {
 });
 
 
-test.only('Get storage unit size', t => {
+test('Get storage unit size', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
   mb.set(0x0, 0x86);  // nop
@@ -64,7 +64,7 @@ test.only('Get storage unit size', t => {
 });
 
 
-test('Storage: read (poll)', t => {
+test.only('Storage: read (poll)', t => {
   const [mb, cpu, stg] = makeStorage([new FakeDisk()]);
 
   t.equals(mb.get(stg.STG_OP_STATUS), stg.STG_STATUS_OK, 'initial status = done');
@@ -75,9 +75,9 @@ test('Storage: read (poll)', t => {
   // read data
 
   mb.set32(stg.STG_P0, 0x0);     // unit 0
-  mb.set32(stg.STG_P1, 0x20);    // memory position: 0x20
-  mb.set32(stg.STG_P2, 0x100);   // position in stg: 0x100
-  mb.set32(stg.STG_P3, 0x0);
+  mb.set32(stg.STG_P1, 0x100);   // position in stg: 0x100
+  mb.set32(stg.STG_P2, 0x0);
+  mb.set32(stg.STG_P3, 0x20);    // memory position: 0x20
   mb.set32(stg.STG_P4, 13);      // size: 13 bytes
   mb.set(stg.STG_OP, stg.STG_OP_READ);
 
@@ -104,9 +104,9 @@ test('Storage: write (poll)', t => {
   // write data
 
   mb.set32(stg.STG_P0, 0x0);     // unit 0
-  mb.set32(stg.STG_P1, 0x100);   // position in stg: 0x100
-  mb.set32(stg.STG_P2, 0x0);
-  mb.set32(stg.STG_P3, 0x20);    // memory position: 0x20
+  mb.set32(stg.STG_P1, 0x20);    // memory position: 0x20
+  mb.set32(stg.STG_P2, 0x100);   // position in stg: 0x100
+  mb.set32(stg.STG_P3, 0x0);
   mb.set32(stg.STG_P4, 13);      // size: 13 bytes
   mb.set(stg.STG_OP, stg.STG_OP_WRITE);
 

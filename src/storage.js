@@ -28,7 +28,7 @@ export default class Storage extends Device {
     this.STG_MODE_INTERRUPT = 0x1;
 
     // STG_OP_STATUS responses
-    this.STG_STATUS_DONE           = 0x0;
+    this.STG_STATUS_OK             = 0x0;
     this.STG_STATUS_WAITING        = 0x1;
     this.STG_STATUS_ADDRESS_ERROR  = 0x2;
     this.STG_STATUS_UNAVALIABLE    = 0x3;
@@ -149,18 +149,36 @@ export default class Storage extends Device {
 
 
   _execute(op) {
-    switch(op) {
-      case this.STG_OP_SIZE:
-        if (this._p[0] > this._units.length) {
-          this.fireInterrupt(this.STG_STATUS_UNAVALIABLE);
-        } else {
-          const r = this._units[this._p[0]].size;
-          console.log(r);
-          console.log(r >>> 32);
-          return [r & 0xFFFFFFFF, r >> 32];
-        }
-        break;
+    // check if unit exists
+    if (op === this.STG_OP_READ || op === this.STG_OP_WRITE || op === this.STG_OP_READ) {
+      if (this._p[0] > this._units.length) {
+        this.fireInterrupt(this.STG_STATUS_UNAVALIABLE);
+        return [0, 0];
+      }
     }
+
+    if (op === this.STG_OP_SIZE) {
+      const r = this._units[this._p[0]].size;
+      const upper_bytes = Math.floor(r / Math.pow(2, 32));
+      const lower_bytes = r & 0xFFFFFFFF;
+      return [lower_bytes, upper_bytes];
+
+    } else if (op === this.STG_OP_READ) {
+      const unit = this._units[this._p[0]];
+      const stg_location = (this._p[1] | Math.floor(this._p[2] * Math.pow(2, 32)));
+      const mem_location = this._p[3];
+      const size = this._p[4];
+      if ((stg_location + size) > unit.size) {
+        this.fireInterrupt(this.STG_STATUS_ADDRESS_ERROR);
+        return [0, 0];
+      }
+      for (let i = 0; i < size; ++i) {
+        console.log(`${mem_location + i} = ${unit.get(stg_location + i)}`);
+        this.mb.set(mem_location + i, unit.get(stg_location + i));
+      }
+      this.fireInterrupt(this.STG_STATUS_OK);
+    }
+
     return [0, 0];
   }
 
