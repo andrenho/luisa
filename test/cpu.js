@@ -495,6 +495,8 @@ test('CPU: Execute valid basic commands', t => {
   t.equals(cpu.A, 0xA1B2C3E4, 'A is restored');
   t.equals(cpu.B, 0xFFFFFFFF, 'B is restored');
 
+  opc('nop');
+
   t.end();
 
 });

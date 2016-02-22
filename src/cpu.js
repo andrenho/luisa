@@ -1232,6 +1232,10 @@ export default class CPU extends Device {
       return 2;
     };
 
+    f[0x87] = pos => {  // nop
+      return 0;
+    };
+
     return f;
   }
 

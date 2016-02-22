@@ -649,6 +649,12 @@ export default function cpuEncode(s) {
       }
       break;
 
+    case 'nop':
+      if (t0 === 'none' && t1 === 'none') {
+        return [0x87];
+      }
+      break;
+
   }
 
   throw new Error(`Invalid command '${s}'`);
