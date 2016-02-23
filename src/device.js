@@ -119,9 +119,9 @@ Device.Type = {
   MOTHERBOARD:  0x00,
   MMU:          0x01,
   CPU:          0x02,
-  VIDEO:        0x03,
-  STORAGE:      0x04,
-  KEYBOARD:     0x05,
+  STORAGE:      0x03,
+  KEYBOARD:     0x04,
+  VIDEO:        0x05,
   // other
   OTHER_INPUT:  0x80,
   OTHER_OUTPUT: 0x81,
