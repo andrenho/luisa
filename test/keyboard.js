@@ -29,21 +29,22 @@ test('Keyboard: invalid event', t => {
   const kbd = new Keyboard();
   t.throws(() => kbd.addEvent('event'), null, 'invalid event causes error');
   t.throws(() => kbd.addEvent({ event:'aaa' }), null, 'invalid event causes error');
-  t.throws(() => kbd.addEvent({ event: 'press', shift: false, control: false, alt: true, key: 0xF0000000 }), null, 'invalid key rejected');
   t.end();
 });
 
 
-test.only('Keyboard: keypresses (poll)', t => {
+test('Keyboard: keypresses (poll)', t => {
   const [mb, cpu, kbd] = makeKeyboard();
 
   kbd.addEvent({ event: 'press', shift: false, control: false, alt: true, key: 0x20 });
   kbd.addEvent({ event: 'release', shift: false, control: false, alt: true, key: 0x20 });
 
   t.equals(mb.get(kbd.KBD_QUEUE_FULL), 0, 'queue is not full');
-  t.equals(mb.get(kbd.KBD_DEQUEUE), (1 << 0x1C) | 0x20, 'dequeued event #1');
-  t.equals(mb.get(kbd.KBD_DEQUEUE), (1 << 0x1F) | (1 << 0x1C) | 0x20, 'dequeued event #2');
-  t.equals(mb.get(kbd.KBD_DEQUEUE), 0, 'queue empty');
+  t.equals(mb.get32(kbd.KBD_EOQ), (1 << 0x1C) | 0x20, 'event #1');
+  mb.set(mb.get(kbd.KBD_DEQUEUE));
+  t.equals(mb.get32(kbd.KBD_EOQ), ((1 << 0x1F) | (1 << 0x1C) | 0x20) >>> 0, 'event #2');
+  mb.set(mb.get(kbd.KBD_DEQUEUE));
+  t.equals(mb.get32(kbd.KBD_EOQ), 0, 'all events dequeued');
 
   t.end();
 });
@@ -63,7 +64,7 @@ test('Keyboard: keypresses (interrupt)', t => {
 
   t.equals(cpu.PC, 0x1000, 'interrupt was called');
   t.equals(mb.get(kbd.KBD_QUEUE_FULL), 0, 'queue is not full');
-  t.equals(mb.get(kbd.KBD_DEQUEUE), (1 << 0x1C) | 0x20, 'dequeued event #1');
+  t.equals(mb.get32(kbd.KBD_EOQ), (1 << 0x1C) | 0x20, 'event #1');
 
   t.end();
 });
