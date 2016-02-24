@@ -42,9 +42,9 @@ export default class Keyboard extends Device {
   addEvent(event) {
     if (typeof event !== 'object') {
       throw new Error('Hash expected');
-    } else if(event.event === undefined || event.shift === undefined || event.control === undefined || event.alt === undefined || event.key === undefined) {
+    } else if (event.event === undefined || event.shift === undefined || event.control === undefined || event.alt === undefined || event.key === undefined) {
       throw new Error('Expected format: { event, shift, control, alt, key }');
-    } else if(event.event !== 'press' && event.event !== 'release') {
+    } else if (event.event !== 'press' && event.event !== 'release') {
       throw new Error('Event must be one of press/release');
     }
     if (this._queue.length < Keyboard.QUEUE_SIZE) {
