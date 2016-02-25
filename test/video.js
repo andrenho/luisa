@@ -20,7 +20,7 @@ function makeVideo() {
   const cpu = new CPU(mb);
   mb.addDevice(cpu);
   const canvas = new Canvas(500,560);
-  const video = new Video(loader_function, canvas);
+  const video = new Video(loader_function, canvas, new Canvas(500, 560));
   mb.addDevice(video);
   return [mb, cpu, video, canvas];
 }
@@ -44,14 +44,10 @@ test('Draw one single pixel', t => {
   const [mb, cpu, video, canvas] = makeVideo();
   let c = canvas.getContext('2d');
   
-  // set color 1 = red
-  mb.set32(video.VID_PALETTE + (0x1 * 4), 0xFF000000);
-  t.equals(mb.get32(video.VID_PALETTE + (0x1 * 4)), 0xFF000000, 'palette color set correctly');
-
   // draw pixel in 5,5
   mb.set32(video.VID_P0, 5);
   mb.set32(video.VID_P1, 5);
-  mb.set32(video.VID_P2, 1);
+  mb.set32(video.VID_P2, 0xFF0000);
   mb.set(video.VID_OP, video.VID_OP_DRAW_PX);
   
   t.deepEqual(c.getImageData(5, 5, 1, 1).data, [0, 0, 0, 0], 'pixel is black');
@@ -59,13 +55,13 @@ test('Draw one single pixel', t => {
 
   // update screen
   mb.set(video.VID_OP, video.VID_OP_UPDATE);
-  t.deepEqual(c.getImageData(5, 5, 1, 1).data, [0xFF, 0, 0, 0xFF], 'pixel is red');
+  t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0xFF, 0, 0], 'pixel is red');
 
   // clear screen
   mb.set32(video.VID_P0, 0);
   mb.set(video.VID_OP, video.VID_OP_CLRSCR);
   mb.set(video.VID_OP, video.VID_OP_UPDATE);
-  t.deepEqual(c.getImageData(5, 5, 1, 1).data, [0, 0, 0, 0], 'pixel is black again');
+  t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0, 0, 0], 'pixel is black again');
 
   t.end();
 });
