@@ -2,11 +2,10 @@ import Device from './device';
 
 export default class Video extends Device {
 
-  constructor(loaderFunction, canvas, offscreenCanvas) {
+  constructor(loaderFunction, canvas) {
     super();
 
     // constants
-    this.VID_OP_UPDATE  = 0x1;
     this.VID_OP_CLRSCR  = 0x2;
     this.VID_OP_DRAW_PX = 0x3;
     this.VID_OP_GET_PX  = 0x4;
@@ -15,15 +14,13 @@ export default class Video extends Device {
     // initialize
     this._const = this.constantList();
     this._loader = loaderFunction;
-    this._canvas = canvas;
-    this._ctx = canvas.getContext('2d');
     this._width = 500; // border of 10
     this._height = 560;
+    this._canvas = canvas;
+    this._ctx = canvas.getContext('2d');
+    this._data = this._ctx.getImageData(0, 0, this._width, this._height);
     this._p = new Uint32Array(8);
     this._r = new Uint32Array(2);
-    this._offscreenCanvas = offscreenCanvas;
-    this._offctx = offscreenCanvas.getContext('2d');
-    this._offdata = this._offctx.getImageData(0, 0, this._width, this._height);
   }
 
   name() { return 'TinyVideo'; }
@@ -51,8 +48,7 @@ export default class Video extends Device {
       VID_P7:         0x30,
       VID_R0:         0x34,
       VID_R1:         0x38,
-      VID_PIXELS:  0x10000,
-      VID_DATA:   0x210000,
+      VID_DATA:    0x10000,
     };
   }
 
@@ -120,22 +116,20 @@ export default class Video extends Device {
 
   _execute(op) {
     switch (op) {
-      case this.VID_OP_UPDATE:
-        this._ctx.putImageData(this._offdata, 0, 0);  // TODO - dirty
-        break;
       case this.VID_OP_CLRSCR:
-        break;
+        break;  // TODO
       case this.VID_OP_DRAW_PX:
         let px = (this._p[0] + (this._p[1] * this._width)) * 4;
-        this._offdata[px+3] = 0xFF;
-        this._offdata[px+0] = (this._p[2] >> 16) & 0xFF;
-        this._offdata[px+1] = (this._p[2] >> 8) & 0xFF;
-        this._offdata[px+2] = this._p[2] & 0xFF;
+        this._data.data[px+3] = 0xFF;
+        this._data.data[px+0] = (this._p[2] >> 16) & 0xFF;
+        this._data.data[px+1] = (this._p[2] >> 8) & 0xFF;
+        this._data.data[px+2] = this._p[2] & 0xFF;
+        this._ctx.putImageData(this._data, 0, 0);  // dirty
         break;
       case this.VID_OP_GET_PX:
         return 0;  // TODO
       case this.VID_OP_WRITE:
-        break;
+        break; // TODO
     }
     return [0, 0];
   }
