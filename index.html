@@ -3,6 +3,7 @@
   <meta charset="utf-8">
 
   <link rel="stylesheet" href="tinyvm.css">
+
   <script src="lib/tinyvm.js"></script>
   <script src="lib/startup.js"></script>
 
@@ -10,7 +11,8 @@
   <body>
     <h1>tinyvm 0.0.1</h1>
     <hr>
-    <canvas id="canvas" width="500" height="560"></canvas>
+    <button onclick='tinyvm.step(); console.log(tinyvm.cpu.PC.toString(16));'>Step</button>
+    <canvas id="canvas" width="500" height="430" style="width:1000px; height:860px; image-rendering: pixelated;"></canvas>
   </body>
 </html>
 

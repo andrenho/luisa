@@ -24,6 +24,8 @@
 import LSBStorage from './lsbstorage';
 import Device from './device';
 import RAM from './ram';
+import MMU from './mmu';
+import CPU from './cpu';
 
 export default class Motherboard extends LSBStorage {
 

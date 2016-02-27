@@ -8,6 +8,8 @@ import Timer from './timer';
 import BIOS from './bios';
 import Video from './video';
 
+import cpuEncode from '../src/cpuencode';
+
 
 export default class TinyVM {
 
@@ -41,6 +43,7 @@ export default class TinyVM {
 
 if (typeof window !== 'undefined') {
   window.TinyVM = TinyVM;
+  window.cpuEncode = cpuEncode;
 }
 
 
