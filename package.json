@@ -3,13 +3,17 @@
   "version": "0.0.1",
   "description": "An emulator for a 32-bit new computer.",
   "main": "main.js",
-  "scripts": {
-    "build": "babel src -d lib",
+  "scripts": { 
+    "build": "npm run build-tinyvm && npm run build-page",
+    "build-tinyvm": "browserify src/tinyvm.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -o lib/tinyvm.js",
+    "build-page": "babel page --out-dir lib",
+    "build-sm": "browserify src/tinyvm.js -o lib/tinyvm.js -t [ babelify --presets es2015 ] -d",
     "doc": "java -jar doc/plantuml.jar doc/classes.uml",
     "lint": "eslint src",
     "style": "jscs -v src/*.js",
     "genchars": "utils/genchars data/font.png 127 > src/chars.js",
-    "test": "babel-tape-runner test/*.js | tap-spec"
+    "test": "babel-tape-runner test/*.js | tap-spec",
+    "clean": "rm -r lib/*"
   },
   "repository": {
     "type": "git",
@@ -28,10 +32,12 @@
     "babel-cli": "^6.5.1",
     "babel-eslint": "^5.0.0",
     "babel-plugin-transform-runtime": "^6.5.0",
+    "babel-plugin-uglify": "^1.0.2",
     "babel-polyfill": "^6.5.0",
     "babel-preset-es2015": "^6.5.0",
     "babel-preset-stage-2": "^6.5.0",
     "babel-tape-runner": "^2.0.0",
+    "babelify": "^7.2.0",
     "canvas": "^1.3.10",
     "eslint": "^2.0.0",
     "tap-spec": "^4.1.1",

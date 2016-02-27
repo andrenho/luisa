@@ -39,4 +39,9 @@ export default class TinyVM {
 }
 
 
+if (typeof window !== 'undefined') {
+  window.TinyVM = TinyVM;
+}
+
+
 // vim: ts=2:sw=2:sts=2:expandtab

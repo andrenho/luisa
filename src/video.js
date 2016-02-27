@@ -23,6 +23,9 @@ export default class Video extends Device {
     this._p = new Uint32Array(8);
     this._r = new Uint32Array(2);
     this._charCache = {};
+
+    this._ctx.fillStyle = 'black';
+    this._ctx.fillRect(0, 0, this._width, this._height);
   }
 
   name() { return 'TinyVideo'; }

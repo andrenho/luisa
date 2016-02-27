@@ -40,7 +40,7 @@ test('Draw one single pixel', t => {
   const [mb, cpu, video, canvas] = makeVideo();
   let c = canvas.getContext('2d');
   
-  t.deepEqual(c.getImageData(5, 5, 1, 1).data, [0, 0, 0, 0], 'pixel is black');
+  t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0, 0, 0], 'pixel is black');
 
   // draw pixel in 5,5
   mb.set32(video.VID_P0, 5);
