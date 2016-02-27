@@ -1,4 +1,5 @@
 var tinyvm;
+var dbg;
 
 window.onload = () => {
   let b = [];
@@ -9,6 +10,34 @@ window.onload = () => {
   b = b.concat(cpuEncode('movd [0xF0016024], 0xFF0000'));  // movd [VID_P4], 0xFF0000
   b = b.concat(cpuEncode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
   tinyvm = new TinyVM(256, [], document.getElementById('canvas'), new Uint8Array(b));
+  dbg = new Debugger(tinyvm);
+
+
+  document.getElementById('debugger_input').onkeypress = (e) => {
+    if (!e) {
+      e = window.event;
+    }
+    let keyCode = e.keyCode || e.which;
+    if (keyCode == 13) {
+      
+      const txt = document.getElementById('debugger_input').value;
+      const output = document.getElementById('debugger_output');
+
+      output.innerHTML = `<div>${dbg.parse(txt)}</div><div><b>${txt}</b></div>` + output.innerHTML;
+
+      document.getElementById('debugger_input').value = '';
+
+      return false;
+    }
+  };
+
+
+  document.getElementById('clear_debugger').onclick = (e) => {
+    document.getElementById('debugger_output').innerHTML = '';
+  };
+
 };
+
+
 
 // vim: ts=2:sw=2:sts=2:expandtab
