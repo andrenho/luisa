@@ -1,0 +1,10 @@
+- debugger
+  - move decoder to debugger
+  - add computer registers (constants)
+  - finish debugger
+- write linker
+- write assembler
+- load BIOS
+- write disk tool (host)
+- write boot tool (guest)
+- write operating system
