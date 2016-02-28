@@ -2042,6 +2042,100 @@ export default class CPU extends Device {
     throw new Error(`Invalid command '${s}'`);
   }
 
+  // 
+  // DECODING
+  //
+  decode(addr) {
+
+    function h(n, digits) {
+      return (Array(digits || 0).join('0') + n.toString(16)).substr(-digits).toUpperCase();
+    }
+
+    function reg(n) {
+      switch (n) {
+        case 0x0: return 'A';
+        case 0x1: return 'B';
+        case 0x2: return 'C';
+        case 0x3: return 'D';
+        case 0x4: return 'E';
+        case 0x5: return 'F';
+        case 0x6: return 'G';
+        case 0x7: return 'H';
+        case 0x8: return 'I';
+        case 0x9: return 'J';
+        case 0xA: return 'K';
+        case 0xB: return 'L';
+        case 0xC: return 'FP';
+        case 0xD: return 'SP';
+        case 0xE: return 'PC';
+        case 0xF: return 'FL';
+        default: return '?';
+      }
+    }
+
+    function v8(n) {
+      return '0x' + h(n[0], 2);
+    }
+    
+    function v16(n) {
+      return '0x' + h(n[1],2) + h(n[0],2)
+    }
+
+    function v32(n) {
+      return '0x' + h(n[3],2) + h(n[2],2) + h(n[1],2) + h(n[0],2);
+    }
+
+    let r = {
+      0x01: (p) => [`mov     ${reg(p[0])}, ${reg(p[1])}`, 3],
+      0x02: (p) => [`mov     ${reg(p[0])}, ${v8(p[1])}`, 3],
+      0x03: (p) => [`mov     ${reg(p[0])}, ${v16(p.slice(1,3))}`, 4],
+      0x04: (p) => [`mov     ${reg(p[0])}, ${v32(p.slice(1,5))}`, 6],
+      0x05: (p) => [`movb    ${reg(p[0])}, [${reg(p[1])}]`, 3],
+      0x06: (p) => [`movb    ${reg(p[0])}, [${v32(p.slice(1,5))}]`, 6],
+      0x07: (p) => [`movw    ${reg(p[0])}, [${reg(p[1])}]`, 3],
+      0x08: (p) => [`movw    ${reg(p[0])}, [${v32(p.slice(1,5))}]`, 6],
+      0x09: (p) => [`movd    ${reg(p[0])}, [${reg(p[1])}]`, 3],
+      0x0A: (p) => [`movd    ${reg(p[0])}, [${v32(p.slice(1,5))}]`, 6],
+
+      0x0B: (p) => [`movb    [${reg(p[0])}], ${reg(p[1])}`, 3],
+      0x0C: (p) => [`movb    [${reg(p[0])}], ${v8(p[1])}`, 3],
+      0x0D: (p) => [`movb    [${reg(p[0])}], [${reg(p[1])}]`, 3],
+      0x0E: (p) => [`movb    [${reg(p[0])}], [${v32(p.slice(1,5))}]`, 6],
+      0x0F: (p) => [`movw    [${reg(p[0])}], ${reg(p[1])}`, 3],
+      0x1A: (p) => [`movw    [${reg(p[0])}], ${v16(p.slice(1,3))}`, 4],
+      0x1B: (p) => [`movw    [${reg(p[0])}], [${reg(p[1])}]`, 3],
+      0x1C: (p) => [`movw    [${reg(p[0])}], [${v32(p.slice(1,5))}]`, 6],
+      0x1D: (p) => [`movd    [${reg(p[0])}], ${reg(p[1])}`, 3],
+      0x1E: (p) => [`movd    [${reg(p[0])}], ${v32(p.slice(1,5))}`, 6],
+      0x1F: (p) => [`movd    [${reg(p[0])}], [${reg(p[1])}]`, 3],
+      0x20: (p) => [`movd    [${reg(p[0])}], [${v32(p.slice(1,5))}]`, 6],
+
+      0x21: (p) => [`movb    [${v32(p.slice(0,4))}], ${reg(p[4])}`, 6],
+      0x22: (p) => [`movb    [${v32(p.slice(0,4))}], ${v8(p[4])}`, 6],
+      0x23: (p) => [`movb    [${v32(p.slice(0,4))}], [${reg(p[4])}]`, 6],
+      0x24: (p) => [`movb    [${v32(p.slice(0,4))}], [${v32(p.slice(4,8))}]`, 9],
+      0x25: (p) => [`movw    [${v32(p.slice(0,4))}], ${reg(p[4])}`, 6],
+      0x26: (p) => [`movw    [${v32(p.slice(0,4))}], ${v16(p.slice(4,6))}`, 7],
+      0x27: (p) => [`movw    [${v32(p.slice(0,4))}], [${reg(p[4])}]`, 6],
+      0x28: (p) => [`movw    [${v32(p.slice(0,4))}], [${v32(p.slice(4,8))}]`, 9],
+      0x29: (p) => [`movd    [${v32(p.slice(0,4))}], ${reg(p[4])}`, 6],
+      0x2A: (p) => [`movd    [${v32(p.slice(0,4))}], ${v32(p.slice(4,8))}`, 9],
+      0x2B: (p) => [`movd    [${v32(p.slice(0,4))}], [${reg(p[4])}]`, 6],
+      0x2C: (p) => [`movd    [${v32(p.slice(0,4))}], [${v32(p.slice(4,8))}]`, 9],
+
+      0x74: (p) => ['ret', 1],
+    };
+
+    const op = this._mb.get(addr);
+    let p = this._mb.getArray(addr+1, 8);
+
+    if (op in r) {
+      return r[op](p);
+    } else {
+      return [`data    0x${h(op,2)}`, 1];
+    }
+  }
+
 }
 
 
