@@ -10,11 +10,13 @@ export default class Debugger {
     this._const = this._loadConstants();
     this._last = '';
     this._lastAddress = undefined;
+    this._breakpoints = {};
   }
 
 
   parse(s) {
     let [cmd, ...pars] = s.split(' ');
+    pars = pars.map(i => parseInt(i));
 
     if (cmd === '') {
       if (this._last === 's' || this._last ==='n' || this._last === 'l') {
@@ -79,7 +81,7 @@ Other:
     if (addr === undefined) {
       addr = this._vm.cpu.PC;
     }
-    return `:: 0x${h(addr,8)} -> ${this.decode(addr)[0]}`;
+    return `${this._breakpoints[addr] ? '*' : ' '} 0x${h(addr,8)} -> ${this.decode(addr)[0]}`;
   }
 
 
@@ -114,10 +116,11 @@ ${this._instruction()}`;
 
     let r = [];
     for (let i = 0; i < 5; ++i) {
-      let [op, a] = this._instruction(addr);
-      r.push(op);
+      let [op, a] = this.decode(addr);
+      r.push(`${this._breakpoints[addr] ? '*' : ' '} 0x${h(addr,8)} -> ${op}`);
       addr += a;
     }
+    this._lastAddress = addr;
 
     return r.join('\n');
   }
@@ -817,7 +820,11 @@ ${this._instruction()}`;
     }
 
     function v8(n) {
-      return '0x' + h(n[0], 2);
+      if (n instanceof Array) {
+        return '0x' + h(n[0], 2);
+      } else {
+        return '0x' + h(n, 2);
+      }
     }
     
     function v16(n) {
@@ -971,7 +978,7 @@ ${this._instruction()}`;
     if (op in r) {
       return r[op](p);
     } else {
-      return [`data    ${v8([op])}`, 1];
+      return [`data    ${v8(op)}`, 1];
     }
   }
 }

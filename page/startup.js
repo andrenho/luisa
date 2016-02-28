@@ -28,6 +28,7 @@ window.onload = () => {
       document.getElementById('debugger_input').focus();
       return false;
     }
+    return true;
   };
 
 
