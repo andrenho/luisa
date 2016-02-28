@@ -38,7 +38,7 @@ export default class Debugger {
   parse(s) {
     let [cmd, ...pars] = s.split(' ');
     switch (cmd) {
-      case '?': return this._help();
+      case '?': case 'h': return this._help();
       case 'r': return this._registers();
       case 's': return this._step();
       default: return 'syntax error (use [?] for help)';
@@ -71,10 +71,11 @@ Other:
   _registers() {
     const c = this._vm.cpu;
     return `A: ${h(c.A,8)}    E: ${h(c.E,8)}    I: ${h(c.I,8)}    FP: ${h(c.FP,8)}
-B: ${h(c.A,8)}    F: ${h(c.E,8)}    J: ${h(c.I,8)}    SP: ${h(c.FP,8)}
-D: ${h(c.A,8)}    G: ${h(c.E,8)}    K: ${h(c.I,8)}    PC: ${h(c.FP,8)}
-C: ${h(c.A,8)}    H: ${h(c.E,8)}    L: ${h(c.I,8)}    FL: ${h(c.FP,8)}`;
-    // TODO - add flags
+B: ${h(c.B,8)}    F: ${h(c.F,8)}    J: ${h(c.J,8)}    SP: ${h(c.SP,8)}
+C: ${h(c.C,8)}    G: ${h(c.G,8)}    K: ${h(c.K,8)}    PC: ${h(c.PC,8)}
+D: ${h(c.D,8)}    H: ${h(c.H,8)}    L: ${h(c.L,8)}    FL: ${h(c.FL,8)}
+
+Flags => Y:${c.Y?1:0}  V:${c.V?1:0}  Z:${c.Z?1:0}  S:${c.S?1:0}  GT:${c.GT?1:0}  LT:${c.LT?1:0}  P:${c.P?1:0}  T:${c.T?1:0}`;
   }
 
 
