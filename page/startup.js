@@ -22,8 +22,9 @@ window.onload = () => {
       
       const txt = document.getElementById('debugger_input').value;
       const output = document.getElementById('debugger_output');
+      const pr = dbg.parse(txt).replace(/ /g, '&nbsp;').split('\n').join('<br>');
 
-      output.innerHTML = `<div>${dbg.parse(txt)}</div><div><b>${txt}</b></div>` + output.innerHTML;
+      output.innerHTML = `<div>${pr}</div><div>- <b>${txt}</b></div>` + output.innerHTML;
 
       document.getElementById('debugger_input').value = '';
 

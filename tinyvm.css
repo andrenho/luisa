@@ -36,7 +36,7 @@ canvas {
 }
 
 .debugger_output {
-  width: 400px;
+  width: 500px;
   height: 830px;
   max-height: 830px;
   min-height: min-content;
