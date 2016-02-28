@@ -1,0 +1,296 @@
+@font-face { 
+    font-family: 'Sudo'; 
+    src: url('sudo/Sudo.ttf') format('truetype'); 
+}
+@font-face { 
+    font-family: 'Sudo'; 
+    font-weight: bold; 
+    src: url('sudo/Sudo-Bold.ttf') format('truetype'); 
+}
+@font-face { 
+    font-family: 'Sudo'; 
+    font-style: italic; 
+    src: url('sudo/Sudo-Italic.ttf') format('truetype'); 
+}
+@font-face { 
+    font-family: 'Sudo'; 
+    font-weight: bold; 
+    font-style: italic; 
+    src: url('sudo/Sudo-BoldItalic.ttf') format('truetype'); 
+}
+
+/*
+ * BODY
+ */
+
+html {
+    overflow-y: scroll;
+}
+
+body {
+    font-family: Sudo, monospace;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+header {
+    font-size: 180%;
+    font-weight: bold;
+}
+
+footer {
+    font-size: 80%;
+    clear: both;
+    padding-top: 10px;
+}
+
+h2 {
+    font-size: 130%;
+}
+
+table {
+    margin: 5px;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px black solid;
+    padding: 2px 5px 2px 5px;
+    text-align: left;
+}
+
+.dev_mode {
+    display: none;
+}
+
+/*
+ * MENUS
+ */
+
+.development {
+    padding-top: 15px;
+    display: none;
+}
+
+nav.topmenu {
+    position: relative;
+    left: 130px;
+    cursor: pointer;
+    width: 200px;
+}
+
+nav.leftmenu {
+    float: left;
+    padding-top: 18px;
+    width: 110px;
+    cursor: pointer;
+}
+
+nav.leftmenu > span {
+    display: block;
+    padding: 3px;
+}
+
+nav.topmenu > span {
+    padding: 3px;
+}
+
+nav.leftmenu > span.selected {
+    border: black solid;
+    border-width: 1px 0 1px 1px;
+    background-color: #FAFAFA;
+}
+
+nav.topmenu > span.selected {
+    border: black solid;
+    border-width: 1px 1px 0 1px;
+    background-color: #FAFAFA;
+}
+
+section.content {
+    float: left;
+    position: relative;
+    left: 10px;
+    width: calc(100% - 145px);
+    margin-top: 10px;
+    padding: 10px;
+    border: black solid;
+    border-width: 1px 0 0 1px;
+    min-height: 250px;
+}
+
+section.content > section {
+    display: none;
+}
+
+/*
+ * TESTS
+ */
+
+
+td.ok {
+    text-align: center;
+    background-color: #ccffcc;
+}
+
+td.ok:after {
+    content: '\2714';
+}
+
+td.nok {
+    text-align: center;
+    background-color: #ffcccc;
+}
+
+td.nok:after {
+    content: '\2718';
+}
+
+/*
+ * MEMORY MAP
+ */
+
+table.mmap {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 150px;
+    font-size: 95%;
+}
+
+table.mmap > tbody > tr > td.area {
+    width: 100px;
+    text-align: center;
+    vertical-align: center;
+}
+
+table.mmap > tbody > tr > td.beginning {
+    border-width: 1px 0 0 0;
+    width: 0px;
+    padding: 0 6px 0 0;
+}
+
+table.mmap > tbody > tr > td.address {
+    border: 0;
+    vertical-align: top;
+    font-size: 80%; 
+    padding-left: 0;
+    width: 90px;
+}
+
+td.ram {
+    height: 80px; 
+    background-color: #ccffff;
+}
+
+td.invalid {
+    height: 50px; 
+    background-color: #ffeeee;
+}
+
+td.devreg {
+    height: 20px; 
+    background-color: #ffccff;
+}
+
+td.devram {
+    height: 90px; 
+    background-color: #ccffcc;
+}
+
+td.ob {
+    height: 10px; 
+    background-color: #ffffcc;
+}
+
+/*
+ * MEMORY
+ */
+
+td.data {
+    border: 0;
+    padding: 0;
+    text-align: center;
+}
+
+td.addr {
+    border: 1px black solid;
+    font-weight: bold;
+}
+
+.noborder {
+    border-width: 0;
+    padding-right: 2px;
+}
+
+span.base_address {
+    padding-right: 10px;
+}
+
+
+/*
+ * REGISTER TABLE
+ */
+
+td.register {
+    font-weight: bold;
+}
+
+td.value {
+    align: center;
+    text-align: center;
+}
+
+td.access {
+    text-align: center;
+}
+
+/*
+ * SPECIAL TAGS
+ */
+
+.memory_data {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    align: center;
+}
+
+.editable {
+    color: #0000ff;
+    font-family: Sudo, monospace;
+    font-size: 100%;
+}
+
+.data_input {
+    font-family: Sudo;
+    font-size: 100%;
+    text-align: center;
+    padding: 0;
+    margin-left: auto;
+    margin-right: auto;
+    border-width: 0;
+}
+
+/* 
+ * MMU PAGE TABLE
+ */
+
+.page_set {
+    border:0; 
+    vertical-align: top;
+}
+
+td.page {
+    width: 7px;
+    height: 7px;
+    border-color: #a0a0a0;
+    padding: 0;
+}
+
+td.mmu_inactive {
+}
+
+
+/* vim: ts=4:sw=4:sts=4:expandtab
+ */

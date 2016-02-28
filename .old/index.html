@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+
+<!--
+Some explanations:
+
+ - In development mode, each page selected is composed of a pair containing the
+   top and left menus separated by a underscore. For example, if the user selects
+   "Motherboard" and "debug", all sections will be hidden except for "mboard_debug".
+   The code that does this is in "page.js", in the method `updatePage()`.
+ - Some sections will be built dynamically by javascript. This is mostly true
+   about the "debug" sections. The code that builds these sections is in
+   "page.js", in the method `initializePage()`.
+ - A special <span class="memory_data"> is a widget that, managed by javascript code,
+   allows edition and direct access to the emulated computer memory.
+ - A special <span class="memory_table"> is a widget that, managed by javascript code,
+   presents a memory table and optionally allows editing.
+-->
+
+<html>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="tinyvm.css">
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  
+  <!-- management code -->
+  <script src="src/page/util.js"></script>
+  <script src="src/page/valuebox.js"></script>
+  <script src="src/page/strbox.js"></script>
+  <script src="src/page/memorytable.js"></script>
+  <script src="src/page/tests.js"></script>
+
+  <!-- emulator code -->
+  <script src="src/tinyvm/motherboard.js"></script>
+  <script src="src/tinyvm/ram.js"></script>
+  <script src="src/tinyvm/bios.js"></script>
+  <script src="src/tinyvm/mmu.js"></script>
+  <script src="src/tinyvm/tinyvm.js"></script>
+
+  <script src="src/page/page.js"></script>
+
+  <title>tinyvm 0.0.1</title>
+
+  <body>
+    <header>
+      tinyvm 0.0.1
+      <hr>
+    </header>
+
+    <!--          -->
+    <!-- COMPUTER -->
+    <!--          -->
+
+    <section id="computer">
+      <span id="loading">Loading...</span>
+      <section id="screen"></section>
+      <section id="choose_dev_mode" class="dev_mode">
+        <label>
+          <input type="checkbox" id="dev_mode" onchange="page.developmentModeUpdated(this.checked);">Development mode
+        </label>
+      </section>
+    </section>
+
+    <!--       -->
+    <!-- MENUS -->
+    <!--       -->
+
+    <section id="dev" class="development">
+
+      <nav id="topmenu" class="topmenu">
+        <span onclick="page.menuSelected(this.id);" id="doc" class="selected">doc</span>
+        <span onclick="page.menuSelected(this.id);" id="debug">debug</span>
+      </nav>
+
+      <nav id="leftmenu" class="leftmenu">
+        <span onclick="page.menuSelected(this.id);" id="mboard">Motherboard</span>
+        <span onclick="page.menuSelected(this.id);" id="ram">RAM</span>
+        <span onclick="page.menuSelected(this.id);" id="mmu">MMU</span>
+        <span onclick="page.menuSelected(this.id);" id="bios">BIOS</span>
+        <hr>
+        <span onclick="page.menuSelected(this.id);" id="tests">Tests</span>
+        <span onclick="page.menuSelected(this.id);" id="about" class="selected">About</span>
+      </nav>
+
+      <!--          -->
+      <!-- CONTENTS -->
+      <!--          -->
+
+      <section id="content" class="content">
+
+        <!--            -->
+        <!-- ABOUT PAGE -->
+        <!--            -->
+
+        <section id="about_doc">
+          <p><b>tinyvm</b> is a emulator for a 32-bit computer that aims to be 
+            as powerful as a modern computer, but as simple as 8-bit computer
+            from the 80s. This computer doesn't exist in a physical form 
+            (<i>yet</i>).</p>
+          <p>Features:</p>
+          <ul>
+            <li>32-bit CPU</li>
+            <li>up to 4 Gb of RAM</li>
+            <li>virtual memory</li>
+            <li>up to 4 hard disks of 256 Gb each</li>
+          </ul>
+          <p>The tab "<i>doc</i>" contains the documentation for each one of the 
+            computer devices on the left. The tab "<i>debug</i>" allows the 
+            internals of each device to be inspected.</p>
+          <p>The code for this emulator is avaliable under the
+            <a href="LICENSE">GPLv3 license</a>.</p>
+        </section>
+
+        <section id="not_avaliable">Not avaliable.</section>
+
+        <!--             -->
+        <!-- MOTHERBOARD -->
+        <!--             -->
+
+        <section id="mboard_doc">
+          <h2>Motherboard</h2>
+          <p>The <b>motherboard</b> coordinates how the memory is accessed. Each <b>device</b>
+            contains an addressing area, and the motherboard will relay the information
+            to the device, according to the address.</p>
+          <p>The addressing areas are organized in a <b>memory map</b>.</p>
+          <p>The full physical memory of the computer (<b>RAM</b>) is also present
+            in the motherboard. When a memory address is accessed, the motherboard will:</p>
+          <ol>
+            <li>look for a device in the memory map. If no device is mapped to this address, it will</li>
+            <li>ask the MMU for a physical address. If the MMU is not active, it will</li>
+            <li>access the physical address in RAM. If the address is out of bounds, it will</li>
+            <li>set the <b>OB</b> (<i>out of bounds</i>) register. This register can be accessed
+              at 0xFFFFFFFF.</li>
+          </ol>
+          <p>This means that, without a MMU active, the memory map will something look like this:</p>
+          <table class="mmap">
+            <tr>
+              <td class="area ram">RAM (physical memory)</td>
+              <td class="beginning"></td>
+              <td class="address">0x00000000</td>
+            </tr>
+            <tr>
+              <td class="area invalid">Invalid access area</td>
+              <td class="beginning"></td>
+              <td class="address">?? (depending on memory size)</td>
+            </tr>
+            <tr>
+              <td class="area devreg">Devices registers</td>
+              <td class="beginning"></td>
+              <td class="address">0xF0000000</td>
+            </tr>
+            <tr>
+              <td class="area devram">Devices RAM</td>
+              <td class="beginning"></td>
+              <td class="address">0xF0010000</td>
+            </tr>
+            <tr>
+              <td class="noborder"></td>
+              <td class="beginning"></td>
+              <td class="address">0xFFFFFFFF</td>
+            </tr>
+          </table>
+          <p>(see the debug page for the current actual implementation)</p>
+
+          <h2>Implementing new devices</h2>
+          <p>New devices can be created in javascript and connected to the motherboard.
+            For that, they need to respect the following interface:</p>
+          <pre class="code">
+class Device {
+    constructor(interrupts...)
+    name()            : string
+    interruptCount()  : int         [optional]
+    getReg(addr)      : uint8_t
+    setReg(addr, uint_8)
+    avaliable()       : bool
+    doc()             : html_string [optional]
+    debug()           : html_string [optional]
+}
+          </pre>
+          <p>Devices of this kind will receive 256 bytes of area to use as registers.</p>
+          <p>Devices can also request an extra, larger amount of memory
+             to be used as a local RAM. These devices need to respect the following interface:</p>
+          <pre class="code">
+class RAMDevice extends Device {
+    areaRequested() : int
+    getRAM(addr)    : uint8_t
+    setRAM(addr, uint8_t)
+} 
+          </pre>
+ 
+          <h3>Registers</h3>
+
+          <p>Each device must implement, at least, the following set of registers:</p>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Description</th>
+                <th style="min-width:130px;">Address</th>
+                <th>Size (bytes)</th>
+                <th>Access</th>
+              </tr>
+              <tr>
+                <td>
+                  Device type:
+                  <table style="border-style: hidden;">
+                    <tr><td>0x00</td><td>No device</td></tr>
+                    <tr><td>0x01</td><td>MMU</td></tr>
+                    <tr><td>0x02</td><td>BIOS</td></tr>
+                    <tr><td>0x03</td><td>CPU</td></tr>
+                    <tr><td>0x04</td><td>Video</td></tr>
+                    <tr><td>0x05</td><td>Audio</td></tr>
+                    <tr><td>0x06</td><td>Timer</td></tr>
+                    <tr><td>0x07</td><td>Keyboard</td></tr>
+                    <tr><td>0x08</td><td>Input device</td></tr>
+                    <tr><td>0x09</td><td>Output device</td></tr>
+                    <tr><td>0x0A</td><td>External device</td></tr>
+                  </table>
+                </td>
+                <td>Device addr + 0x00</td>
+                <td class="access">1</td>
+                <td class="access">R</td>
+              </tr>
+              <tr>
+                <td>Device version</td>
+                <td>Device addr + 0x01</td>
+                <td class="access">1</td>
+                <td class="access">R</td>
+              </tr>
+              <tr>
+                <td>Interrupt number (this number is set by the motherboard)</td>
+                <td>Device addr + 0x02</td>
+                <td class="access">1</td>
+                <td class="access">RW</td>
+              </tr>
+              <tr>
+                <td>Reserved</td>
+                <td>Device addr + 0x03</td>
+                <td class="access">1</td>
+                <td class="access">R</td>
+              </tr>
+              <tr style="background-color: #e8ffe8;">
+                <td>Free</td>
+                <td>Device addr + 0x04</td>
+                <td class="access">220</td>
+                <td class="access">RW</td>
+              </tr>
+              <tr>
+                <td>Device name</td>
+                <td>Device addr + 0xE0</td>
+                <td class="access">31</td>
+                <td class="access">R</td>
+              </tr>
+            </table>
+          </section>
+          <p>Addresses <b>between 0x05 and 0xDF are free</b> to be used by the devices for other pourposes.</p>
+
+        </section>
+
+        <section id="mboard_debug">
+
+          <h2>Memory map</h2>
+          <p>This is the current memory map for the computer.</p>
+          <section id="mmap"></section>
+
+        </section>
+
+        <!--     -->
+        <!-- RAM -->
+        <!--     -->
+
+        <section id="ram_doc">
+          <h2>RAM</h2>
+          <p>The RAM (random access memory) store the information used by the programs running in the computer.</p>
+          <p>It is important to notice that the RAM is never accessed directly. The motherboard will determine the address,
+             usually following these rules:</p>
+          <ol>
+            <li>If the address is &ge; <b>0xF0000000</b>, the access is redirected to the devices;</li>
+            <li>If the address is &lt; <b>0xF0000000</b> and virtual memory is <b>active</b>, 
+                the address is rerouted via the MMU;</li>
+            <li>If the address is &lt; <b>0xF0000000</b> and virtual memory is <b>not active</b>, 
+                then the address is accessed directly in the RAM.</li>
+          </ol>
+          <p>When the memory is being accessed directly (option 3), the RAM is also called <b>physical memory</b>.</p>
+        </section>
+
+        <section id="ram_debug">
+          <p>The physical memory size is <b><span id="ram_size_kb"></span> Kb</b>. The maximum addressable address 
+             is <b><span id="ram_max_address"></span></b>.</p>
+          <h2>Physical memory</h2>
+          <section id="ram_memory_debug" class="physical_memory_table">start=0x0,end=physical_memory_size</section>
+          <p>Notice that this is access to the <b>physical memory</b>. When virtual memory is active,
+             this is not the memory that the CPU sees.</p>
+        </section>
+
+        <!--      -->
+        <!-- BIOS -->
+        <!--      -->
+
+        <section id="bios_doc">
+          <h2>BIOS</h2>
+          <p>The BIOS is a read-only block of memory that is the first code 
+             executed when the computer is turned on.</p>
+          <p>It contains code that will check errors and look for disks present, 
+             loading the booting code and excuting it.</p>
+          <p>When the CPU is turned on, it will point to <b>0xF0000100</b>, (in the BIOS
+             area), that will contain simply a jump to a larger code area starting in
+             <b>0xF0010000</b>.</p>
+        </section>
+
+        <section id="bios_debug">
+
+          <h2>Registers</h2>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Register</th>
+                <th>Description</th>
+                <th>Address</th>
+                <th>Access</th>
+                <th>Current value</th>
+              </tr>
+              <tr>
+                <td class="register">BDEV</td>
+                <td>Device code</td>
+                <td>0xF0000100</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data bios_reg">addr=0xF0000100,prefix,rw</span></td>
+                <!--
+                <td class="value" style="min-width: 110px">
+                  <span class="memory_data">addr=0xF0000100,rw</span>
+                  <span class="memory_data">addr=0xF0000101,rw</span>
+                  <span class="memory_data">addr=0xF0000102,rw</span>
+                  <span class="memory_data">addr=0xF0000103,rw</span>
+                  <span class="memory_data">addr=0xF0000104,rw</span>
+                </td>
+                -->
+              </tr>
+              <tr>
+                <td class="register">BVER</td>
+                <td>BIOS version</td>
+                <td>0xF0000101</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data bios_reg">addr=0xF0000101,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">BNAME</td>
+                <td>BIOS name</td>
+                <td>0xF00001E0</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data_str bios_reg">addr=0xF00001E0,size=16,rw</span></td>
+              </tr>
+            </table>
+          </section>
+
+          <h2>Source code</h2>
+          <section id="bios_source"></section>
+
+          <h2>Binary data</h2>
+          <section id="bios_memory" class="mboard_memory_table">start=0xF0010000,end=0xF001FFFF</section>
+
+        </section>
+
+        <!--     -->
+        <!-- MMU -->
+        <!--     -->
+        <section id="mmu_doc">
+          <h2>MMU</h2>
+          <p>The MMU (memory management unit) controls the access to the RAM. 
+             If the MMU is <b>disabled</b>, any memory address is mapped
+             directly to the same adress in RAM (this is called 
+             <b><i>physical memory</i></b>). If the MMU is <b>enabled</b>, however,
+             a memory access to any address is translated by the MMU. This allows
+             for more sophisticated memory management technique called <b>virtual 
+             memory</b>.</p>
+          <p>The virtual memory can be activated by setting the bit 16 of the VMEM register, 
+             like this:</p>
+          <pre>      movd    [MMU_VMEM], (1 &lt;&lt; 16) | 0xFAB</pre>
+          <p>This will activate the virtual memory and set the memory page to <b>0xFAB</b>.</p>
+
+          <h2>Algorithm for memory addressing</h2>
+          <p>When a memory address is selected, the motherboard and MMU will use the following
+             algorithm to determine the final memory location:</p>
+          <img src="diagrams/memory.svg" alt="Memory address algorithm">
+
+          <h2>Virtual Memory</h2>
+          <p>The <b>virtual memory</b> makes possible to access the memory indirectly.
+             If active, when the CPU requests a memory byte from the MMU, the MMU lookups 
+             the position in a page table to search for the physical position. 
+             This has the following advantages:</p>
+          <ul>
+            <li>By creating several page tables, it is possible to make that several 
+                processes see the full memory as if were their own, easing the 
+                development and avoiding that processes access memory from other 
+                processes;</li>
+            <li>It is possible to establish different permissions for different 
+                memory pages. A page, for example, might be only accessible by the kernel;</li>
+            <li>It is possible to create pages outside of the memory (in a swap file, for 
+                example), thus allowing more memory to be addressable than what is 
+                available in the device.</li>
+          </ul>
+
+          <h2>Memory address translation</h2>
+          <p>The image below illustrates how the logical access works. The VMEM register 
+             contains the <b>Page directory</b> address. The page directory points 
+             to multiple page tables, and the page table points to a page in memory.</p>
+          <img alt="VMEM register" src="img/vmem.png">
+          <p>The way the access works is exemplified below.</p>
+          <img alt="Example" src="img/example.png">
+          <p>The VMEM register can be changed every time the OS changes the active process.
+             This way, each process can have its own memory.</p>
+
+          <h2>Page details</h2>
+          <p>Each page contains <b>0x1000 bytes</b> (4 kB, or 4096 bytes). Since each 
+             index is 4 bytes long, there are 1024 indexes in each page.</p>
+          <img alt="Page details" src="img/page.png">
+
+          <h2>Addresses above 0xF0000000</h2>
+          <p>Memory positions above 0xF0000000 will access the devices' memories. This means 
+             that the maximum addressable space for RAM is 3GB. See <b>Motherboard/Debug</b> for the details
+             on which device will use each block of memory.</p>
+
+          <h2>Registers</h2>
+          <p>The MMU contains a set of registers that help managing memory. A list of these registers
+             along with their description and current values can be seen in the <b>debug</b> page.</p>
+          
+          <h2>Errors</h2>
+          <p>If an error happens during a MMU operation, the interrupt defined in <b>MMU_INTERRUPT</b> 
+             will be called, and <b>MMU_ERROR</b> will contain one of the following:</p>
+          <table>
+            <tr>
+              <th>Value</th>
+              <th>Constant</th>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td class="value">0x00</td>
+              <td class="register">MMU_NO_ERRORS</td>
+              <td>No errors happened</td>
+            </tr>
+            <tr>
+              <td class="value">0x01</td>
+              <td class="register">MMU_OUT_OF_BOUNDS</td>
+              <td>Memory addressed above the memory size</td>
+            </tr>
+            <tr>
+              <td class="value">0x02</td>
+              <td class="register">MMU_PAGE_FAULT</td>
+              <td>Memory position is not paged</td>
+            </tr>
+            <tr>
+              <td class="value">0x04</td>
+              <td class="register">MMU_UNAUTH_WRITE</td>
+              <td>Tried to write read-only memory address</td>
+            </tr>
+            <tr>
+              <td class="value">0x08</td>
+              <td class="register">MMU_UNAUTH_EXEC</td>
+              <td>Tried to load non-executable memory address for execution</td>
+            </tr>
+            <tr>
+              <td class="value">0x10</td>
+              <td class="register">MMU_UNAUTH_ACCESS</td>
+              <td>Tried to access supervisor-only memory address in user mode</td>
+            </tr>
+          </table>
+
+        </section>
+
+        <section id="mmu_debug">
+
+          <h2>Information</h2>
+          <p>
+            Virtual memory is
+            <select id="vmem_active" class="editable" onchange="tinyvm.mboard.mmu.vmemChanged();">
+              <option value='0'>inactive</option>
+              <option value='1'>active</option>
+            </select>
+            and the page directory is
+            <span id="vmem_directory" class="hex_data">value=0,size=4,prefix,rw</span>.
+          </p>
+          <p>
+            Test translation from MMU address to RAM (physical) address: 
+            <span id="mmu_translation" class="hex_data">value=0,size=8,prefix,rw</span>
+            ->
+            <span id="mmu_translated">0x00000000</span>
+          </p>
+
+          <h2>Registers</h2>
+          <section id="registers">
+            <table>
+              <tr>
+                <th>Register</th>
+                <th>Description</th>
+                <th>Address</th>
+                <th>Access</th>
+                <th>Current value</th>
+              </tr>
+              <tr>
+                <td class="register">MDEV</td>
+                <td>Device code</td>
+                <td>0xF0000000</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data mmu">addr=0xF0000000,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">MVER</td>
+                <td>MMU version</td>
+                <td>0xF0000001</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000001,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">MINT</td>
+                <td>Set the interrupt used by the MMU when an error ocurrs</td>
+                <td>0xF0000002</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000002,prefix,rw</span></td>
+              </tr>
+              <tr>
+                <td class="register">MERR</td>
+                <td>Last error</td>
+                <td>0xF0000004</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000004,prefix,rw,domain=0:MMU_NO_ERRORS;1:MMU_OUT_OF_BOUNDS;2:MMU_PAGE_FAULT;4:MMU_UNAUTH_WRITE;8:MMU_UNAUTH_EXEC,16;MMU_UNAUTH_ACCESS</span></td>
+              </tr>
+              <tr>
+                <td class="register">MSUP</td>
+                <td>Supervisor mode (active when != 0)</td>
+                <td>0xF0000005</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000005,prefix,rw,domain=0:Inactive;*:Active</span></td>
+              </tr>
+              <tr>
+                <td class="register">RAMSZ</td>
+                <td>RAM memory size</td>
+                <td>0xF0000008</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF0000008,prefix,rw,size=8</span></td>
+              </tr>
+              <tr>
+                <td class="register">VMEM</td>
+                <td>Virtual memory (bits 0~15: directory location, bit 16: active/inactive)</td>
+                <td>0xF000000C</td>
+                <td class="access">RW</td>
+                <td class="value"><span class="memory_data mmu_reg">addr=0xF000000C,prefix,rw,size=8</span></td>
+              </tr>
+              <tr>
+                <td class="register">MNAME</td>
+                <td>MMU name</td>
+                <td>0xF00000E0</td>
+                <td class="access">R</td>
+                <td class="value"><span class="memory_data_str mmu_reg">addr=0xF00000E0,size=16,rw</span></td>
+              </tr>
+            </table>
+          </section>
+
+          <h2>Memory</h2>
+          <section id="mmu_memory" class="mboard_memory_table">start=0x0,end=0xEFFFFFFF</section>
+
+          <!--
+          <h2>Pages</h2>
+          <div id="mmu_disabled"><p>Virtual memory is <b>disabled</b>.</p></div>
+          <div id="mmu_enabled" style="display:none;">
+            <table>
+              <tr>
+                <th class="page_set">Virtual pages (MMU)</th>
+                <th class="page_set">Physical pages (RAM)</th>
+              </tr>
+              <tr>
+                <td class="page_set"><span id="mmu_virtual_pages"></td>
+                <td class="page_set"><span id="mmu_ram_pages"></td>
+              </tr>
+            </table>
+          </div>
+          -->
+
+        </section>
+
+        <!--       -->
+        <!-- TESTS -->
+        <!--       -->
+        <section id="tests_doc">
+          <p>Choose the tab <b><i>debug</i></b> to run the unit tests.</p>
+        </section>
+
+        <section id="tests_debug">
+          <button class="test" onclick="
+            Motherboard.runTests('mboard_tests');
+            RAM.runTests('ram_tests');
+            MMU.runTests('mmu_tests');
+          ">Run tests</button>
+          <h2>Motherboard</h2>
+          <section id="mboard_tests"></section>
+          <h2>RAM</h2>
+          <section id="ram_tests"></section>
+          <h2>MMU</h2>
+          <section id="mmu_tests"></section>
+        </section>
+
+      </section>
+
+    </section>
+
+    <footer>
+      <hr>
+      Released under the <a href="LICENSE">GPLv3 license</a>.<br>
+      Tested on the latest version of
+      <a href="https://www.google.com/chrome/">Google Chrome</a><!-- and
+      <a href="https://www.mozilla.org/firefox/">Mozilla Firefox</a>-->.
+    </footer>
+  </body>
+</html>
+
+<!-- vim: ts=2:sw=2:sts=2:expandtab
+-->
