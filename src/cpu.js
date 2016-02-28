@@ -2047,6 +2047,8 @@ export default class CPU extends Device {
   //
   decode(addr) {
 
+    addr = addr || this.PC;
+
     function h(n, digits) {
       return (Array(digits || 0).join('0') + n.toString(16)).substr(-digits).toUpperCase();
     }
@@ -2168,7 +2170,52 @@ export default class CPU extends Device {
       0x5A: (p) => [`inc     ${reg(p[0])}`, 2],
       0x5B: (p) => [`dec     ${reg(p[0])}`, 2],
 
+      0x5C: (p) => [`bz      ${reg(p[0])}`, 2],
+      0x5D: (p) => [`bz      ${v32(p.slice(0,4))}`, 5],
+      0x5E: (p) => [`bnz     ${reg(p[0])}`, 2],
+      0x5F: (p) => [`bnz     ${v32(p.slice(0,4))}`, 5],
+      0x60: (p) => [`bneg    ${reg(p[0])}`, 2],
+      0x61: (p) => [`bneg    ${v32(p.slice(0,4))}`, 5],
+      0x62: (p) => [`bpos    ${reg(p[0])}`, 2],
+      0x63: (p) => [`bpos    ${v32(p.slice(0,4))}`, 5],
+      0x64: (p) => [`bgt     ${reg(p[0])}`, 2],
+      0x65: (p) => [`bgt     ${v32(p.slice(0,4))}`, 5],
+      0x66: (p) => [`bgte    ${reg(p[0])}`, 2],
+      0x67: (p) => [`bgte    ${v32(p.slice(0,4))}`, 5],
+      0x68: (p) => [`blt     ${reg(p[0])}`, 2],
+      0x69: (p) => [`blt     ${v32(p.slice(0,4))}`, 5],
+      0x6A: (p) => [`blte    ${reg(p[0])}`, 2],
+      0x6B: (p) => [`blte    ${v32(p.slice(0,4))}`, 5],
+      0x6C: (p) => [`bv      ${reg(p[0])}`, 2],
+      0x6D: (p) => [`bv      ${v32(p.slice(0,4))}`, 5],
+      0x6E: (p) => [`bnv     ${reg(p[0])}`, 2],
+      0x6F: (p) => [`bnv     ${v32(p.slice(0,4))}`, 5],
+      0x70: (p) => [`jmp     ${reg(p[0])}`, 2],
+      0x71: (p) => [`jmp     ${v32(p.slice(0,4))}`, 5],
+      0x72: (p) => [`jsr     ${reg(p[0])}`, 2],
+      0x73: (p) => [`jsr     ${v32(p.slice(0,4))}`, 5],
       0x74: (p) => ['ret', 1],
+      0x75: (p) => [`sys     ${reg(p[0])}`, 2],
+      0x76: (p) => [`sys     ${v8(p[0])}`, 2],
+      0x77: (p) => ['iret', 1],
+      0x86: (p) => ['sret', 1],
+
+      0x78: (p) => [`pushb   ${reg(p[0])}`, 2],
+      0x79: (p) => [`pushb   ${v8(p[0])}`, 2],
+      0x7A: (p) => [`pushw   ${reg(p[0])}`, 2],
+      0x7B: (p) => [`pushw   ${v16(p.slice(0,2))}`, 3],
+      0x7C: (p) => [`pushd   ${reg(p[0])}`, 2],
+      0x7D: (p) => [`pushd   ${v32(p.slice(0,4))}`, 5],
+      0x7E: (p) => [`push.a`, 1],
+      0x7F: (p) => [`popb    ${reg(p[0])}`, 2],
+      0x80: (p) => [`popw    ${reg(p[0])}`, 2],
+      0x81: (p) => [`popd    ${reg(p[0])}`, 2],
+      0x82: (p) => [`pop.a`, 1],
+      0x83: (p) => [`popx    ${reg(p[0])}`, 2],
+      0x84: (p) => [`popx    ${v8(p[0])}`, 2],
+      0x85: (p) => [`popx    ${v16(p.slice(0,2))}`, 3],
+
+      0x87: (p) => ['nop', 1],
     };
 
     const op = this._mb.get(addr);

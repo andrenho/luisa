@@ -75,7 +75,9 @@ B: ${h(c.B,8)}    F: ${h(c.F,8)}    J: ${h(c.J,8)}    SP: ${h(c.SP,8)}
 C: ${h(c.C,8)}    G: ${h(c.G,8)}    K: ${h(c.K,8)}    PC: ${h(c.PC,8)}
 D: ${h(c.D,8)}    H: ${h(c.H,8)}    L: ${h(c.L,8)}    FL: ${h(c.FL,8)}
 
-Flags => Y:${c.Y?1:0}  V:${c.V?1:0}  Z:${c.Z?1:0}  S:${c.S?1:0}  GT:${c.GT?1:0}  LT:${c.LT?1:0}  P:${c.P?1:0}  T:${c.T?1:0}`;
+Flags => Y:${c.Y?1:0}  V:${c.V?1:0}  Z:${c.Z?1:0}  S:${c.S?1:0}  GT:${c.GT?1:0}  LT:${c.LT?1:0}  P:${c.P?1:0}  T:${c.T?1:0}
+
+Next instruction => ${c.decode()[0]}`;
   }
 
 
