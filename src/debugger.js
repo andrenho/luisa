@@ -1,28 +1,3 @@
-/* Functionalities:
- *   - [?] help
- *     Memory
- *       - [d]ump memory block
- *       - [e]nter memory data
- *       - [f]ill memory with data
- *       - [c]opy memory block
- *       - search for [p]attern
- *     CPU
- *       - [r]egisters
- *       - [s]tep through
- *       - step [o]ver
- *       - [r]un
- *       - [s]et/[u]nset breakpoint
- *     Video
- *       - dump [t]ext
- *     Code
- *       - [a]ssemble
- *       - [d]isassemble
- *     File operations (?)
- *     Other
- *       - [h]ex calculator
- */
-
-
 function h(n, digits) {
   return (Array(digits || 0).join('0') + n.toString(16)).substr(-digits).toUpperCase();
 }
@@ -33,22 +8,37 @@ export default class Debugger {
   constructor(tinyvm) {
     this._vm = tinyvm;
     this._const = this._loadConstants();
+    this._last = '';
+    this._lastAddress = undefined;
   }
 
 
   parse(s) {
     let [cmd, ...pars] = s.split(' ');
+
+    if (cmd === '') {
+      if (this._last === 's' || this._last ==='n' || this._last === 'l') {
+        cmd = this._last;
+      }
+    }
+    this._last = cmd;
+
+    if (cmd !== 'l') {
+      this._lastAddress = undefined;
+    }
+
     switch (cmd) {
       case '?': case 'h': return this._help();
       case 'r': return this._registers();
       case 's': return this._step();
+      case 'l': return this._list(pars[0]);
       default: return 'syntax error (use [?] for help)';
     }
   }
 
 
   welcome() {
-    return 'Welcome to TinyVM debugger. Type \'?\' for help.\n\n' + this._currentInstruction();
+    return 'Welcome to TinyVM debugger. Type \'?\' for help.\n\n' + this._instruction();
   }
 
 
@@ -67,7 +57,7 @@ export default class Debugger {
     return `CPU:
   [r] Registers
   [s] step through
-  [o] step over
+  [n] step over
   [c] continue execution
   [s]/[u] set/unset breakpoint ([address=PC])
   [l] disassemly ([address=PC])
@@ -85,8 +75,11 @@ Other:
   }
 
 
-  _currentInstruction() {
-    return `:: PC 0x${h(this._vm.cpu.PC,8)} -> ${this.decode()[0]}`;
+  _instruction(addr) {
+    if (addr === undefined) {
+      addr = this._vm.cpu.PC;
+    }
+    return `:: 0x${h(addr,8)} -> ${this.decode(addr)[0]}`;
   }
 
 
@@ -99,13 +92,34 @@ D: ${h(c.D,8)}    H: ${h(c.H,8)}    L: ${h(c.L,8)}    FL: ${h(c.FL,8)}
 
 Flags => Y:${c.Y?1:0}  V:${c.V?1:0}  Z:${c.Z?1:0}  S:${c.S?1:0}  GT:${c.GT?1:0}  LT:${c.LT?1:0}  P:${c.P?1:0}  T:${c.T?1:0}
 
-${this._currentInstruction()}`;
+${this._instruction()}`;
   }
 
 
   _step() {
     this._vm.step();
-    return this._currentInstruction();
+    return this._instruction();
+  }
+
+
+  _list(cmd) {
+    let addr;
+    if (cmd) {
+      addr = cmd;
+    } else if (this._lastAddress !== undefined) {
+      addr = this._lastAddress;
+    } else {
+      addr = this._vm.cpu.PC;
+    }
+
+    let r = [];
+    for (let i = 0; i < 5; ++i) {
+      let [op, a] = this._instruction(addr);
+      r.push(op);
+      addr += a;
+    }
+
+    return r.join('\n');
   }
 
 
@@ -811,10 +825,8 @@ ${this._currentInstruction()}`;
     }
 
     let _const = this._const;
-    console.log(_const);
     function v32(n) {
-      const value = ((n[3] << 24) | (n[2] << 16) | (n[1] << 8) | n[8]) >>> 0;
-      console.log(value); console.log(value.toString(16));
+      const value = ((n[3] << 24) | (n[2] << 16) | (n[1] << 8) | n[0]) >>> 0;
       if (value in _const) {
         return _const[value];
       } else {
@@ -959,7 +971,7 @@ ${this._currentInstruction()}`;
     if (op in r) {
       return r[op](p);
     } else {
-      return [`data    0x${v8([op])}`, 1];
+      return [`data    ${v8([op])}`, 1];
     }
   }
 }
