@@ -5,8 +5,8 @@
   "main": "main.js",
   "scripts": { 
     "build": "npm run build-tinyvm && npm run build-page",
-    "build-tinyvm": "browserify src/export.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -o lib/tinyvm.js",
-    "build-page": "babel page --out-dir lib",
+    "build-tinyvm": "browserify src/export.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -c -m -o lib/tinyvm.js",
+    "build-page": "babel page | uglifyjs - --screw-ie8 -o lib/page.js",
     "build-sm": "browserify src/tinyvm.js -o lib/tinyvm.js -t [ babelify --presets es2015 ] -d",
     "doc": "java -jar doc/plantuml.jar doc/classes.uml",
     "lint": "eslint src",
