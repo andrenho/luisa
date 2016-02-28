@@ -2,6 +2,10 @@ var tinyvm;
 var dbg;
 
 window.onload = () => {
+
+  //
+  // initialize TinyVM and debugger
+  //
   let b = [];
   b = b.concat(CPU.encode('movd [0xF0016014], 65'));        // movd [VID_P0], '@'
   b = b.concat(CPU.encode('movd [0xF0016018], 5'));         // movd [VID_P1], 5
@@ -13,6 +17,20 @@ window.onload = () => {
   dbg = new Debugger(tinyvm);
 
 
+  // 
+  // on pressing AltGr+D, go to debugger
+  //
+  document.onkeypress = (e) => {
+    if (e.code === 'KeyD') {
+      document.getElementById('debugger_input').focus();
+      return false;
+    }
+  };
+
+
+  //
+  // parse debugger input
+  //
   document.getElementById('debugger_input').onkeypress = (e) => {
     if (!e) {
       e = window.event;
@@ -33,6 +51,9 @@ window.onload = () => {
   };
 
 
+  // 
+  // C button (clear debugger)
+  //
   document.getElementById('clear_debugger').onclick = (e) => {
     document.getElementById('debugger_output').innerHTML = '';
   };
