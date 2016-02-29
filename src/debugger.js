@@ -38,6 +38,7 @@ export default class Debugger {
       case 'l': return this._list(pars[0]);
       case 'b': return this._setBreakpoint(pars[0]);
       case 'd': return this._unsetBreakpoint(pars[0]);
+      case 'm': return this._dumpMemory(pars[0], pars[1]);
       default: return 'syntax error (use [?] for help)';
     }
   }
@@ -69,11 +70,12 @@ export default class Debugger {
   [l] disassemly ([address=PC])
 
 Memory:
-  [m] dump memory block     (address [size=0x100])
-  [e] enter memory data     (address value)
-  [f] fill memory with data (address size value)
-  [c] copy memory block     (origin destination size)
-  [p] search for pattern    (pattern [beginning [end]])
+  [m] dump memory block       (address [size=0x100])
+  [w/ww/wd] show memory data  (address)
+  [e/ew/ed] enter memory data (address value)
+  [f] fill memory with data   (address size value)
+  [c] copy memory block       (origin destination size)
+  [p] search for pattern      (pattern [beginning [end]])
   [v] virtual memory info`;
   }
 
@@ -172,6 +174,37 @@ ${this._instruction()}`;
     
     delete this._breakpoints[addr];
     return this._breakpointList();
+  }
+
+
+  _dumpMemory(addr, sz) {
+    sz = sz || 0x100;
+    
+    addr = Math.floor(addr / 0x10) * 0x10;
+    sz = Math.floor(sz / 0x10) * 0x10;
+
+    let ret = [];
+    for (let a = addr; a < (addr + sz); a += 0x10) {
+      let s = [h(a, 8) + ':   '];
+      for (let b = a; b < (a + 0x10); ++b) {
+        s.push(h(this._vm.mb.get(b), 2) + ' ');
+        if (b - a == 0x7) {
+          s.push(' ');
+        }
+      }
+      s.push('  ');
+      for (let b = a; b < (a + 0x10); ++b) {
+        let m = this._vm.mb.get(b);
+        if (m >= 32 && m < 127) {
+          s.push(String.fromCharCode(m));
+        } else {
+          s.push('.');
+        }
+      }
+      ret.push(s.join(''));
+    }
+
+    return ret.join('\n');
   }
 
 
