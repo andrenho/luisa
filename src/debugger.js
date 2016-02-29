@@ -16,7 +16,7 @@ export default class Debugger {
 
   parse(s) {
     let [cmd, ...pars] = s.split(' ');
-    pars = pars.map(i => parseInt(i));
+    pars = pars.map(i => parseInt('0x' + i));
 
     if (cmd === '') {
       if (this._last === 's' || this._last ==='n' || this._last === 'l') {
@@ -33,7 +33,11 @@ export default class Debugger {
       case '?': case 'h': return this._help();
       case 'r': return this._registers();
       case 's': return this._step();
+      case 'n': return this._stepOver();
+      case 'c': return this._continue();
       case 'l': return this._list(pars[0]);
+      case 'b': return this._setBreakpoint(pars[0]);
+      case 'd': return this._unsetBreakpoint(pars[0]);
       default: return 'syntax error (use [?] for help)';
     }
   }
@@ -60,20 +64,17 @@ export default class Debugger {
   [r] Registers
   [s] step through
   [n] step over
-  [c] continue execution
-  [s]/[u] set/unset breakpoint ([address=PC])
+  [c] start/continue execution
+  [b]/[d] set/delete breakpoint ([address=PC])
   [l] disassemly ([address=PC])
 
 Memory:
-  [d] dump memory block     (address [size=0x100])
+  [m] dump memory block     (address [size=0x100])
   [e] enter memory data     (address value)
   [f] fill memory with data (address size value)
   [c] copy memory block     (origin destination size)
   [p] search for pattern    (pattern [beginning [end]])
-  [v] virtual memory info
-
-Other:
-  [t] dump video text`;
+  [v] virtual memory info`;
   }
 
 
@@ -104,6 +105,23 @@ ${this._instruction()}`;
   }
 
 
+  _stepOver() {
+    const next = this._vm.cpu.PC + this.decode()[1];
+    this._setBreakpoint(next);
+    const s = this._continue();
+    this._unsetBreakpoint(next);
+    return s;
+  }
+
+
+  _continue() {
+    do {
+      this._vm.step();
+    } while (!(this._vm.cpu.PC in this._breakpoints));
+    return this._instruction();
+  }
+
+
   _list(cmd) {
     let addr;
     if (cmd) {
@@ -124,6 +142,39 @@ ${this._instruction()}`;
 
     return r.join('\n');
   }
+
+
+  _breakpointList() {
+    if (Object.keys(this._breakpoints).length === 0) {
+      return 'Breakpoints: none.';
+    } else {
+      return 'Breakpoints: ' + Object.keys(this._breakpoints).map(a => '0x' + h(parseInt(a),8)).join(' ');
+    }
+  }
+
+
+  _setBreakpoint(addr) {
+    if (addr === undefined) {
+      addr = this._vm.cpu.PC;
+    } 
+    this._breakpoints[addr] = true;
+    return this._breakpointList();
+  }
+
+
+  _unsetBreakpoint(addr) {
+    if (addr === undefined) {
+      addr = this._vm.cpu.PC;
+    }
+    if (!(addr in this._breakpoints)) {
+      return 'No such breakpoint. ' + this._breakpointList();
+    }
+    
+    delete this._breakpoints[addr];
+    return this._breakpointList();
+  }
+
+
 
 
   //
@@ -792,10 +843,6 @@ ${this._instruction()}`;
 
     if (addr === undefined) 
       addr = this._vm.cpu.PC;
-
-    function h(n, digits) {
-      return (Array(digits || 0).join('0') + n.toString(16)).substr(-digits).toUpperCase();
-    }
 
     function reg(n) {
       switch (n) {
