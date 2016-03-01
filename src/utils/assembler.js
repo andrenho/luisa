@@ -1,4 +1,4 @@
-export default function assemble(code) {
+export default function assemblyToIr(code) {
   return {};
 }
 
