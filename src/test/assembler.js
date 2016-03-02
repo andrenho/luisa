@@ -67,27 +67,24 @@ test('LuisaVM assembler: valid inputs', t => {
         resw      2
         resd      4`;
   result = {
-    entry: 0,
     text: [0x87],
-    bss: 26,
+    bss: 22,
   };
   t.deepEquals(assemblyToLif(file), result, 'bss section');
 
 
-  /*
   // data section
   file = `
 .section text
         nop
 .section data
         db      0x12, 0x34
-        dw      0x1234
+        dw      0xABCD
 .section rodata
         dd      0xABCDEF01`;
   result = {
-    entry: 0,
     text: [0x87],
-    data: [0x12, 0x34, 0x34, 0x12],
+    data: [0x12, 0x34, 0xCD, 0xAB],
     rodata: [0x01, 0xEF, 0xCD, 0xAB],
   };
   t.deepEquals(assemblyToLif(file), result, 'data section');
@@ -98,16 +95,17 @@ test('LuisaVM assembler: valid inputs', t => {
 .section text
         nop
 .section data
-        ascii   "Abc\\n"
-        asciz   "Abc"`;
+        db      "Abc\\n"
+        db      "Abc\\0"
+        db      "A,A"`;
   result = {
-    entry: 0,
     text: [0x87],
-    data: [65, 98, 99, 13, 65, 98, 99, 0],
+    data: [65, 98, 99, 13, 65, 98, 99, 0, 65, 44, 65],
   };
   t.deepEquals(assemblyToLif(file), result, 'ascii data');
 
 
+  /*
   // resolved labels in code
   file = `
 .section text

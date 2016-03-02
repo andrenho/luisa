@@ -39,6 +39,92 @@ export default function assemblyToLif(code) {
     return bytes;
   }
 
+
+  function parseBSS(line, ctx) {
+    const sp = line.split(/[\s\t]+/);
+    if (sp.length !== 2) {
+      throw new Error(`Syntax error in line ${ctx.nline}. [bss]`);
+    }
+    let [cmd,par] = sp;
+    par = parseInt(par);
+    if (isNaN(par)) {
+      throw new Error(`Invalid number in line ${ctx.nline}. [bss]`);
+    }
+    switch (cmd) {
+      case 'resb': return par;
+      case 'resw': return par * 2;
+      case 'resd': return par * 4;
+      default:
+        throw new Error(`Invalid command '${cmd}' in line ${ctx.nline}.`);
+    }
+  }
+
+
+  function parseData(line, section, ctx) {
+    const sp = line.split(/[\s\t]+/);
+    if (sp.length < 2) {
+      throw new Error(`Syntax error in line ${ctx.nline}. [${section}]`);
+    }
+    const [cmd,...par] = sp;
+    let data = [];
+    for (let b of par.join(' ').split(/,(?=([^\"]*\"[^\"]*\")*[^\"]*$)/)) {  // split by commas
+      if (b === undefined) { continue; }
+      let value;
+      if (cmd == 'db' && (b.startsWith('"') || b.startsWith("'"))) {  // string
+        data = data.concat(parseString(b, ctx));
+      } else {  // numbers
+        value = parseInt(b);
+        if (isNaN(value)) {
+          throw new Error(`Invalid number in line ${ctx.nline}.`);
+        }
+        switch (cmd) {
+          case 'db':
+            if (value > 0xFF) { throw new Error(`Number too large in line ${ctx.nline}.`); }
+            data.push(value);
+            break;
+          case 'dw':
+            if (value > 0xFFFF) { throw new Error(`Number too large in line ${ctx.nline}.`); }
+            data = data.concat([value & 0xFF, value >> 8]);
+            break;
+          case 'dd':
+            if (value > 0xFFFFFFFF) { throw new Error(`Number too large in line ${ctx.nline}.`); }
+            data = data.concat([value & 0xFF, (value >> 8) & 0xFF, (value >> 16) & 0xFF, (value >> 24) & 0xFF ]);
+            break;
+          default:
+            throw new Error(`Invalid command '${cmd}' in line ${ctx.nline}.`);
+        }
+      }
+    }
+    return data;
+  }
+
+
+  function parseString(s, ctx) {
+    let data = [];
+    s = s.slice(1, s.length - 1);  // remove quotes
+    for (let i = 0; i < s.length; ++i) {
+      if (s[i] === '\\') {
+        if (i === s.length - 1) {
+          throw new Error(`Backslash requires a character afterwords, at ${ctx.nline}.`);
+        }
+        let v;
+        switch (s[i + 1]) {
+          case 'n': v = 13; break;
+          case '0': v = 0; break;
+          case '\\': v = '\\'.charCodeAt(0); break;
+          default:
+            throw new Error(`Invalid backslash at ${ctx.nline}.`);
+        }
+        data.push(v);
+        ++i;
+      } else {
+        data.push(s[i].charCodeAt(0));
+      }
+    }
+    return data;
+  }
+
+
   // 
   // MAIN PROCEDURE
   //
@@ -90,7 +176,7 @@ export default function assemblyToLif(code) {
     ++ctx.nline;
   }
 
-  // remove ctxual unwanted info
+  // remove contextual unwanted info
   delete ctx.currentSection;
   delete ctx.constants;
   delete ctx.nline;
