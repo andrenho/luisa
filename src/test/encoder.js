@@ -60,15 +60,16 @@ test('Encoder: invalid commands', t => {
 });
 
 
-/*
 test('Encoder: labels', t => {
 
   function ok(t, s, v) {
     t.same(encode(s), v, s);
   }
   
-  ok(t, 'mov A, test', [x
-*/
+  ok(t, 'movb A, [test]', [0x6, 0x0, 'test', 0x0, 0x0, 0x0]);
+
+  t.end();
+});
 
 
 // vim: ts=2:sw=2:sts=2:expandtab
