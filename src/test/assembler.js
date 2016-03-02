@@ -105,7 +105,6 @@ test('LuisaVM assembler: valid inputs', t => {
   t.deepEquals(assemblyToLif(file), result, 'ascii data');
 
 
-  /*
   // resolved labels in code
   file = `
 .section text
@@ -129,6 +128,7 @@ fwd_label:
   t.deepEquals(assemblyToLif(file), result, 'static labels');
   
 
+  /*
   // local labels
   file = `
 .section text
