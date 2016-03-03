@@ -1,3 +1,50 @@
+export default function encode(line, acceptLabel) {
+
+  // separate operand and parameters
+  let [operand, ...rest] = line.split(/[\s\t]+/);
+  rest = rest.join('');
+
+  // find parameters
+  const parameters = rest.split(/[\s\t]*,[\s\t]*/).filter(s => s !== '');
+  if (parameters.length > 2) {
+    throw new Error('Invalid number of parameters.');
+  }
+
+  const par = parameters.map(p => parseParameter(p));
+  console.log(par);
+
+}
+
+
+function parseParameter(p) {
+  let value, type, array = 0, none, [];
+
+  // if indirect, add indirection and return
+  if (p.startsWith('[') && p.endsWith(']')) {
+    let pp = parseParameter(p.slice(1, p.length - 1));
+    if (pp.type === 'v8') {
+      pp.array = pp.array.concat([0, 0, 0]);
+      pp.type = 'v32';
+    } else if (pp.type === 'v16') {
+      pp.array = pp.array.push(0);
+      pp.type = 'v32';
+    }
+    pp.type = 'indirect ' + pp.type;
+    return type;
+  }
+
+  // if binary, convert to number
+  if (p.search(/0b[01_]+/) !== -1) {
+    p = parseInt(p, 2);
+  }
+
+  // identify data type (value, register or label)
+
+  // if value, check data size
+}
+
+
+/*
 export default function encode(s) {
   const [cmd, t0, v0, a0, s0, t1, v1, a1, s1] = understandCommand(s);
   return parseCommand(cmd, t0, v0, a0, s0, t1, v1, a1, s1);
@@ -474,7 +521,7 @@ function parseCommand(cmd, t0, v0, a0, s0, t1, v1, a1, s1) {
         }
       }
       break;
-    */
+
 
     case 'bz':
     case 'beq':
@@ -674,6 +721,7 @@ function parseCommand(cmd, t0, v0, a0, s0, t1, v1, a1, s1) {
 
   throw new Error(`Invalid command '${s}'`);
 }
+*/
 
 
 // vim: ts=2:sw=2:sts=2:expandtab
