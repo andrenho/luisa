@@ -7,6 +7,7 @@ test('LuisaVM assembler: valid inputs', t => {
 
   let file, result;
 
+  /*
   // simplest file
   file = `
 .section text
@@ -103,6 +104,7 @@ test('LuisaVM assembler: valid inputs', t => {
     data: [65, 98, 99, 13, 65, 98, 99, 0, 65, 44, 65],
   };
   t.deepEquals(assemblyToLif(file), result, 'ascii data');
+  */
 
 
   // resolved labels in code
@@ -131,7 +133,7 @@ fwd_label:
   };
   t.deepEquals(assemblyToLif(file), result, 'static labels');
   
-
+  /*
   // local labels
   file = `
 .section text
@@ -242,6 +244,7 @@ ldat:   resb    0x1`;
     text: [0x71, 0x34, 0x12, 0x00, 0x00],
   };
   t.deepEquals(assemblyToLif(file), result, 'import files');
+  */
 
   t.end();
 
