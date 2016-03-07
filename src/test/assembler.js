@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import assemblyToLif from '../utils/assembler.js';
+import { assemblyToLif, joinLifObjects } from '../utils/assembler.js';
 
 
 test('LuisaVM assembler: valid inputs', t => {
@@ -18,7 +18,6 @@ test('LuisaVM assembler: valid inputs', t => {
 
   // some useful code
   file = `
-.entry  0x1000
 .section text
         mov     A, 0x4
         movb    A, [B]
@@ -29,7 +28,6 @@ test('LuisaVM assembler: valid inputs', t => {
         bz      0x42
         ret`;
   result = {
-    entry: 0x1000,
     text: [0x02, 0x00, 0x04,
            0x05, 0x00, 0x01,
            0x06, 0x00, 0x78, 0x56, 0x34, 0x12,
@@ -127,7 +125,7 @@ test('LuisaVM assembler: valid inputs', t => {
   t.deepEquals(assemblyToLif(file), result, 'import files');
 
 
-  // resolved labels in code
+  // private labels
   file = `
 .section text
 label:  nop
@@ -147,7 +145,7 @@ fwd_label:
       fwd_label: { section: 'text', addr: 0xC },
     },
   };
-  t.deepEquals(assemblyToLif(file), result, 'static labels');
+  t.deepEquals(assemblyToLif(file), result, 'private labels');
   
 
   // local labels
@@ -205,7 +203,7 @@ ldat:   resb    0x1`;
   t.deepEquals(assemblyToLif(file), result, 'data labels');
 
 
-  // exports
+  // public labels
   file = `
 .section text
 @test:  nop`;
@@ -214,7 +212,6 @@ ldat:   resb    0x1`;
     symbols: {
       '@test': { section: 'text', addr: 0x00 },
     },
-    exports: ['@test'],
   };
   t.deepEquals(assemblyToLif(file), result, 'global labels');
 
@@ -225,11 +222,60 @@ ldat:   resb    0x1`;
         jmp     @test`;
   result = {
     text: [0x71, '@test', 0x00, 0x00, 0x00],
-    unresolved: ['@test'],
   };
   t.deepEquals(assemblyToLif(file), result, 'unresolved symbols');
   
   
+  t.end();
+
+});
+
+
+test('LuisaVM assembler: LIF joiner', t => {
+
+  const objA = {
+    text: [0x06, 0x00, '@ldat', 0x00, 0x00, 0x00],
+    bss: 2,
+    data: [0x00],
+    symbols: {
+      '@ldat': { section: 'text', addr: 0x02 },
+    },
+  };
+
+  const objB = {
+    text: [0x07, 'abc', 0x00, 0x00, 0x00],
+    bss: 32,
+    data: [0x24, 0xFF],
+    symbols: {
+      'abc': { section: 'text', addr: 0x0 },
+      'xxx': { section: 'bss', addr: 0xA },
+      'dt': { section: 'data', addr: 0x1 },
+    },
+  };
+
+  const objC = { 
+    text: [0x4, 0x5],
+    symbols: {
+      'c': { section: 'text', addr: 0x0 },
+    },
+  };
+
+  const result = {
+    text: [0x06, 0x00, '@ldat', 0x00, 0x00, 0x00,
+           0x07, 'abc', 0x00, 0x00, 0x00,
+           0x04, 0x05],
+    bss: 34,
+    data: [0x00, 0x24, 0xFF],
+    symbols: {
+      '@ldat': { section: 'text', addr: 0x02 },
+      'abc': { section: 'text', addr: 0x0 },
+      'c': { section: 'text', addr: 0xB },
+      'xxx': { section: 'bss', addr: 0xC },
+      'dt': { section: 'data', addr: 0x2 },
+    },
+  };
+  
+  t.deepEquals(joinLifObjects([objA, objB, objC]), result, 'lifs joined');
   t.end();
 
 });

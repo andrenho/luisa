@@ -16,25 +16,13 @@ let reservedWords = [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
 // CONVERT ASSEMBLY TO LIF
 //
 
-export default function assemblyToLif(code) {
+export function assemblyToLif(code) {
 
   function replaceConstants(line, ctx) {
     for(let c in ctx.constants) {
       line = line.replace(c, ctx.constants[c]);
     }
     return line;
-  }
-
-
-  function parseEntry(pars, ctx) {
-    if (pars.length !== 1) {
-      throw new Error(`Syntax error in line ${ctx.nline}. [entry]`);
-    }
-    const r = parseInt(pars[0]);
-    if (isNaN(r)) {
-      throw new Error(`Invalid number for entry in line ${ctx.nline}.`);
-    }
-    return r;
   }
 
 
@@ -279,7 +267,6 @@ export default function assemblyToLif(code) {
       let [directive, ...pars] = line.split(' ');
       pars = pars.filter(n => n.trim() !== '');
       switch (directive) {
-        case '.entry': ctx.entry = parseEntry(pars, ctx); break;
         case '.section': ctx.currentSection = parseSection(pars, ctx); break;
         case '.define': parseConstant(pars, ctx); break;
         case '.import': parseImport(pars, ctx); break;
@@ -307,9 +294,7 @@ export default function assemblyToLif(code) {
   }
 
   // final adjustments
-  // createRelocationTable(ctx);
-  // addExports(ctx);
-  // findUnresolvedSymbols(ctx);
+  // addExports(ctx); - TODO
 
   // remove contextual unwanted info
   delete ctx.currentSection;
@@ -327,5 +312,14 @@ export default function assemblyToLif(code) {
 
   return ctx;
 }
+
+
+// 
+// JOIN LIF FILES
+//
+export function joinLifObjects(objects) {
+  return {};
+}
+
 
 // vim: ts=2:sw=2:sts=2:expandtab
