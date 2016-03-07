@@ -12,6 +12,7 @@ let reservedWords = [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
   'iret', 'sret', 'pushb', 'pushw', 'pushd', 'push.a', 'popb', 'popw', 'popd',
   'pop.a', 'popx', 'nop', 'db', 'dw', 'dd', 'resb', 'resw', 'resd' ];
 
+
 //
 // CONVERT ASSEMBLY TO LIF
 //
@@ -317,8 +318,30 @@ export function assemblyToLif(code) {
 // 
 // JOIN LIF FILES
 //
+
 export function joinLifObjects(objects) {
-  return {};
+
+  function joinTwoLifObjects(objA, objB) {
+    let joined = {};
+    // join sections text, data and rodata
+    for (let section of ['text', 'data', 'rodata']) {
+      if (objA[section] || objB[section]) {
+        joined[section] = (objA[section] ? objA[section] : []).concat(objA[section] ? objA[section] : []);
+      }
+    }
+    // join bss
+    if (objA.bss || objB.bss) {
+      joined.bss = (objA.bss ? objA.bss : 0) + (objB.bss ? objB.bss : 0);
+    }
+    // add symbols
+  }
+
+
+  let joined = {};
+  for (let obj of objects) {
+    joinTwoLifObjects(joined, obj);
+  }
+  return joined;
 }
 
 
