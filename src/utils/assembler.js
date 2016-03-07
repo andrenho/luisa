@@ -307,9 +307,9 @@ export default function assemblyToLif(code) {
   }
 
   // final adjustments
-  createRelocationTable(ctx);
-  addExports(ctx);
-  findUnresolvedSymbols(ctx);
+  // createRelocationTable(ctx);
+  // addExports(ctx);
+  // findUnresolvedSymbols(ctx);
 
   // remove contextual unwanted info
   delete ctx.currentSection;
