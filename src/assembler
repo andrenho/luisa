@@ -32,10 +32,14 @@ const offset = parseInt(opt.options.offset) || 0;
 
 let obj = [];
 for (let f of opt.argv) {
-  obj.push(createRelocationTable(assemblyToLif(fs.readFileSync(f).toString())), false, true);
+  const file = fs.readFileSync(f).toString();
+  const assembled = assemblyToLif(file);
+  //const reloc = createRelocationTable(assembled, false, true);
+  obj.push(assembled);
 }
 
-const lif = createRelocationTable(joinLifObjects(obj), true, false);
+const joined = joinLifObjects(obj);
+const lif = createRelocationTable(joined, true, false);
 
 let output;
 if (format === 'lrf') {
