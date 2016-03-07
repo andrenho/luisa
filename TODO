@@ -1,3 +1,6 @@
+- load BIOS from another file
+- fix Canvas on continuous execution
+
 - write assembler (ok)
 - write preprocessor (no)
 - write linker (ok)
