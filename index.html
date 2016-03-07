@@ -1,1 +1,81 @@
-web/index.html
+<!DOCTYPE html>
+<html>
+  <meta charset="utf-8">
+
+  <style>
+    @font-face { 
+      font-family: 'Sudo'; 
+      src: url('web/Sudo.ttf') format('truetype'); 
+    }
+    @font-face { 
+      font-family: 'Sudo'; 
+      font-weight: bold; 
+      src: url('web/Sudo-Bold.ttf') format('truetype'); 
+    }
+    @font-face { 
+      font-family: 'Sudo'; 
+      font-style: italic; 
+      src: url('web/Sudo-Italic.ttf') format('truetype'); 
+    }
+    @font-face { 
+      font-family: 'Sudo'; 
+      font-weight: bold; 
+      font-style: italic; 
+      src: url('web/Sudo-BoldItalic.ttf') format('truetype'); 
+    }
+
+    body {
+      font-family: Sudo, monospace;
+    }
+
+    canvas {
+      width: 1000px; 
+      height: 860px; 
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+    }
+
+    .block {
+      display: block;
+      float: left;
+      margin: 20px;
+    }
+
+    .debugger_output {
+      width: 600px;
+      height: 830px;
+      max-height: 830px;
+      overflow-y: scroll;
+      margin-bottom: 10px;
+      margin-top: auto;
+      display: flex;
+      flex-flow: column-reverse;
+    }
+
+    #debugger_input {
+      font-family: Sudo, monospace;
+      font-size: 12pt;
+    }
+  </style>
+
+  <script src="web/luisavm.js" async></script>
+
+  <title>luisavm 0.0.1</title>
+  <body>
+    <h1>luisavm 0.0.1</h1>
+    <hr>
+    <div class='block'>
+      <canvas id="canvas" width="500" height="430">
+        Sorry, seems like your archaic browser is not supported.
+      </canvas>
+    </div>
+    <div class='block'>
+      <div class='debugger_output' id='debugger_output'></div>
+      - <input id='debugger_input' type='text' inputmode='verbatim' maxlength='60' size='55'>
+        <i>(AltGr+D)</i>
+        <input id='clear_debugger' type='button' value='C'>
+    </div>
+  </body>
+</html>
+<!-- vim: ts=2:sw=2:sts=2:expandtab
+-->
