@@ -1,0 +1,10 @@
+{
+  "preset": "airbnb",
+  "esnext": true,
+
+  "disallowMultipleLineBreaks": false,
+  "requirePaddingNewLinesAfterBlocks": false,
+  "requirePaddingNewLinesBeforeLineComments": false,
+  "disallowTrailingWhitespace": false,
+  "disallowMultipleVarDecl": false,
+}

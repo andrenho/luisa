@@ -1,0 +1,50 @@
+{
+  "name": "luisavm",
+  "version": "0.0.1",
+  "description": "An emulator for a 32-bit new computer.",
+  "scripts": {
+    "build": "npm run genchars && npm run build-bios && npm run build-tests",
+    "build-worker": "browserify src/page/worker.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -c -m -o web/luisavm.js",
+    "build-bios": "src/assembler -f bin -T 0xF0006010 host/bios/bios.ls > host/bios.rom && src/emu/jsify host/bios.rom > src/emu/bioscode.js",
+    "build-tests": "browserify src/test/*.js -t [ babelify --presets es2015 ] > src/test/tests.js",
+    "doc": "java -jar doc/plantuml.jar doc/classes.uml",
+    "lint": "eslint src/emu/*.js src/tools/*.js",
+    "style": "jscs -v src/emu/*.js src/tools/*",
+    "genchars": "src/emu/genchars src/emu/font.png 127 > src/emu/chars.js",
+    "test": "babel-tape-runner src/test/*.js | tap-spec",
+    "clean": "rm -f luisavm.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andrenho/luisa.git"
+  },
+  "keywords": [
+    "emulator"
+  ],
+  "author": "André Wagner",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/andrenho/luisa/issues"
+  },
+  "homepage": "https://andrenho.github.com/luisa",
+  "devDependencies": {
+    "babel-cli": "^6.5.1",
+    "babel-eslint": "^5.0.0",
+    "babel-plugin-transform-runtime": "^6.5.0",
+    "babel-plugin-uglify": "^1.0.2",
+    "babel-polyfill": "^6.5.0",
+    "babel-preset-es2015": "^6.5.0",
+    "babel-preset-stage-2": "^6.5.0",
+    "babel-tape-runner": "^2.0.0",
+    "babelify": "^7.2.0",
+    "canvas": "^1.3.10",
+    "eslint": "^2.0.0",
+    "node-getopt": "^0.2.3",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.4.0",
+    "tape-catch": "^1.0.4"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.5.0"
+  }
+}
