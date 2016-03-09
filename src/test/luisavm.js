@@ -1,22 +1,18 @@
-test('LuisaVM', t => {
-  t.fail('Implement these tests.');
-});
-
-/*
 const _biosCode = new Uint8Array([0, 1, 2, 3, 4]);
 
 
 test('LuisaVM: sanity', t => {
-  t.doesNotThrow(() => new LuisaVM(256, [], _biosCode), null, "LuisaVM created");
+  t.doesNotThrow(() => new LuisaVM(256, [], _biosCode, 500, 500, null), null, "LuisaVM created");
   t.end();
 });
 
 
 test('LuisaVM: step', t => {
-  let tm = new LuisaVM(256, [], biosCode);
+  let tm = new LuisaVM(256, [], _biosCode, 500, 500, null);
   t.doesNotThrow(() => tm.step(), null, "step");
   t.end();
 });
+
 
 
 test('LuisaVM: full example', t => {
@@ -28,7 +24,8 @@ test('LuisaVM: full example', t => {
   b = b.concat(Debugger.encode('movd [0xF0016024], 0xFF0000'));  // movd [VID_P4], 0xFF0000
   b = b.concat(Debugger.encode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
 
-  let tm = new LuisaVM(256, [], Uint8Array.from(b));
+  let d = [];
+  let tm = new LuisaVM(256, [], Uint8Array.from(b), 600, 500, d);
 
   t.equal(tm.cpu.PC, 0xF0006010, 'PC is initial position');
   t.equal(tm.mb.get(0xF0006010), 0x2A, 'code loaded into BIOS');
@@ -40,10 +37,10 @@ test('LuisaVM: full example', t => {
   t.equal(tm.cpu.PC, 0xF0006010 + b.length, 'PC is in the right place');
 
   // check pixel
-  // TODO t.deepEqual(canvas.getContext('2d').getImageData(41, 56, 1, 1).data.slice(0, 3), [0xFF, 0, 0], 'character was set on the screen');
-
+  t.equal(d[0].cmd, 'write', 'character written');
+  
   t.end();
 });
-*/
+
 
 // vim: ts=2:sw=2:sts=2:expandtab

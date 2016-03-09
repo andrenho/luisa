@@ -60,6 +60,9 @@ window.onload = () => {
       case 'test_title':
         document.getElementById('tests_list').innerHTML += `<h3>${pars[0]}</h3>`;
         break;
+      case 'test_subtitle':
+        document.getElementById('tests_list').innerHTML += `<h4>${pars[0]}</h4>`;
+        break;
       case 'test_ok':
         document.getElementById('tests_list').innerHTML += `<span class="ok"></span>${pars[0]}<br>`;
         break;

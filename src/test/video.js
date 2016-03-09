@@ -1,17 +1,11 @@
-test('Video', t => {
-  t.fail('Implement these tests.');
-});
-
-/*
-function makeVideo() {
+function makeVideo(queue) {
   const mb = new Motherboard();
   mb.addDevice(new MMU(new RAM(256)));
   const cpu = new CPU(mb);
   mb.addDevice(cpu);
-  const canvas = new Canvas(500,560);
-  const video = new Video(canvas);
+  const video = new Video(500, 400, d => queue.push(d));
   mb.addDevice(video);
-  return [mb, cpu, video, canvas];
+  return [mb, cpu, video];
 }
 
 
@@ -21,86 +15,31 @@ test('Video: sanity', t => {
 });
 
 
-test('Video: screen size', t => {
-  const [mb, cpu, video, canvas] = makeVideo();
-  t.equals(mb.get(video.VID_WIDTH), 500, 'video width');
-  t.equals(mb.get(video.VID_HEIGHT), 560, 'video height');
-  t.end();
-});
-
-
 test('Draw one single pixel', t => {
-  const [mb, cpu, video, canvas] = makeVideo();
-  let c = canvas.getContext('2d');
+  let d = [];
+  const [mb, cpu, video] = makeVideo(d);
   
-  t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0, 0, 0], 'pixel is black');
-
   // draw pixel in 5,5
   mb.set32(video.VID_P0, 5);
   mb.set32(video.VID_P1, 5);
   mb.set32(video.VID_P2, 0xFF0000);
   mb.set(video.VID_OP, video.VID_OP_DRAW_PX);
-  video.update();
+  t.equal(d[0].cmd, 'draw_px', 'pixel drawn');
+  t.equal(d[0].pars[2], 0xFF0000, 'pixel is red');
   
-  t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0xFF, 0, 0], 'pixel is red');
-
   // read pixel in 5, 5
-  mb.set(video.VID_OP, video.VID_OP_GET_PX);
-  t.equals(mb.get32(video.VID_R0), 0xFF0000, 'read pixel from memory');
+  //mb.set(video.VID_OP, video.VID_OP_GET_PX);
+  //t.equals(mb.get32(video.VID_R0), 0xFF0000, 'read pixel from memory');
 
   // clear screen
   mb.set32(video.VID_P0, 0);
   mb.set(video.VID_OP, video.VID_OP_CLRSCR);
-  video.update();
-  t.deepEqual(c.getImageData(5, 5, 1, 1).data.slice(0, 3), [0, 0, 0], 'screen cleared, pixel is black again');
-
+  console.log(d[1]);
+  t.equal(d[1].cmd, 'clrscr', 'screen cleared');
+  
   t.end();
 });
 
-
-test('Draw character', t => {
-  const [mb, cpu, video, canvas] = makeVideo();
-  let c = canvas.getContext('2d');
-
-  mb.set32(video.VID_P0, '@'.charCodeAt(0));
-  mb.set32(video.VID_P1, 5);
-  mb.set32(video.VID_P2, 5);
-  mb.set32(video.VID_P3, 0x0);
-  mb.set32(video.VID_P4, 0xFF0000);
-  mb.set32(video.VID_P5, 1);
-  mb.set32(video.VID_P6, 1);
-  mb.set(video.VID_OP, video.VID_OP_WRITE);
-  video.update();
-
-  // check if pixels were set correctly
-  let px = 42; // 10 [border] + 6*5 [x=5] + 1 [offset] + 1 [first pixel]
-  const py = 57; // 10 [border] + 9*5 [x=5] + 1 [offset] + 1 [first pixel]
-  mb.set32(video.VID_P0, px);
-  mb.set32(video.VID_P1, py);
-  mb.set(video.VID_OP, video.VID_OP_GET_PX);
-  video.update();
-  t.equals(mb.get32(video.VID_R0), 0xFF0000, 'character set correctly');
-
-  mb.set32(video.VID_P0, '@'.charCodeAt(0));
-  mb.set32(video.VID_P1, 6);
-  mb.set32(video.VID_P2, 5);
-  mb.set32(video.VID_P3, 0x0);
-  mb.set32(video.VID_P4, 0xFF0000);
-  mb.set32(video.VID_P5, 1);
-  mb.set32(video.VID_P6, 1);
-  mb.set(video.VID_OP, video.VID_OP_WRITE);
-  video.update();
-
-  // check if pixels were set correctly
-  px += 6;
-  mb.set32(video.VID_P0, px);
-  mb.set32(video.VID_P1, py);
-  mb.set(video.VID_OP, video.VID_OP_GET_PX);
-  t.equals(mb.get32(video.VID_R0), 0xFF0000, 'character cache working correcly');
-
-  t.end();
-});
-*/
 
 
 // vim: ts=2:sw=2:sts=2:expandtab
