@@ -3,15 +3,13 @@ import test from 'tape';
 import LuisaVM from '../emu/luisavm';
 import Debugger from '../utils/debugger';
 
-var Canvas = require('canvas');
-
 //
 // DECODER
 //
 
 test('Debugger decoder', t => {
 
-  let tm = new LuisaVM(256, [], new Canvas(500, 560), Uint8Array.from([]));
+  let tm = new LuisaVM(256, [], Uint8Array.from([]));
   let dbg = new Debugger(tm);
 
   function ok(t, a, s) {

@@ -1,6 +1,6 @@
-import Device from './device';
+'use strict';
 
-export default class Keyboard extends Device {
+class Keyboard extends Device {
 
   constructor() {
     super();

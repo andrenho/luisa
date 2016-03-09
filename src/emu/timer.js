@@ -1,6 +1,6 @@
-import Device from './device';
+'use strict';
 
-export default class Timer extends Device {
+class Timer extends Device {
 
   constructor() {
     super();

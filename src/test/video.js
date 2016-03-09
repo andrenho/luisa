@@ -7,9 +7,8 @@ import CPU from '../emu/cpu';
 
 import Video from '../emu/video';
 
-var Canvas = require('canvas');
 
-
+/*
 function makeVideo() {
   const mb = new Motherboard();
   mb.addDevice(new MMU(new RAM(256)));
@@ -107,6 +106,7 @@ test('Draw character', t => {
 
   t.end();
 });
+*/
 
 
 // vim: ts=2:sw=2:sts=2:expandtab

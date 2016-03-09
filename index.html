@@ -4,24 +4,24 @@
 
   <style>
     @font-face { 
-      font-family: 'Sudo'; 
-      src: url('web/Sudo.ttf') format('truetype'); 
+      font-family: "Sudo"; 
+      src: url("web/Sudo.ttf") format("truetype"); 
     }
     @font-face { 
-      font-family: 'Sudo'; 
+      font-family: "Sudo"; 
       font-weight: bold; 
-      src: url('web/Sudo-Bold.ttf') format('truetype'); 
+      src: url("web/Sudo-Bold.ttf") format("truetype"); 
     }
     @font-face { 
-      font-family: 'Sudo'; 
+      font-family: "Sudo"; 
       font-style: italic; 
-      src: url('web/Sudo-Italic.ttf') format('truetype'); 
+      src: url("web/Sudo-Italic.ttf") format("truetype"); 
     }
     @font-face { 
-      font-family: 'Sudo'; 
+      font-family: "Sudo"; 
       font-weight: bold; 
       font-style: italic; 
-      src: url('web/Sudo-BoldItalic.ttf') format('truetype'); 
+      src: url("web/Sudo-BoldItalic.ttf") format("truetype"); 
     }
 
     body {
@@ -56,10 +56,15 @@
       font-family: Sudo, monospace;
       font-size: 12pt;
     }
+
+    a.always_blue:visited {
+      color: blue;
+    }
   </style>
 
-  <script src="web/bioscode.js" async></script>
-  <script src="web/luisavm.js" async></script>
+  <script src="src/emu/chars.js" async></script>
+  <script src="src/page/videocanvas.js" async></script>
+  <script src="src/page/page.js" async></script>
 
   <title>luisavm 0.0.1</title>
   <body>
@@ -67,16 +72,24 @@
     <h1>luisavm 0.0.1</h1>
     <hr>
     -->
-    <div class='block'>
+    <div class="block">
       <canvas id="canvas" width="540" height="400">
         Sorry, seems like your archaic browser is not supported.
       </canvas>
+      <p>
+        <a href="#" id="settings" class="always_blue">Settings</a> |
+        <a href="https://github.com/andrenho/luisavm/wiki">VM Documentation</a> |
+        <a href="https://github.com/andrenho/luisavm/">Development</a> |
+        <a href="#" id="tests" class="always_blue">Run tests...</a> (in console) |
+        <a href="https://github.com/andrenho/luisavm/wiki/About">About</a>
+      </p>
     </div>
-    <div class='block'>
-      <div class='debugger_output' id='debugger_output'></div>
-      - <input id='debugger_input' type='text' inputmode='verbatim' maxlength='60' size='55'>
+
+    <div class="block">
+      <div class="debugger_output" id="debugger_output"></div>
+      - <input id="debugger_input" type="text" inputmode="verbatim" maxlength="60" size="55">
         <i>(AltGr+D)</i>
-        <input id='clear_debugger' type='button' value='C'>
+        <input id="clear_debugger" type="button" value="C">
     </div>
   </body>
 </html>

@@ -50,9 +50,9 @@
  *   - improve signedness
  */
 
-import Device from './device';
+'use strict';
 
-export default class CPU extends Device {
+class CPU extends Device {
 
   // 
   // DEVICE METHODS
@@ -604,7 +604,6 @@ export default class CPU extends Device {
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
       const r = p2;
-      debugger;
       mb.set32(p1, this._affectFlags(r));
       return 8;
     };

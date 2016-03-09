@@ -1,10 +1,8 @@
-import Device from './device';
+'use strict';
 
-import chars from './chars';
+class Video extends Device {
 
-export default class Video extends Device {
-
-  constructor(canvas) {
+  constructor(width, height, callback) {
     super();
 
     // constants
@@ -15,18 +13,11 @@ export default class Video extends Device {
 
     // initialize
     this._const = this.constantList();
-    this._width = canvas.width;
-    this._height = canvas.height;
-    this._canvas = canvas;
-    this._ctx = canvas.getContext('2d');
-    this._data = this._ctx.getImageData(0, 0, this._width, this._height);
+    this._width = width;
+    this._height = height;
     this._p = new Uint32Array(8);
     this._r = new Uint32Array(2);
-    this._charCache = {};
-    this._pending = [];
-
-    this._ctx.fillStyle = 'black';
-    this._ctx.fillRect(0, 0, this._width, this._height);
+    this._callback = callback;
   }
 
   name() { return 'LuisaVideo'; }
@@ -120,81 +111,25 @@ export default class Video extends Device {
   }
 
 
-  update() {
-    for (const p of this._pending) {
-      switch(p.cmd) {
-        case this.VID_OP_CLRSCR:
-          this._ctx.fillStyle = `rgb(${(p.pars[0] >> 16) & 0xFF},${(p.pars[0] >> 8) & 0xFF},${p.pars[0] & 0xFF})`;
-          this._ctx.fillRect(0, 0, this._width, this._height);
-          break;
-        case this.VID_OP_DRAW_PX:
-          let px = (p.pars[0] + (p.pars[1] * this._width)) * 4;
-          this._data.data[px + 3] = 0xFF;
-          this._data.data[px + 0] = (p.pars[2] >> 16) & 0xFF;
-          this._data.data[px + 1] = (p.pars[2] >> 8) & 0xFF;
-          this._data.data[px + 2] = p.pars[2] & 0xFF;
-          this._ctx.putImageData(this._data, 0, 0, p.pars[0], p.pars[1], 1, 1);
-          break;
-        case this.VID_OP_WRITE:
-          this._drawChar.apply(this, p.pars);
-          break;
-      }
-    }
-    this._pending = [];
-  }
-
-
   _execute(op) {
     switch (op) {
       case this.VID_OP_GET_PX:
-        const d = this._ctx.getImageData(this._p[0], this._p[1], 1, 1).data;
-        return [(d[0] << 16) | (d[1] << 8) | d[2], 0];
+        // TODO
+        // const d = this._ctx.getImageData(this._p[0], this._p[1], 1, 1).data;
+        //return [(d[0] << 16) | (d[1] << 8) | d[2], 0];
+        break;
       case this.VID_OP_CLRSCR:
+        this._callback({ device: 'video', cmd: 'clrscr', pars: this._p.slice(0, 7) });
+        break;
       case this.VID_OP_DRAW_PX:
+        this._callback({ device: 'video', cmd: 'draw_px', pars: this._p.slice(0, 7) });
+        break;
       case this.VID_OP_WRITE:
-        this._pending.push({ cmd: op, pars: this._p.slice(0, 7) });
+        this._callback({ device: 'video', cmd: 'write', pars: this._p.slice(0, 7) });
         break;
     }
     return [0, 0];
   }
-
-
-  _drawChar(c, x, y, bg, fg, offx, offy) {
-    const image = this._charImage(c, bg, fg);
-    const px = 10 + (x * 6) + offx;
-    const py = 10 + (y * 9) + offy;
-    this._ctx.putImageData(image, px, py);
-  }
-  
-
-  _charImage(c, bg, fg) {
-    const idx = `${c.toString(16)}_${bg.toString(16)}${fg.toString(16)}`;
-    const value = this._charCache[idx];
-    if (value) {
-      return value;
-    } else {
-      const chr = this._createCharImage(c, bg, fg);
-      this._charCache[idx] = chr;
-      return chr;
-    }
-  }
-
-
-  _createCharImage(c, bg, fg) {
-    let img = this._ctx.createImageData(6, 9);
-    for (let y = 0; y < 9; ++y) {
-      for (let x = 0; x < 6; ++x) {
-        const p = ((5 - x) + (y * 6)) * 4;
-        const v = (chars[c][y] >> x) & 1;
-        img.data[p + 3] = 0xFF;
-        img.data[p] = ((v ? fg : bg) >> 16) & 0xFF;
-        img.data[p + 1] = ((v ? fg : bg) >> 8) & 0xFF;
-        img.data[p + 2] = (v ? fg : bg) & 0xFF;
-      }
-    }
-    return img;
-  }
-
 
 }
 

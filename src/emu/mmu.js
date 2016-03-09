@@ -63,9 +63,9 @@
  *     P = page index (24 bits)
  */
 
-import Device from './device';
+'use strict';
 
-export default class MMU extends Device {
+class MMU extends Device {
 
   constructor(ram) {
     super();

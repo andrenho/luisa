@@ -1,17 +1,8 @@
-import Motherboard from './motherboard';
-import RAM from './ram';
-import MMU from './mmu';
-import CPU from './cpu';
-import Storage from './storage';
-import Keyboard from './keyboard';
-import Timer from './timer';
-import BIOS from './bios';
-import Video from './video';
+'use strict';
 
+class LuisaVM {
 
-export default class LuisaVM {
-
-  constructor(ramSizeKb, storageUnits, canvas, biosCode) {
+  constructor(ramSizeKb, storageUnits, biosCode, screenWidth, screenHeight, callback) {
     this.mb = new Motherboard();
     this.mmu = new MMU(new RAM(ramSizeKb));
     this.cpu = new CPU(this.mb);
@@ -19,7 +10,7 @@ export default class LuisaVM {
     this.keyboard = new Keyboard();
     this.timer = new Timer();
     this.bios = new BIOS(biosCode);
-    this.video = new Video(canvas);
+    this.video = new Video(screenWidth, screenHeight, callback);
 
     this.mb.addDevice(this.mmu);
     this.mb.addDevice(this.cpu);
