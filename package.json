@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "description": "An emulator for a 32-bit new computer.",
   "scripts": {
-    "build": "npm run genchars && npm run build-bios && npm run build-emu",
+    "build": "npm run genchars && npm run build-bios && npm run build-tests",
     "build-worker": "browserify src/page/worker.js -t [ babelify --presets es2015 ] | uglifyjs - --screw-ie8 -c -m -o web/luisavm.js",
-    "build-page": "babel src/page/page.js > web/page.js",
     "build-bios": "src/assembler -f bin -T 0xF0006010 host/bios/bios.ls > host/bios.rom && src/emu/jsify host/bios.rom > src/emu/bioscode.js",
+    "build-tests": "browserify src/test/*.js -t [ babelify --presets es2015 ] > src/test/tests.js",
     "doc": "java -jar doc/plantuml.jar doc/classes.uml",
     "lint": "eslint src/emu/*.js src/tools/*.js",
     "style": "jscs -v src/emu/*.js src/tools/*",

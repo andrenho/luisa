@@ -1,12 +1,15 @@
 'use strict';
 
+let videoCanvas;
+
 //
-// run when the window is loaded
+// ON LOAD WINDOW
 //
 
 window.onload = () => {
 
-  const canvas = document.getElementById('canvas');
+  videoCanvas = new VideoCanvas(document.getElementById('canvas'));
+  videoCanvas.initCanvas();
 
   //
   // initialize main web worker
@@ -14,13 +17,6 @@ window.onload = () => {
   let worker = new Worker('src/page/worker.js');
   worker.addEventListener('message', e => message(e.data));
   worker.postMessage(['init', canvas.width, canvas.height]);  // initialize VM and debugger
-
-  // 
-  // initialize canvas
-  //
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   //
   // read callbacks each 16ms
@@ -44,8 +40,10 @@ window.onload = () => {
       
       // print info on the debugger
       case 'print_debugger':
+        document.getElementById('debugger_input').disabled = false;
         const output = document.getElementById('debugger_output');
         output.innerHTML = `<div>${pars[0].replace(/ /g, '&nbsp;').split('\n').join('<br>')}</div>` + output.innerHTML;
+        document.getElementById('debugger_input').focus();
         break;
 
       // a callback was called
@@ -86,6 +84,7 @@ window.onload = () => {
       const output = document.getElementById('debugger_output');
       output.innerHTML = `<div>- <b>${txt}</b></div>` + output.innerHTML;
       document.getElementById('debugger_input').value = '';
+      document.getElementById('debugger_input').disabled = true;
 
       worker.postMessage(['to_debugger', txt]);
 
@@ -101,7 +100,44 @@ window.onload = () => {
     document.getElementById('debugger_output').innerHTML = '';
   };
 
+
+  //
+  // Settings
+  //
+  document.getElementById('settings').onclick = (e) => {
+    alert('Not implemented yet.');
+  };
+
+
+  //
+  // Run tests
+  //
+  document.getElementById('tests').onclick = (e) => {
+    worker.postMessage(['run_tests']);
+  };
+
 };
+
+
+// 
+// CALLBACK MANAGEMENT
+//
+
+function executeCallbacks(cbs) {
+  for (let cb of cbs) {
+    if (cb.device === 'video') {
+      switch (cb.cmd) {
+        case 'clrscr':  videoCanvas.clearScreen.apply(videoCanvas, cb.pars); break;
+        case 'draw_px': videoCanvas.drawPixel.apply(videoCanvas, cb.pars);   break;
+        case 'write':   videoCanvas.write.apply(videoCanvas, cb.pars);       break;
+        default:
+          console.warn(`Invalid call ${cb.device}:${cb.cmd}.`);
+      }
+    } else {
+      console.warn(`Invalid call ${cb.device}:${cb.cmd}.`);
+    }
+  }
+}
 
 
 // vim: ts=2:sw=2:sts=2:expandtab
