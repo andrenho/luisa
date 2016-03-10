@@ -21,7 +21,6 @@ local img = pngImage(arg[1], nil)
 print('var chars = [')
 
 for i=0,arg[2] do
-  print('  // char '..i)
   io.write('  [')
 
   -- get image
@@ -34,10 +33,10 @@ for i=0,arg[2] do
       b = b << 1
       b = b | ((img:getPixel(x+1, y+1).R == 0) and 0 or 1)
     end
-    ns[#ns+1] = string.format('0x%x', b)
+    ns[#ns+1] = string.format('0x%X', b)
   end
 
-  io.write(table.concat(ns, ', '))
+  io.write(table.concat(ns, ','))
 
   print('],')
 end

@@ -1,0 +1,14 @@
+#!/usr/bin/env lua
+
+local inp = assert(io.open(arg[1], 'rb'))
+local data = inp:read("*all")
+
+io.write('var biosCode = new Uint8Array([');
+
+data:gsub('.', function(c)
+  io.write(c:byte()..',')
+end)
+
+io.write(']);')
+
+-- vim: ts=2:sw=2:sts=2:expandtab
