@@ -68,10 +68,17 @@ window.onload = () => {
         document.getElementById('tests_list').innerHTML += `<h4>${pars[0]}</h4>`;
         break;
       case 'test_ok':
-        document.getElementById('tests_list').innerHTML += `<span class="ok"></span>${pars[0]}<br>`;
+        document.getElementById('tests_list').innerHTML += `<span class="ok">${pars[0]}</span><br>`;
         break;
       case 'test_nok':
-        document.getElementById('tests_list').innerHTML += `<span class="nok"></span>${pars[0]} (expected: ${pars[1]}, got: ${pars[2]})<br>`;
+        document.getElementById('tests_list').innerHTML += `<span class="nok">${pars[0]}</span> (expected: ${pars[1]}, got: ${pars[2]})<br>`;
+        break;
+      case 'test_summary':
+        if (pars[0].length === 0) {
+          document.getElementById('tests_list').innerHTML = `<p><span class="ok" style="font-size: 18pt;">All tests successful.</span></p>` + document.getElementById('tests_list').innerHTML;
+        } else {
+          document.getElementById('tests_list').innerHTML = `<p><span class="nok" style="font-size: 18pt;">${pars[0].length} test(s) failed.</span></p>` + document.getElementById('tests_list').innerHTML;
+        }
         break;
 
       // other, invalid message
@@ -140,6 +147,7 @@ window.onload = () => {
     if (!debuggerVisible) {
       document.getElementById('debugger').style.display = 'block';
       document.getElementById('show_debugger').innerHTML = 'Hide debugger';
+      videoCanvas.clearScreen(0, 0, 0);
       debuggerVisible = true;
     } else {
       document.getElementById('debugger').style.display = 'none';
