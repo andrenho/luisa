@@ -184,14 +184,292 @@ end
 --
 ------------------------------------------------------------------
 
-function encode(s)
+local opcodes = {
+  -- movement
+  { 0x01, 'mov', 'reg', 'reg' },
+  { 0x02, 'mov', 'reg', 'v8' },
+  { 0x03, 'mov', 'reg', 'v16' },
+  { 0x04, 'mov', 'reg', 'v32' },
+  { 0x05, 'movb', 'reg', 'indreg' },
+  { 0x06, 'movb', 'reg', 'indv32' },
+  { 0x07, 'movw', 'reg', 'indreg' },
+  { 0x08, 'movw', 'reg', 'indv32' },
+  { 0x09, 'movd', 'reg', 'indreg' },
+  { 0x0A, 'movd', 'reg', 'indv32' },
+
+  { 0x0B, 'movb', 'indreg', 'reg' },
+  { 0x0C, 'movb', 'indreg', 'v8' },
+  { 0x0D, 'movb', 'indreg', 'indreg' },
+  { 0x0E, 'movb', 'indreg', 'indv32' },
+  { 0x0F, 'movw', 'indreg', 'reg' },
+  { 0x1A, 'movw', 'indreg', 'v16' },
+  { 0x1B, 'movw', 'indreg', 'indreg' },
+  { 0x1C, 'movw', 'indreg', 'indv32' },
+  { 0x1D, 'movd', 'indreg', 'reg' },
+  { 0x1E, 'movd', 'indreg', 'v32' },
+  { 0x1F, 'movd', 'indreg', 'indreg' },
+  { 0x20, 'movd', 'indreg', 'indv32' },
+
+  { 0x21, 'movb', 'indv32', 'reg' },
+  { 0x22, 'movb', 'indv32', 'v8' },
+  { 0x23, 'movb', 'indv32', 'indreg' },
+  { 0x24, 'movb', 'indv32', 'indv32' },
+  { 0x25, 'movw', 'indv32', 'reg' },
+  { 0x26, 'movw', 'indv32', 'v16' },
+  { 0x27, 'movw', 'indv32', 'indreg' },
+  { 0x28, 'movw', 'indv32', 'indv32' },
+  { 0x29, 'movd', 'indv32', 'reg' },
+  { 0x2A, 'movd', 'indv32', 'v32' },
+  { 0x2B, 'movd', 'indv32', 'indreg' },
+  { 0x2C, 'movd', 'indv32', 'indv32' },
+
+  -- logic
+  { 0x2D, 'or', 'reg', 'reg' },
+  { 0x2E, 'or', 'reg', 'v8' },
+  { 0x2F, 'or', 'reg', 'v16' },
+  { 0x30, 'or', 'reg', 'v32' },
+  { 0x31, 'xor', 'reg', 'reg' },
+  { 0x32, 'xor', 'reg', 'v8' },
+  { 0x33, 'xor', 'reg', 'v16' },
+  { 0x34, 'xor', 'reg', 'v32' },
+  { 0x35, 'and', 'reg', 'reg' },
+  { 0x36, 'and', 'reg', 'v8' },
+  { 0x37, 'and', 'reg', 'v16' },
+  { 0x38, 'and', 'reg', 'v32' },
+  { 0x39, 'shl', 'reg', 'reg' },
+  { 0x3A, 'shl', 'reg', 'v8' },
+  { 0x3D, 'shr', 'reg', 'reg' },
+  { 0x3E, 'shr', 'reg', 'v8' },
+  { 0x41, 'not', 'reg' },
+
+  -- arithmetic
+  { 0x42, 'add', 'reg', 'reg' },
+  { 0x43, 'add', 'reg', 'v8' },
+  { 0x44, 'add', 'reg', 'v16' },
+  { 0x45, 'add', 'reg', 'v32' },
+  { 0x46, 'sub', 'reg', 'reg' },
+  { 0x47, 'sub', 'reg', 'v8' },
+  { 0x48, 'sub', 'reg', 'v16' },
+  { 0x49, 'sub', 'reg', 'v32' },
+  { 0x4A, 'cmp', 'reg', 'reg' },
+  { 0x4B, 'cmp', 'reg', 'v8' },
+  { 0x4C, 'cmp', 'reg', 'v16' },
+  { 0x4D, 'cmp', 'reg', 'v32' },
+  { 0x4E, 'mul', 'reg', 'reg' },
+  { 0x4F, 'mul', 'reg', 'v8' },
+  { 0x50, 'mul', 'reg', 'v16' },
+  { 0x51, 'mul', 'reg', 'v32' },
+  { 0x52, 'idiv', 'reg', 'reg' },
+  { 0x53, 'idiv', 'reg', 'v8' },
+  { 0x54, 'idiv', 'reg', 'v16' },
+  { 0x55, 'idiv', 'reg', 'v32' },
+  { 0x56, 'mod', 'reg', 'reg' },
+  { 0x57, 'mod', 'reg', 'v8' },
+  { 0x58, 'mod', 'reg', 'v16' },
+  { 0x59, 'mod', 'reg', 'v32' },
+  { 0x5A, 'inc', 'reg' },
+  { 0x5B, 'dec', 'reg' },
+
+  -- jumps
+  { 0x5C, 'bz', 'reg' },
+  { 0x5D, 'bz', 'v32' },
+  { 0x5C, 'beq', 'reg' },
+  { 0x5D, 'beq', 'v32' },
+  { 0x5E, 'bnz', 'reg' },
+  { 0x5F, 'bnz', 'v32' },
+  { 0x60, 'bneg', 'reg' },
+  { 0x61, 'bneg', 'v32' },
+  { 0x62, 'bpos', 'reg' },
+  { 0x63, 'bpos', 'v32' },
+  { 0x64, 'bgt', 'reg' },
+  { 0x65, 'bgt', 'v32' },
+  { 0x66, 'bgte', 'reg' },
+  { 0x67, 'bgte', 'v32' },
+  { 0x68, 'blt', 'reg' },
+  { 0x69, 'blt', 'v32' },
+  { 0x6A, 'blte', 'reg' },
+  { 0x6B, 'blte', 'v32' },
+  { 0x6C, 'bv', 'reg' },
+  { 0x6D, 'bv', 'v32' },
+  { 0x6E, 'bnv', 'reg' },
+  { 0x6F, 'bnv', 'v32' },
+  { 0x70, 'jmp', 'reg' },
+  { 0x71, 'jmp', 'v32' },
+  { 0x72, 'jsr', 'reg' },
+  { 0x73, 'jsr', 'v32' },
+  { 0x74, 'ret' },
+  { 0x75, 'sys', 'reg' },
+  { 0x76, 'sys', 'v8' },
+  { 0x77, 'iret' },
+  { 0x86, 'sret' },
+
+  -- stack
+  { 0x78, 'pushb', 'reg' },
+  { 0x79, 'pushb', 'v8' },
+  { 0x7A, 'pushw', 'reg' },
+  { 0x7B, 'pushw', 'v16' },
+  { 0x7C, 'pushd', 'reg' },
+  { 0x7D, 'pushd', 'v32' },
+  { 0x7E, 'push.a' },
+  { 0x7F, 'popb', 'reg' },
+  { 0x80, 'popw', 'reg' },
+  { 0x81, 'popd', 'reg' },
+  { 0x82, 'pop.a' },
+  { 0x83, 'popx', 'reg' },
+  { 0x84, 'popx', 'v8' },
+  { 0x85, 'popx', 'v9' },
+
+  -- other
+  { 0x87, 'nop' },
+}
+
+
+function encode(line, accept_label, label_prefix)
+  label_prefix = label_prefix or ''
+
+  -- separate operand and parameters
+  local i = line:find('%s')
+  local operand, rest
+  if i then
+    operand, rest = line:sub(1, i-1), line:sub(i+1)
+  else
+    operand, rest = line, ''
+  end
+
+  -- find parameters
+  if #rest:gsub('[^,]','') > 1 then
+    error('Invalid expression '..line)
+  end
+  local parameters = table.pack(rest:gmatch("([-_%.%w%[%]]+)%s*,%s*([-_%w%.%[%]]+)")())
+  if #parameters == 0 then
+    parameters = table.pack(rest:gmatch("([-_%w%.%[%]]+)$")())
+  end
+
+  -- parse parameters
+  local pars = map(parameters, function(p) return parse_parameter(p, accept_label, label_prefix) end)
+  return parse_opcode(operand, pars, line)
+
 end
+
+
+function parse_parameter(par, accept_label, label_prefix)
+
+  local function register_value(r)
+    return ({
+      a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6,
+      h = 7, i = 8, j = 9, k = 10, l = 11, fp = 12,
+      sp = 13, pc = 14, fl = 15
+    })[r]
+  end
+
+  -- if indirect, add indirection and return
+  if par:sub(1,1) == '[' and par:sub(-1) == ']' then
+    local pp = parse_parameter(par:sub(2,-2), accept_label, label_prefix)
+    if pp.type == 'v8' then
+      for _=1,3 do pp.array[#pp.array+1] = 0 end
+      pp.type = 'v32'
+    elseif pp.type == 'v16' then
+      for _=1,2 do pp.array[#pp.array+1] = 0 end
+      pp.type = 'v32'
+    end
+    pp.type = 'ind'..pp.type
+    return pp
+  end
+
+  -- if value, convert to number
+  if par:match('0b[01_]+') then
+    par = tonumber(par:gsub('_',''):sub(3), 2)
+  elseif par:match('0[xX][%x_]+') then
+    par = tonumber(par:gsub('_',''):sub(3), 16)
+  elseif par:match('%d+') then
+    par = tonumber(par, 10)
+  end
+
+  -- is it a number?
+  local tp, array
+  if type(par) == 'number' then
+    if par < 0 then
+      par = 0x100000000 + par
+    end
+    if par <= 0xFF then
+      tp, array = 'v8', { par }
+    elseif par <= 0xFFFF then
+      tp, array = 'v16', { par & 0xFF, par >> 8 }
+    elseif par <= 0xFFFFFFFF then
+      tp, array = 'v32', { par & 0xFF, (par >> 8) & 0xFF, (par >> 16) & 0xFF, (par >> 24) & 0xFF }
+    else
+      error('Values higher than 32-bit are unsupported.')
+    end
+  
+  -- is it a register or label?
+  else
+    local value = register_value(par:lower())
+    
+    -- is it a register?
+    if value ~= nil then
+      tp = 'reg'
+      array = { value }
+
+    -- is it a label?
+    elseif accept_label then
+      tp = 'v32'
+      array = { par.sub(1,1) and (label_prefix .. par) or par, 0, 0, 0 }
+
+    -- is niether
+    else
+      error('Could not understand expression '..par)
+    end
+
+  end
+
+  return { type=tp, array=array }
+
+end
+
+
+function parse_opcode(operand, pars, line)
+  -- find opcode
+  for _,op in ipairs(opcodes) do
+    local ptype = map(pars, function(p) return p and p.type or nil end)
+    if operand:lower() == op[2] and ptype[1] == op[3] and ptype[2] == op[4] then
+      local a = { op[1] }
+      for i=1,2 do
+        if pars[i] then
+          for _,pr in ipairs(pars[i].array) do a[#a+1] = pr end
+        end
+      end
+      return a
+    end
+  end
+
+  -- if opcode wasn't found, and par is < v32, try to find higher value
+  local function increase_par(pr)
+    if pr.type == 'v16' then
+      return { type='v32', array={ pr.array[1], pr.array[2], 0, 0 } }
+    else 
+      return { type='v16', array={ pr.array[1], 0 } }
+    end
+  end
+  local function can_increase(pr) return pr and (pr.type == 'v8' or pr.type == 'v16') end
+  
+  if can_increase(pars[1]) then
+    return parse_opcode(operand, { increase_par(pars[1]), pars[2] })
+  elseif can_increase(pars[2]) then
+    return parse_opcode(operand, { pars[1], increase_par(pars[2]) })
+  end
+  if can_increase(pars[1]) and can_increase(pars[2]) then
+    return parse_opcode(operand, { increase_par(pars[1]), increase_par(pars[2]) })
+  end
+  error('Invalid command '..line)
+end
+
 
 ------------------------------------------------------------------
 -- 
 -- ASSEMBLER
 --
 ------------------------------------------------------------------
+
 
 ------------------------------------------------------------------
 -- 
@@ -226,13 +504,24 @@ function TestInterface:equals(result, expected, description)
 end
 
 
+function TestInterface:throws(f, description)
+  if pcall(f) then
+    self:_nok(description)
+  else
+    self:_ok(description)
+  end
+end
+
+
 function TestInterface:_ok(description)
   print('      ' .. description)
 end
 
 
-function TestInterface:_nok(description)
-  print('    x ' .. description)
+function TestInterface:_nok(description, expected, result)
+  io.write('    x ' .. description)
+  if expected then io.write(' (expected: '..inspect(expected)..', got: '..inspect(result)..')') end
+  print()
 end
 
 
@@ -242,7 +531,7 @@ end
 --
 ------------------------------------------------------------------
 
-function run_tests()
+function run_encoder_tests()
 
   local t = TestInterface:new()
 
@@ -256,9 +545,58 @@ function run_tests()
     t:equals(encode(s), v, s)
   end
 
-  ok(t, 'mov A, 0xABCD', { 0x03, 0x00, 0xCD, 0xAB });
+  ok(t, 'mov A, 0xABCD', { 0x03, 0x00, 0xCD, 0xAB })
+  ok(t, 'mov A, B', { 0x01, 0x00, 0x01 })
+  ok(t, 'movb [A], 0x42', { 0x0C, 0x00, 0x42 })
+  ok(t, 'movw [0x42], K', { 0x25, 0x42, 0x00, 0x00, 0x00, 0x0A })
+  ok(t, 'movd [A], 0x1', { 0x1E, 0x00, 0x01, 0x00, 0x00, 0x00 })
+  ok(t, 'or C, 0x1234', { 0x2F, 0x02, 0x34, 0x12 })
+  ok(t, 'not B', { 0x41, 0x1 })
+  ok(t, 'bz 0x12', { 0x5D, 0x12, 0x00, 0x00, 0x00 })
+  ok(t, 'ret', { 0x74 })
+  ok(t, 'push.a', { 0x7E })
+  ok(t, 'movb A, [0x1000]', { 0x06, 0x00, 0x00, 0x10, 0x00, 0x00 })
+
+  t:title('Encoder: number systems')
+
+  ok(t, 'mov A, 42', { 0x02, 0x00, 0x2A })
+  ok(t, 'mov A, 0x42', { 0x02, 0x00, 0x42 })
+  ok(t, 'mov A, 0b1010_1111', { 0x02, 0x00, 0xAF })
+  ok(t, 'mov A, -42', { 0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF })
+
+  t:title('Encoder: invalid commands')
+
+  local function nok(t, s)
+    t:throws(function() encode(s) end, s)
+  end
+
+  nok(t, 'mov [B], 0x42')
+  nok(t, 'movb A, 0x1234')
+  nok(t, 'movb 0x42, A')
+  nok(t, 'not 0x42')
+  nok(t, 'or A, B, 0x42')
+  nok(t, 'sys 0x1234')
+  nok(t, 'pushb 0x1234')
+  nok(t, 'movb A, [test]')
+
+  t:title('Encoder: labels')
+
+  local function tok(t, s, v)
+    t:equals(encode(s, true), v, s)
+  end
+
+  tok(t, 'movb A, [test]', { 0x6, 0x0, 'test', 0x0, 0x0, 0x0 });
+  tok(t, 'mov A, test', { 0x4, 0x0, 'test', 0x0, 0x0, 0x0 });
+  tok(t, 'jmp label', { 0x71, 'label', 0, 0, 0 });
+  t:equals(encode('jmp .la', true, 'xy'), { 0x71, 'xy.la', 0, 0, 0 }, 'jmp .la');
 
 end
+
+
+function run_tests()
+  run_encoder_tests()
+end
+
 
 ------------------------------------------------------------------
 --
