@@ -12,11 +12,13 @@ window.onload = () => {
   // 
   // initialize video canvas
   //
+  let messageAppears = true;
   videoCanvas = new VideoCanvas(document.getElementById('canvas'));
   videoCanvas.initCanvas();
   document.getElementById('canvas').ondblclick = (e) => {
     window.getSelection().removeAllRanges();  // unselect all text
     videoCanvas.clearScreen(0, 0, 0);
+    messageAppears = false;
     worker.postMessage(['run']);
   };
 
@@ -147,7 +149,10 @@ window.onload = () => {
     if (!debuggerVisible) {
       document.getElementById('debugger').style.display = 'block';
       document.getElementById('show_debugger').innerHTML = 'Hide debugger';
-      videoCanvas.clearScreen(0, 0, 0);
+      if (messageAppears) {
+        videoCanvas.clearScreen(0, 0, 0);
+        messageAppears = false;
+      }
       debuggerVisible = true;
     } else {
       document.getElementById('debugger').style.display = 'none';
