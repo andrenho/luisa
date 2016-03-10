@@ -13,22 +13,33 @@ end
 -- load file
 --
 
-package.path = './libs/?.lua;' .. package.path
-require('libs.png')
+package.path = './tools/libs/?.lua;./libs/?.lua;' .. package.path
+require('png')
 
 local img = pngImage(arg[1], nil)
 
 print('var chars = [')
 
-for i=1,arg[2] do
+for i=0,arg[2] do
   print('  // char '..i)
-  print('  [')
+  io.write('  [')
 
   -- get image
-  local ox, oy = (i / 16) * 6, (i % 16) * 9
+  local ox, oy = (i // 16) * 6, (i % 16) * 9
 
-  print('  ],')
-  print()
+  local ns = {}
+  for y=oy,(oy+9-1) do
+    local b = 0
+    for x=ox,(ox+6-1) do
+      b = b << 1
+      b = b | ((img:getPixel(x+1, y+1).R == 0) and 0 or 1)
+    end
+    ns[#ns+1] = string.format('0x%x', b)
+  end
+
+  io.write(table.concat(ns, ', '))
+
+  print('],')
 end
 
 print('];')
