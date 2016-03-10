@@ -1,61 +1,36 @@
-#!/usr/bin/env babel-node
+#!/usr/bin/env lua
 
-var Canvas = require('canvas'),
-    fs = require('fs');
+--
+-- parse commandline arguments
+--
 
-//
-// commandline arguments
-//
+if #arg ~= 2 then
+  print('Usage: '..arg[0]..' filename.png last_char')
+  os.exit(false)
+end
 
-if (process.argv.length !== 4) {
-  console.error('Usage: genchars filename.png last_char');
-  process.exit();
-}
+--
+-- load file
+--
 
-const filename = process.argv[2];
-const lastChar = parseInt(process.argv[3]);
+package.path = './libs/?.lua;' .. package.path
+require('libs.png')
 
-// 
-// load file
-//
+local img = pngImage(arg[1], nil)
 
-fs.readFile(filename, (err, data) => {
+print('var chars = [')
 
-  const print = process.stdout.write;
+for i=1,arg[2] do
+  print('  // char '..i)
+  print('  [')
 
-  if (err) {
-    throw err;
-  }
+  -- get image
+  local ox, oy = (i / 16) * 6, (i % 16) * 9
 
-  const img = new Canvas.Image();
-  img.src = data;
+  print('  ],')
+  print()
+end
 
-  let canvas = new Canvas(img.width, img.height);
-  let ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, img.width, img.height);
+print('];')
 
-  process.stdout.write('var chars = [\n');
-
-  for (let i = 0; i <= lastChar; ++i) {
-    process.stdout.write(`  // char ${i}\n  [`);
-
-    const ox = Math.floor(i / 16) * 6;
-    const oy = (i % 16) * 9;
-    
-    let ns = [];
-    for (let y = oy; y < (oy + 9); ++y) {
-      let b = 0b0;
-      for (let x = ox; x < (ox + 6); ++x) {
-        b <<= 1;
-        b |= (ctx.getImageData(x, y, 1, 1).data[0] == 0) ? 0 : 1;
-      }
-      ns.push('0x' + b.toString(16));
-    }
-
-    process.stdout.write(ns.join(', ') + '],\n\n');
-  }
-
-  process.stdout.write('];\n');
-});
-
-// vim: ts=2:sw=2:sts=2:expandtab:syntax=javascript
+-- vim: ts=2:sw=2:sts=2:expandtab
