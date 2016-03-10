@@ -154,6 +154,7 @@ end
 --
 -- deep equals
 --
+
 local function equals(t1, t2)
    if t1 == t2 then
        return true
@@ -216,8 +217,22 @@ function TestInterface:title(s)
 end
 
 
-function TestInterface:same(s)
+function TestInterface:equals(result, expected, description)
+  if equals(result, expected) then
+    self:_ok(description)
+  else
+    self:_nok(description, expected, result)
+  end
+end
 
+
+function TestInterface:_ok(description)
+  print('      ' .. description)
+end
+
+
+function TestInterface:_nok(description)
+  print('    x ' .. description)
 end
 
 
@@ -238,7 +253,7 @@ function run_tests()
   t:title('Encoder: valid commands')
   
   local function ok(t, s, v)
-    t:same(encode(s), v, s)
+    t:equals(encode(s), v, s)
   end
 
   ok(t, 'mov A, 0xABCD', { 0x03, 0x00, 0xCD, 0xAB });
