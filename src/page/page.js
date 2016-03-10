@@ -9,9 +9,13 @@ let debuggerVisible = false;
 
 window.onload = () => {
 
+  // 
+  // initialize video canvas
+  //
   videoCanvas = new VideoCanvas(document.getElementById('canvas'));
   videoCanvas.initCanvas();
-  document.getElementById('canvas').onclick = (e) => {
+  document.getElementById('canvas').ondblclick = (e) => {
+    window.getSelection().removeAllRanges();  // unselect all text
     videoCanvas.clearScreen(0, 0, 0);
     worker.postMessage(['run']);
   };

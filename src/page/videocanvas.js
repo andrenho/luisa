@@ -16,7 +16,7 @@ class VideoCanvas {
     this._ctx.font = "11px Sudo";
     this._ctx.fillStyle = 'white';
     this._ctx.textAlign = 'center';
-    this._ctx.fillText('Click to run', this._canvas.width / 2, this._canvas.height / 2);
+    this._ctx.fillText('Double-click to run', this._canvas.width / 2, this._canvas.height / 2);
   }
 
 

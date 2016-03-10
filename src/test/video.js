@@ -15,7 +15,7 @@ test('Video: sanity', t => {
 });
 
 
-test('Draw one single pixel', t => {
+test('Video: draw one single pixel', t => {
   let d = [];
   const [mb, cpu, video] = makeVideo(d);
   
@@ -34,7 +34,6 @@ test('Draw one single pixel', t => {
   // clear screen
   mb.set32(video.VID_P0, 0);
   mb.set(video.VID_OP, video.VID_OP_CLRSCR);
-  console.log(d[1]);
   t.equal(d[1].cmd, 'clrscr', 'screen cleared');
   
   t.end();

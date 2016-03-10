@@ -2,7 +2,7 @@
 // DECODER
 //
 
-test('Debugger decoder', t => {
+test('Debugger: decoder', t => {
 
   let tm = new LuisaVM(256, [], Uint8Array.from([]));
   let dbg = new Debugger(tm);

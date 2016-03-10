@@ -25,7 +25,7 @@ test('LuisaVM: full example', t => {
   b = b.concat(Debugger.encode('movb [0xF0016012], 0x5'));       // movb [VID_OP], VID_OP_WRITE
 
   let d = [];
-  let tm = new LuisaVM(256, [], Uint8Array.from(b), 600, 500, d);
+  let tm = new LuisaVM(256, [], Uint8Array.from(b), 600, 500, data => d.push(data));
 
   t.equal(tm.cpu.PC, 0xF0006010, 'PC is initial position');
   t.equal(tm.mb.get(0xF0006010), 0x2A, 'code loaded into BIOS');
@@ -33,7 +33,6 @@ test('LuisaVM: full example', t => {
   for(let i=0; i<6; ++i) {
     tm.step();
   }
-  tm.video.update();
   t.equal(tm.cpu.PC, 0xF0006010 + b.length, 'PC is in the right place');
 
   // check pixel
