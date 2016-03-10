@@ -470,6 +470,66 @@ end
 --
 ------------------------------------------------------------------
 
+local reserved_words = { 
+  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'fp', 'sp', 'pc', 
+  'fl', 'y', 'v', 'z', 's', 'gt', 'lt', 'p', 't', 'mov', 'movb', 'movw', 
+  'movd', 'or', 'xor', 'and', 'shl', 'shr', 'not', 'add', 'sub', 'cmp', 'mul', 
+  'idiv', 'mod', 'inc', 'dec', 'bz', 'beq', 'bnz', 'bneq', 'bneg', 'bpos', 
+  'bgt', 'bgte', 'blt', 'blte', 'bv', 'bnv', 'jmp', 'jsr', 'ret', 'sys', 
+  'iret', 'sret', 'pushb', 'pushw', 'pushd', 'push.a', 'popb', 'popw', 'popd', 
+  'pop.a', 'popx', 'nop', 'db', 'dw', 'dd', 'resb', 'resw', 'resd'
+}
+
+--
+-- CONVERT ASSEMBLY TO LIF
+--
+
+function assembly_to_lif(code)
+  
+  local function replace_constants(line, ctx)
+    return line  -- TODO
+  end
+
+  -- 
+  -- main procedure
+  --
+  local ctx = {
+    -- final info
+    text = {},
+    bss = 0,
+    data = {},
+    rodata = {},
+    symbols = {},
+    reloc = {},
+    exports = {},
+    -- auxiliary info
+    constants = {},
+    current_section = nil,
+    current_symbol = '',
+    nline = 1
+  }
+
+  for line in code:gmatch('[^\n]+') do
+
+    -- remove comments
+    line = line:gsub(';.*', '')
+
+    -- remove spaces around
+    line = line:match("^%s*(.-)%s*$")
+
+    -- replace constants
+    line = replace_constants(line, ctx)
+
+    -- parse line
+    if line:sub(1,1) == '.' and not line:match(':') then
+      -- directive
+      
+    end
+
+    print(line)
+  end
+
+end
 
 ------------------------------------------------------------------
 -- 
@@ -531,13 +591,10 @@ end
 --
 ------------------------------------------------------------------
 
-function run_encoder_tests()
-
-  local t = TestInterface:new()
-
-  --
-  -- encoder
-  -- 
+--
+-- encoder
+-- 
+function run_encoder_tests(t)
 
   t:title('Encoder: valid commands')
   
@@ -593,8 +650,30 @@ function run_encoder_tests()
 end
 
 
+-- 
+-- assembler
+--
+function run_assembler_tests(t)
+
+  local file, result
+
+  t:title('Assembler: assembly to LIF')
+  
+  file = [[
+.section  text
+        nop     ; some comment]]
+  result = {
+    text = { 0x87 }
+  }
+  t:equals(assembly_to_lif(file), result, 'simplest file')
+  
+end
+
+
 function run_tests()
-  run_encoder_tests()
+  local t = TestInterface:new()
+  --run_encoder_tests(t)
+  run_assembler_tests(t)
 end
 
 
