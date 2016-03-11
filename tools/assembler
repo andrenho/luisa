@@ -754,6 +754,34 @@ function run_assembler_tests(t)
            0x74},
   }
   t:equals(assembly_to_lif(file), complete(result), 'useful code')
+
+  file = [[
+.section text
+        mov     A, 42
+        mov     A, 0x42
+        mov     A, 0b1010_1111
+        mov     A, -42]]
+  result = {
+    text= {0x02, 0x00, 0x2A,
+           0x02, 0x00, 0x42,
+           0x02, 0x00, 0xAF,
+           0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF},
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'numberic representation')
+
+  file = [[
+.section text
+        nop
+.section bss
+        resb      2
+        resw      2
+        resd      4]]
+  result = {
+    text = { 0x87 },
+    bss = 22,
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'bss section')
+
 end
 
 
