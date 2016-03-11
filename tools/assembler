@@ -490,6 +490,26 @@ function assembly_to_lif(code)
     return line  -- TODO
   end
 
+  local function parse_section(pars, ctx)
+    if #pars ~= 1 then
+      error('Syntax error in line '..ctx.nline..'.')
+    end
+    local section = pars[1]
+    if section == 'text' or section == 'bss' or section == 'data' or section == 'rodata' then
+      return section
+    else
+      error('Invalid section '..section..' in line '..ctx.nline..'.')
+    end
+  end
+
+  local function chomp_labels(line, ctx)
+    return line  -- TODO
+  end
+
+  local function parse_text(line, ctx)
+    return encode(line, true, ctx.current_symbol)
+  end
+
   -- 
   -- main procedure
   --
@@ -501,7 +521,6 @@ function assembly_to_lif(code)
     rodata = {},
     symbols = {},
     reloc = {},
-    exports = {},
     -- auxiliary info
     constants = {},
     current_section = nil,
@@ -523,12 +542,49 @@ function assembly_to_lif(code)
     -- parse line
     if line:sub(1,1) == '.' and not line:match(':') then
       -- directive
-      
+      local f = line:gmatch('%S+')
+      local directive = f()
+      local pars = {}
+      for w in f do 
+        pars[#pars+1] = w 
+      end
+      if directive == '.section' then
+        ctx.current_section = parse_section(pars, ctx)
+      elseif directive == '.define' then
+        parse_constants(pars, ctx)
+      elseif directive == '.import' then
+        parse_import(pars, ctx)
+      else
+        error('Invalid directive '..directive..' in line '..ctx.nline..'.')
+      end
+
+    else
+      local orig_line = line
+
+      local code = chomp_labels(line, ctx)
+      if line ~= '' then
+        if ctx.current_section == 'text' then
+          for _,v in ipairs(parse_text(line, ctx)) do table.insert(ctx.text, v) end
+        elseif ctx.current_section == 'bss' then
+          ctx.bss = ctx.bss + parse_bss(line, ctx)
+        elseif ctx.current_section == 'data' then
+          for _,v in ipairs(parse_data(line, 'data', ctx)) do table.insert(ctx.text, v) end
+        elseif ctx.current_section == 'rodata' then
+          for _,v in ipairs(parse_data(line, 'rodata', ctx)) do table.insert(ctx.text, v) end
+        else
+          error('Invalid section in line '..ctx.nline..'.')
+        end
+      end
     end
 
-    print(line)
+    ctx.nline = ctx.nline + 1
   end
 
+  ctx.constants = nil
+  ctx.current_section = nil
+  ctx.current_symbol = nil
+  ctx.nline = nil
+  return ctx
 end
 
 ------------------------------------------------------------------
@@ -655,6 +711,16 @@ end
 --
 function run_assembler_tests(t)
 
+  local function complete(r)
+    if r.text == nil then r.text = {} end
+    if r.bss == nil then r.bss = 0 end
+    if r.data == nil then r.data = {} end
+    if r.rodata == nil then r.rodata = {} end
+    if r.symbols == nil then r.symbols = {} end
+    if r.reloc == nil then r.reloc = {} end
+    return r
+  end
+
   local file, result
 
   t:title('Assembler: assembly to LIF')
@@ -665,8 +731,29 @@ function run_assembler_tests(t)
   result = {
     text = { 0x87 }
   }
-  t:equals(assembly_to_lif(file), result, 'simplest file')
-  
+  t:equals(assembly_to_lif(file), complete(result), 'simplest file')
+
+  file = [[
+.section text
+        mov     A, 0x4
+        movb    A, [B]
+        movb    A, [0x12345678]
+        movd    [0xABCDEF01], [0x12345678]
+        or      K, 0x4212
+        not     F
+        bz      0x42
+        ret]]
+  result = {
+    text= {0x02, 0x00, 0x04,
+           0x05, 0x00, 0x01,
+           0x06, 0x00, 0x78, 0x56, 0x34, 0x12,
+           0x2C, 0x01, 0xEF, 0xCD, 0xAB, 0x78, 0x56, 0x34, 0x12,
+           0x2F, 0x0A, 0x12, 0x42,
+           0x41, 0x05,
+           0x5D, 0x42, 0x00, 0x00, 0x00,
+           0x74},
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'useful code')
 end
 
 
