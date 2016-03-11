@@ -178,6 +178,21 @@ local function equals(t1, t2)
 end
 
 
+--
+-- convert to integer
+--
+function tointeger(str)
+  if str:match('0b[01_]+') then
+    return tonumber(str:gsub('_',''):sub(3), 2)
+  elseif str:match('0[xX][%x_]+') then
+    return tonumber(str:gsub('_',''):sub(3), 16)
+  elseif str:match('%d+') then
+    return tonumber(str, 10)
+  end
+  return nil
+end
+
+
 ------------------------------------------------------------------
 -- 
 -- ENCODER
@@ -377,13 +392,8 @@ function parse_parameter(par, accept_label, label_prefix)
   end
 
   -- if value, convert to number
-  if par:match('0b[01_]+') then
-    par = tonumber(par:gsub('_',''):sub(3), 2)
-  elseif par:match('0[xX][%x_]+') then
-    par = tonumber(par:gsub('_',''):sub(3), 16)
-  elseif par:match('%d+') then
-    par = tonumber(par, 10)
-  end
+  local pr = tointeger(par)
+  par = pr or par
 
   -- is it a number?
   local tp, array
@@ -487,8 +497,12 @@ local reserved_words = {
 function assembly_to_lif(code)
   
   local function replace_constants(line, ctx)
-    return line  -- TODO
+    for k,v in pairs(ctx.constants) do
+      line = line:gsub(k, v)
+    end
+    return line
   end
+
 
   local function parse_section(pars, ctx)
     if #pars ~= 1 then
@@ -502,13 +516,169 @@ function assembly_to_lif(code)
     end
   end
 
+
+  local function parse_constants(pars, ctx)
+    if #pars ~= 2 then
+      error('Syntax error in line '..ctx.nline..'. [define]')
+    end
+    local name, value = table.unpack(pars)
+    if not name:match('^%a%w+$') then
+      error('Invalid name for a define in line '..ctx.nline..'. [define]')
+    end
+    for _,r in ipairs(reserved_words) do
+      if r == name then error(name .. ' is a reserved word in line '..ctx.nline..'. [define]') end
+    end
+    ctx.constants[name] = value
+  end
+
+
+  local function parse_import(pars, ctx)
+    if #pars ~= 1 then
+      error('Syntax error in line '..ctx.nline..'. [import]')
+    end
+    local f, err = io.open(pars[1])
+    if err then error('Could not open file '..pars[1]) end
+
+    while true do
+      local line = f:read()
+      if line == nil then break end
+      line = line:gsub(';.*', ''):match("^%s*(.-)%s*$")
+      local fc = line:gmatch('%S+')
+      if fc() == '.define' then
+        parse_constants({ fc(), fc() }, ctx)
+      else
+        error('Invalid line in file '..pars[1]..': "'..line..'"')
+      end
+    end
+  end
+
+
   local function chomp_labels(line, ctx)
     return line  -- TODO
   end
 
+
   local function parse_text(line, ctx)
     return encode(line, true, ctx.current_symbol)
   end
+
+
+  local function parse_bss(line, ctx)
+    local f = line:gmatch('%S+')
+    local cmd, par, extra = f(), f(), f()
+    if extra then 
+      error('Syntax error in line '..ctx.nline..'. [bss]') 
+    end
+    par = tointeger(par)
+    if not par then 
+      error('Invalid number in line '..ctx.nline..'. [bss]') 
+    end
+    local m = ({ resb=1, resw=2, resd=4 })[cmd]
+    if not m then
+      error('Invalid command '..cmd..' in line '..ctx.nline..'. [bss]')
+    end
+    return par * m
+  end
+
+  
+  local function parse_string(s, ctx)
+    s = s:sub(2, -2)  -- remove quotes
+    local data = {}
+    local i = 1
+    while i <= #s do
+      if s:sub(i,i) == '\\' then
+        if i == #s then
+          error('Backslash requires a character afterwards, at '..ctx.nline)
+        end
+        local c = s:sub(i+1,i+1)
+        if c == 'n' then
+          data[#data+1] = 13
+        elseif c == '0' then
+          data[#data+1] = 0
+        elseif c == '\\' then
+          data[#data+1] = string.byte('\\')
+        else
+          error('Invalid backslash at '..ctx.nline..'.')
+        end
+        i = i+1
+      else
+        data[#data+1] = string.byte(s:sub(i,i))
+      end
+      i = i+1
+    end
+    return data
+  end
+
+
+  local function parse_data(line, section, ctx)
+
+    local function split_data(text)
+      local tbl = {}
+      local s = {}
+      local inside_quotes = false
+      local i = 1
+      while i <= #text do
+        local c = text:sub(i,i)
+        if c == '\\' and text:sub(i+1,i+1) == '"' then 
+          s[#s+1] = text:sub(i+1, i+1)
+          i = i+2
+        else 
+          if c == '"' then inside_quotes = not inside_quotes end
+          if c == ',' and not inside_quotes then
+            tbl[#tbl+1] = table.concat(s)
+            s = {}
+          else
+            s[#s+1] = c
+          end
+        end
+        i = i+1
+      end
+      tbl[#tbl+1] = table.concat(s)
+      return tbl
+    end
+
+    local i = line:find('%s')
+    local cmd, pars
+    if i then
+      cmd, pars = line:sub(1, i-1), line:sub(i+1):match("^%s*(.-)%s*$")
+    else
+      cmd, pars = line, ''
+    end
+
+    local data = {}
+    for _,b in ipairs(split_data(pars)) do
+      b = b:match("^%s*(.-)%s*$")  -- trim
+      local value
+      if cmd == 'db' and b:sub(1,1) == '"' and b:sub(-1) == '"' then
+        for _,d in ipairs(parse_string(b, ctx)) do data[#data+1] = d end
+      else
+        value = tointeger(b)
+        if not value then
+          error('Invalid number "'..b..'" in line '..ctx.nline..'.')
+        end
+        if cmd == 'db' then
+          if value > 0xFF then error('Number too large in line '..ctx.nline..'.') end
+          data[#data+1] = value
+        elseif cmd == 'dw' then
+          if value > 0xFFFF then error('Number too large in line '..ctx.nline..'.') end
+          data[#data+1] = value & 0xFF
+          data[#data+1] = value >> 8
+        elseif cmd == 'dd' then
+          if value > 0xFFFFFFFF then error('Number too large in line '..ctx.nline..'.') end
+          data[#data+1] = value & 0xFF
+          data[#data+1] = (value >> 8) & 0xFF
+          data[#data+1] = (value >> 16) & 0xFF
+          data[#data+1] = (value >> 24) & 0xFF
+        else
+          error('Invalid command '..cmd..' in line '..ctx.nline..'.')
+        end
+      end
+    end
+
+    return data
+    
+  end
+
 
   -- 
   -- main procedure
@@ -568,9 +738,9 @@ function assembly_to_lif(code)
         elseif ctx.current_section == 'bss' then
           ctx.bss = ctx.bss + parse_bss(line, ctx)
         elseif ctx.current_section == 'data' then
-          for _,v in ipairs(parse_data(line, 'data', ctx)) do table.insert(ctx.text, v) end
+          for _,v in ipairs(parse_data(line, 'data', ctx)) do table.insert(ctx.data, v) end
         elseif ctx.current_section == 'rodata' then
-          for _,v in ipairs(parse_data(line, 'rodata', ctx)) do table.insert(ctx.text, v) end
+          for _,v in ipairs(parse_data(line, 'rodata', ctx)) do table.insert(ctx.rodata, v) end
         else
           error('Invalid section in line '..ctx.nline..'.')
         end
@@ -781,6 +951,52 @@ function run_assembler_tests(t)
     bss = 22,
   }
   t:equals(assembly_to_lif(file), complete(result), 'bss section')
+
+  file = [[
+.section text
+        nop
+.section data
+        db      0x12, 0x34
+        dw      0xABCD
+.section rodata
+        dd      0xABCDEF01]]
+  result = {
+    text = { 0x87 },
+    data = { 0x12, 0x34, 0xCD, 0xAB },
+    rodata = { 0x01, 0xEF, 0xCD, 0xAB },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'data section')
+
+  file = [[
+.section text
+        nop
+.section data
+        db      "Abc\n"
+        db      "Abc\0"
+        db      "A,A"]]
+  result = { 
+    text = { 0x87 },
+    data = { 65, 98, 99, 13, 65, 98, 99, 0, 65, 44, 65 },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'ascii data')
+
+  file = [[
+.define TEST 0x1234
+.section text
+        jmp     TEST]]
+  result = {
+    text = { 0x71, 0x34, 0x12, 0x00, 0x00 }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'local constants')
+
+  file = [[
+.import tools/extra/test1.s
+.section text
+        jmp     TEST]]
+  result = {
+    text = { 0x71, 0x34, 0x12, 0x00, 0x00 }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'import files')
 
 end
 
