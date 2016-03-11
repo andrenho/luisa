@@ -7,6 +7,7 @@
 -- UTILITIES
 --
 ------------------------------------------------------------------
+--{{{
 
 --
 -- strict
@@ -142,7 +143,7 @@ end
 
 function inspect(...)
   return table.concat(map({...}, 
-    function(v) return value(v, 2, 0) end), '\t')
+    function(v) return value(v, 5, 0) end), '\t')
 end
 
 function p(...)
@@ -191,6 +192,7 @@ function tointeger(str)
   end
   return nil
 end
+--}}}
 
 
 ------------------------------------------------------------------
@@ -198,6 +200,7 @@ end
 -- ENCODER
 --
 ------------------------------------------------------------------
+--{{{
 
 local opcodes = {
   -- movement
@@ -355,9 +358,9 @@ function encode(line, accept_label, label_prefix)
   if #rest:gsub('[^,]','') > 1 then
     error('Invalid expression '..line)
   end
-  local parameters = table.pack(rest:gmatch("([-_%.%w%[%]]+)%s*,%s*([-_%w%.%[%]]+)")())
+  local parameters = table.pack(rest:gmatch("([-_@%.%w%[%]]+)%s*,%s*([-_@%w%.%[%]]+)")())
   if #parameters == 0 then
-    parameters = table.pack(rest:gmatch("([-_%w%.%[%]]+)$")())
+    parameters = table.pack(rest:gmatch("([-_@%w%.%[%]]+)$")())
   end
 
   -- parse parameters
@@ -423,7 +426,7 @@ function parse_parameter(par, accept_label, label_prefix)
     -- is it a label?
     elseif accept_label then
       tp = 'v32'
-      array = { par.sub(1,1) and (label_prefix .. par) or par, 0, 0, 0 }
+      array = { (par:sub(1,1) == '.') and (label_prefix .. par) or par, 0, 0, 0 }
 
     -- is niether
     else
@@ -472,6 +475,7 @@ function parse_opcode(operand, pars, line)
   end
   error('Invalid command '..line)
 end
+--}}}
 
 
 ------------------------------------------------------------------
@@ -479,6 +483,7 @@ end
 -- ASSEMBLER
 --
 ------------------------------------------------------------------
+--{{{
 
 local reserved_words = { 
   'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'fp', 'sp', 'pc', 
@@ -554,7 +559,34 @@ function assembly_to_lif(code)
 
 
   local function chomp_labels(line, ctx)
-    return line  -- TODO
+    local re = line:gmatch('([%.@]?%a[%w_]*):%s*')
+
+    for label in re do
+      -- check if label is local or static
+      if label:sub(1,1) == '.' then
+        label = ctx.current_symbol .. label
+      else
+        ctx.current_symbol = label
+      end
+
+      -- check if symbol is duplicated
+      for k,_ in pairs(ctx.symbols) do 
+        if label == k then error('Symbol '..label..' duplicated in line '..ctx.nline..'.') end
+      end
+
+      -- find address
+      local addr;
+      if ctx.current_section == 'bss' then
+        addr = ctx.bss
+      else
+        addr = #ctx[ctx.current_section]
+      end
+      
+      -- add symbol
+      ctx.symbols[label] = { section=ctx.current_section, addr=addr }
+    end
+
+    return line:reverse():gsub(':.*$', ''):reverse():match("^%s*(.-)%s*$")
   end
 
 
@@ -731,7 +763,7 @@ function assembly_to_lif(code)
     else
       local orig_line = line
 
-      local code = chomp_labels(line, ctx)
+      line = chomp_labels(line, ctx)
       if line ~= '' then
         if ctx.current_section == 'text' then
           for _,v in ipairs(parse_text(line, ctx)) do table.insert(ctx.text, v) end
@@ -756,12 +788,75 @@ function assembly_to_lif(code)
   ctx.nline = nil
   return ctx
 end
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- JOIN LIF OBJECTS
+--
+------------------------------------------------------------------
+--{{{
+
+function join_lif_objects(objects) {
+}
+
+--[[
+export function joinLifObjects(objects) {
+
+  function joinTwoLifObjects(objA, objB) {
+    let joined = {};
+    // join sections text, data and rodata
+    for (let section of ['text', 'data', 'rodata']) {
+      if (objA[section] || objB[section]) {
+        joined[section] = (objA[section] ? objA[section] : []).concat(objB[section] ? objB[section] : []);
+      }
+    }
+    // join bss
+    if (objA.bss || objB.bss) {
+      joined.bss = (objA.bss ? objA.bss : 0) + (objB.bss ? objB.bss : 0);
+    }
+    // add symbols
+    joined.symbols = {};
+    if (objA.symbols) {
+      Object.keys(objA.symbols).forEach(k => joined.symbols[k] = objA.symbols[k]);
+    }
+    if (objB.symbols) {
+      Object.keys(objB.symbols).forEach(k => {
+        let sym = { section: objB.symbols[k].section, addr: objB.symbols[k].addr };
+        if (sym.section === 'bss') {
+          sym.addr += (objA.bss ? objA.bss : 0);
+        } else {
+          sym.addr += (objA[sym.section] ? objA[sym.section].length : 0);
+        }
+        joined.symbols[k] = sym;
+      });
+    }
+    if (Object.keys(joined.symbols).length === 0) {
+      delete joined.symbols;
+    }
+    return joined;
+  }
+
+  
+  // join all LIF objects
+  let joined = {};
+  for (let obj of objects) {
+    joined = joinTwoLifObjects(joined, obj);
+  }
+  return joined;
+}
+]]
+
+--}}}
+
 
 ------------------------------------------------------------------
 -- 
 -- TEST INTERFACE
 --
 ------------------------------------------------------------------
+--{{{
 
 TestInterface = {}
 
@@ -809,6 +904,7 @@ function TestInterface:_nok(description, expected, result)
   if expected then io.write(' (expected: '..inspect(expected)..', got: '..inspect(result)..')') end
   print()
 end
+--}}}
 
 
 ------------------------------------------------------------------
@@ -816,6 +912,7 @@ end
 -- TESTS
 --
 ------------------------------------------------------------------
+--{{{
 
 --
 -- encoder
@@ -894,7 +991,8 @@ function run_assembler_tests(t)
   local file, result
 
   t:title('Assembler: assembly to LIF')
-  
+ 
+  -- simplest file
   file = [[
 .section  text
         nop     ; some comment]]
@@ -903,6 +1001,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'simplest file')
 
+  -- useful code
   file = [[
 .section text
         mov     A, 0x4
@@ -925,6 +1024,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'useful code')
 
+  -- numeric representation
   file = [[
 .section text
         mov     A, 42
@@ -939,6 +1039,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'numberic representation')
 
+  -- bss section
   file = [[
 .section text
         nop
@@ -952,6 +1053,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'bss section')
 
+  -- data section
   file = [[
 .section text
         nop
@@ -967,6 +1069,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'data section')
 
+  -- ascii data
   file = [[
 .section text
         nop
@@ -980,6 +1083,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'ascii data')
 
+  -- local constants
   file = [[
 .define TEST 0x1234
 .section text
@@ -989,6 +1093,7 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'local constants')
 
+  -- import files
   file = [[
 .import tools/extra/test1.s
 .section text
@@ -998,14 +1103,158 @@ function run_assembler_tests(t)
   }
   t:equals(assembly_to_lif(file), complete(result), 'import files')
 
+  -- private labels
+  file = [[
+.section text
+label:  nop
+        jmp     label
+        jmp     fwd_label
+        nop
+fwd_label:
+        nop]]
+  result = {
+    text = { 0x87,
+             0x71, 'label', 0x00, 0x00, 0x00,
+             0x71, 'fwd_label', 0x00, 0x00, 0x00,
+             0x87,
+             0x87 },
+    symbols = {
+      label = { section = 'text', addr = 0x0 },
+      fwd_label = { section = 'text', addr = 0xC },
+    }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'private labels')
+
+  -- local labels
+  file = [[
+.section text
+        nop
+.test1: jmp     .test1
+new:    nop
+.test1: jmp     .test1]]
+  result = {
+    text = { 0x87,
+             0x71, '.test1', 0x00, 0x00, 0x00,
+             0x87,
+             0x71, 'new.test1', 0x00, 0x00, 0x00 },
+    symbols = {
+      ['.test1'] =    { section='text', addr=0x01 },
+      new =           { section='text', addr=0x06 },
+      ['new.test1'] = { section='text', addr=0x07 },
+    },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'local labels')
+
+  -- data labels
+  file = [[
+.section text
+        movb    A, [ldat]
+.section data
+        dw      0x1
+ldat:   db      0x1]]
+  result = {
+    text = { 0x06, 0x00, 'ldat', 0x00, 0x00, 0x00 },
+    data = { 0x01, 0x00, 0x01 },
+    symbols = {
+      ldat = { section='data', addr=0x02 },
+    }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'data labels')
+
+  -- bss labels
+  file = [[
+.section text
+        movb    A, [ldat]
+.section bss
+        resw    0x1
+ldat:   resb    0x1]]
+  result = {
+    text = { 0x06, 0x00, 'ldat', 0x00, 0x00, 0x00 },
+    bss = 3,
+    symbols = {
+      ldat = { section='bss', addr=0x02 },
+    },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'bss labels')
+
+  -- public labels
+  file = [[
+.section text
+@test:  nop]]
+  result = {
+    text = { 0x87 },
+    symbols = {
+      ['@test'] = { section='text', addr=0x00 },
+    },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'public labels')
+
+  -- unresolved symbols
+  file = [[
+.section text
+        jmp     @test]]
+  result = {
+    text = { 0x71, '@test', 0x00, 0x00, 0x00 },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'unresolved symbols')
+
+end
+
+
+function run_join_tests(t)
+  local objA = {
+    text = { 0x06, 0x00, '@ldat', 0x00, 0x00, 0x00 },
+    bss = 2,
+    data = { 0x00 },
+    symbols = {
+      ['@ldat'] = { section='text', addr=0x02 },
+    },
+  }
+
+  local objB = {
+    text = { 0x07, 'abc', 0x00, 0x00, 0x00 },
+    bss = 32,
+    data = { 0x24, 0xFF },
+    symbols = {
+      abc = { section='text', addr=0x0 },
+      xxx = { section='bss', addr=0xA },
+      dt = { section='data', addr=0x1 },
+    },
+  }
+
+  local objC = { 
+    text = { 0x4, 0x5 },
+    symbols = {
+      c = { section='text', addr=0x0 },
+    },
+  }
+
+  local result = {
+    text = { 0x06, 0x00, '@ldat', 0x00, 0x00, 0x00,
+             0x07, 'abc', 0x00, 0x00, 0x00,
+             0x04, 0x05 },
+    bss = 34,
+    data = { 0x00, 0x24, 0xFF },
+    symbols = {
+      ['@ldat'] = { section='text', addr=0x02 },
+      abc = { section='text', addr=0x6 },
+      c = { section='text', addr=0xB },
+      xxx = { section='bss', addr=0xC },
+      dt = { section='data', addr=0x2 },
+    },
+  }
+  
+  t:equals(join_lif_objects({ objA, objB, objC }), complete(result), 'lifs joined')
 end
 
 
 function run_tests()
   local t = TestInterface:new()
-  --run_encoder_tests(t)
+  run_encoder_tests(t)
   run_assembler_tests(t)
+  run_join_tests(t)
 end
+--}}}
 
 
 ------------------------------------------------------------------
@@ -1013,10 +1262,13 @@ end
 -- MAIN PROCEDURE
 --
 ------------------------------------------------------------------
+--{{{
 
 -- parse commandline options
 if arg[1] == '-t' then
   run_tests()
 end
 
--- vim: ts=2:sw=2:sts=2:expandtab
+--}}}
+
+-- vim: ts=2:sw=2:sts=2:expandtab:foldmethod=marker
