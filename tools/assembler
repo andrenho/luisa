@@ -527,7 +527,7 @@ function assembly_to_lif(code)
       error('Syntax error in line '..ctx.nline..'. [define]')
     end
     local name, value = table.unpack(pars)
-    if not name:match('^%a%w+$') then
+    if not name:match('^%a[%w_]+$') then
       error('Invalid name for a define in line '..ctx.nline..'. [define]')
     end
     for _,r in ipairs(reserved_words) do
@@ -551,7 +551,7 @@ function assembly_to_lif(code)
       local fc = line:gmatch('%S+')
       if fc() == '.define' then
         parse_constants({ fc(), fc() }, ctx)
-      else
+      elseif line ~= '' then
         error('Invalid line in file '..pars[1]..': "'..line..'"')
       end
     end
@@ -867,6 +867,7 @@ export function joinLifObjects(objects) {
 
 --}}}
 
+
 ------------------------------------------------------------------
 -- 
 -- 4. CREATE RELOCATION TABLE
@@ -907,6 +908,52 @@ function create_relocation_table(obj, tp)
   return obj
 
 end
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- 5a. CONVERT LIF TO BINARY
+--
+------------------------------------------------------------------
+--{{{
+
+function convert_lif_to_binary(obj, offset)
+
+  -- TODO check unesolved symbols
+
+  -- find positions
+  local pos = { text = offset }
+  pos.data = pos.text + (obj.text and #obj.text or 0)
+  pos.rodata = pos.data + (obj.data and #obj.data or 0)
+  pos.bss = pos.rodata + (obj.rodata and #obj.rodata or 0)
+
+  -- add data
+  local data = {}
+  for _,section in { 'text', 'data', 'rodata' } do
+    for _,d in ipairs(obj[section]) do data[#data+1] = d end
+  end
+  for _=1,#obj.bss do data[#data+1] = 0x0 end
+
+  -- replace relocation symbols
+  local function replace(data, position, new_data)
+    if position + 3 > #data then
+      error(('Invalid relocation in position 0x%X'):format(position))
+    end
+    data[position] = new_data & 0xFF
+    data[position+1] = (new_data >> 8) & 0xFF
+    data[position+2] = (new_data >> 16) & 0xFF
+    data[position+3] = (new_data >> 24) & 0xFF
+  end
+
+  for _,r in ipairs(obj.reloc) do
+    replace(data, r.offset, r.desloc + pos[r.section])
+  end
+
+  return data
+
+end
+
 --}}}
 
 ------------------------------------------------------------------
@@ -1345,6 +1392,39 @@ function run_reloc_tests(t)--{{{
 end--}}}
 
 
+function run_binary_tests() --{{{ 
+
+  local obj = complete({
+    text = { 0x1, 0x2, 0x3, 0x0, 0x0, 0x0, 0x0,
+             0xA, 0x0, 0x0, 0x0, 0x0,
+             0xF, 0x0, 0x0, 0x0, 0x0 },
+    bss = 32,
+    data = { 0xA, 0xB, 0xC },
+    reloc = {
+      { offset=0x3, desloc=0x3, section='text' },
+      { offset=0x8, desloc=0x10, section='bss' },
+      { offset=0xD, desloc=0x1, section='data' },
+    },
+  })
+
+  local expected = {
+    -- text
+    0x01, 0x02, 0x03, 0x03, 0x00, 0x0F, 0x00,  -- F0000
+    0x0A, 0x24, 0x00, 0x0F, 0x00,              -- F0007
+    0x0F, 0x12, 0x00, 0x0F, 0x00,              -- F000C
+    -- data
+    0x0A, 0x0B, 0x0C,                          -- F0011
+    -- bss
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,           -- F0014
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0            -- F0024
+  }
+
+  t:equals(convert_lif_to_binary(obj, 0xF0000), expected, 'convert with offset = 0xF0000')
+
+end
+--}}}
+
+
 function run_tests()
   local t = TestInterface:new()
   run_encoder_tests(t)
@@ -1357,15 +1437,101 @@ end
 
 ------------------------------------------------------------------
 --
--- c. MAIN PROCEDURE
+-- c. COMMANDLINE OPTIONS
 --
 ------------------------------------------------------------------
 --{{{
 
--- parse commandline options
-if arg[1] == '-t' then
-  run_tests()
+function parse_args()
+  local i = 1
+  local a = { sources={} }
+  while i <= #arg do
+    if arg[i] == '-h' then
+      a.help = true
+    elseif arg[i] == '-t' then
+      a.run_tests = true
+    elseif arg[i] == '-1' then
+      a.stage = 1
+    elseif arg[i] == '-2' then
+      a.stage = 2
+    elseif arg[i] == '-b' then
+      a.binary = tointeger(arg[i+1])
+      i = i+1
+    elseif arg[i] == '-o' then
+      a.output = arg[i+1]
+      i = i+1
+    else
+      a.sources[#a.sources+1] = arg[i]
+    end
+    i = i+1
+  end
+  return a
 end
+
+-- help, run_tests, stage1, stage2, binary, output, sources
+
+--}}}
+
+
+------------------------------------------------------------------
+--
+-- d. MAIN PROCEDURE
+--
+------------------------------------------------------------------
+--{{{
+
+
+function print_help()
+  print('Usage: '..arg[0]..' [OPTION...] SOURCES...')
+  print()
+  print('   -o FILENAME      output file (if not specified, outputs to stdout)')
+  print('   -1               convert to LIF (Luisa Intermediate Format)')
+  print('   -2               convert to LIF and create relocation table')
+  print('   -b OFFSET        create a binary file instead of a LRF')
+  print('   -h               this help')
+end
+
+
+function compile(a)
+  if #a.sources == 0 then
+    error('No sources defined.')
+  end
+  -- read sources
+  local src = {}
+  for _,source in ipairs(a.sources) do
+    src[#src+1] = assert(io.open(source, 'r')):read('*all')
+  end
+  -- compile
+  local lif = join_lif_objects(map(src, function(s) return assembly_to_lif(s) end))
+  if a.stage == 1 then return lif end
+  local rlif = create_relocation_table(lif)
+  if a.stage == 2 then return rlif end
+  if a.binary then
+    local b = convert_lif_to_binary(rlif, a.binary)
+    return string.pack(string.rep('B', #b), table.unpack(b))
+  else
+    error('LRF files are not supported yet')
+  end
+end
+
+
+function execute_args()
+  local a = parse_args()
+  if a.help then
+    print_help()
+    os.exit(true)
+  elseif a.run_tests then
+    run_tests()
+  elseif #a.sources > 0 then
+    local f = a.output and assert(io.open(a.output, 'wb')) or io.stdout
+    f:write(compile(a))
+  else
+    io.stderr:write('Usage: '..arg[0]..' [OPTION...] SOURCES...\n')
+    os.exit(false)
+  end
+end
+
+execute_args()
 
 --}}}
 
