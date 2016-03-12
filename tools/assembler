@@ -502,8 +502,8 @@ local reserved_words = {
 function assembly_to_lif(code)
   
   local function replace_constants(line, ctx)
-    for k,v in pairs(ctx.constants) do
-      line = line:gsub(k, v)
+    for _,k in ipairs(ctx.constant_list) do
+      line = line:gsub(k, ctx.constants[k])
     end
     return line
   end
@@ -533,6 +533,8 @@ function assembly_to_lif(code)
     for _,r in ipairs(reserved_words) do
       if r == name then error(name .. ' is a reserved word in line '..ctx.nline..'. [define]') end
     end
+    table.insert(ctx.constant_list, name)
+    table.sort(ctx.constant_list, function(a, b) return #a > #b end)
     ctx.constants[name] = value
   end
 
@@ -726,6 +728,7 @@ function assembly_to_lif(code)
     unresolved = {},
     -- auxiliary info
     constants = {},
+    constant_list = {},
     current_section = nil,
     current_symbol = '',
     nline = 1
@@ -784,6 +787,7 @@ function assembly_to_lif(code)
   end
 
   ctx.constants = nil
+  ctx.constant_list = nil
   ctx.current_section = nil
   ctx.current_symbol = nil
   ctx.nline = nil
@@ -1524,7 +1528,12 @@ function execute_args()
     run_tests()
   elseif #a.sources > 0 then
     local f = a.output and assert(io.open(a.output, 'wb')) or io.stdout
-    f:write(compile(a))
+    local t = compile(a)
+    if type(t) == 'string' then
+      f:write(t)
+    else
+      f:write(inspect(t))
+    end
   else
     io.stderr:write('Usage: '..arg[0]..' [OPTION...] SOURCES...\n')
     os.exit(false)
