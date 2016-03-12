@@ -4,10 +4,10 @@
 
 ------------------------------------------------------------------
 --
--- UTILITIES
+-- 0. UTILITIES
 --
 ------------------------------------------------------------------
---{{{
+--{{{ strict, inspect, deep equals
 
 --
 -- strict
@@ -197,7 +197,7 @@ end
 
 ------------------------------------------------------------------
 -- 
--- ENCODER
+-- 1. ENCODER
 --
 ------------------------------------------------------------------
 --{{{
@@ -480,7 +480,7 @@ end
 
 ------------------------------------------------------------------
 -- 
--- ASSEMBLER
+-- 2. ASSEMBLER
 --
 ------------------------------------------------------------------
 --{{{
@@ -793,48 +793,63 @@ end
 
 ------------------------------------------------------------------
 -- 
--- JOIN LIF OBJECTS
+-- 3. JOIN LIF OBJECTS
 --
 ------------------------------------------------------------------
 --{{{
 
-function join_lif_objects(objects) {
-}
+function join_lif_objects(objects) 
+
+  local function join_two_lif_objects(obj_a, obj_b)
+    local joined = {
+      reloc = {}
+    }
+
+    -- join sections text, data and rodata
+    for _,section in ipairs({ 'text', 'data', 'rodata' }) do
+      joined[section] = {}
+      for _,d in ipairs(obj_a[section]) do table.insert(joined[section], d) end
+      for _,d in ipairs(obj_b[section]) do table.insert(joined[section], d) end
+    end
+
+    -- join bss
+    joined.bss = obj_a.bss + obj_b.bss
+
+    -- add symbols
+    joined.symbols = {}
+    for k,v in pairs(obj_a.symbols) do joined.symbols[k] = v end
+    for k,v in pairs(obj_b.symbols) do 
+      local sym = { section=obj_b.symbols[k].section, addr=obj_b.symbols[k].addr }
+      if sym.section == 'bss' then
+        sym.addr = sym.addr + obj_a.bss
+      else
+        sym.addr = sym.addr + #obj_a[sym.section]
+      end
+      joined.symbols[k] = sym
+    end
+
+    return joined
+  end
+  
+  -- join all lif objects
+  local joined = {
+    text = {},
+    bss = 0,
+    data = {},
+    rodata = {},
+    symbols = {},
+    reloc = {},
+  }
+  for _,obj in ipairs(objects) do
+    joined = join_two_lif_objects(joined, obj)
+  end
+  return joined
+
+end
 
 --[[
 export function joinLifObjects(objects) {
 
-  function joinTwoLifObjects(objA, objB) {
-    let joined = {};
-    // join sections text, data and rodata
-    for (let section of ['text', 'data', 'rodata']) {
-      if (objA[section] || objB[section]) {
-        joined[section] = (objA[section] ? objA[section] : []).concat(objB[section] ? objB[section] : []);
-      }
-    }
-    // join bss
-    if (objA.bss || objB.bss) {
-      joined.bss = (objA.bss ? objA.bss : 0) + (objB.bss ? objB.bss : 0);
-    }
-    // add symbols
-    joined.symbols = {};
-    if (objA.symbols) {
-      Object.keys(objA.symbols).forEach(k => joined.symbols[k] = objA.symbols[k]);
-    }
-    if (objB.symbols) {
-      Object.keys(objB.symbols).forEach(k => {
-        let sym = { section: objB.symbols[k].section, addr: objB.symbols[k].addr };
-        if (sym.section === 'bss') {
-          sym.addr += (objA.bss ? objA.bss : 0);
-        } else {
-          sym.addr += (objA[sym.section] ? objA[sym.section].length : 0);
-        }
-        joined.symbols[k] = sym;
-      });
-    }
-    if (Object.keys(joined.symbols).length === 0) {
-      delete joined.symbols;
-    }
     return joined;
   }
 
@@ -850,10 +865,16 @@ export function joinLifObjects(objects) {
 
 --}}}
 
+------------------------------------------------------------------
+-- 
+-- 4. CREATE RELOCATION TABLE
+--
+------------------------------------------------------------------
+
 
 ------------------------------------------------------------------
 -- 
--- TEST INTERFACE
+-- a. TEST INTERFACE
 --
 ------------------------------------------------------------------
 --{{{
@@ -909,7 +930,7 @@ end
 
 ------------------------------------------------------------------
 --
--- TESTS
+-- b. TESTS
 --
 ------------------------------------------------------------------
 --{{{
@@ -917,7 +938,7 @@ end
 --
 -- encoder
 -- 
-function run_encoder_tests(t)
+function run_encoder_tests(t)--{{{
 
   t:title('Encoder: valid commands')
   
@@ -970,23 +991,24 @@ function run_encoder_tests(t)
   tok(t, 'jmp label', { 0x71, 'label', 0, 0, 0 });
   t:equals(encode('jmp .la', true, 'xy'), { 0x71, 'xy.la', 0, 0, 0 }, 'jmp .la');
 
-end
+end--}}}
 
 
 -- 
 -- assembler
 --
-function run_assembler_tests(t)
+local function complete(r)--{{{
+  if r.text == nil then r.text = {} end
+  if r.bss == nil then r.bss = 0 end
+  if r.data == nil then r.data = {} end
+  if r.rodata == nil then r.rodata = {} end
+  if r.symbols == nil then r.symbols = {} end
+  if r.reloc == nil then r.reloc = {} end
+  return r
+end--}}}
 
-  local function complete(r)
-    if r.text == nil then r.text = {} end
-    if r.bss == nil then r.bss = 0 end
-    if r.data == nil then r.data = {} end
-    if r.rodata == nil then r.rodata = {} end
-    if r.symbols == nil then r.symbols = {} end
-    if r.reloc == nil then r.reloc = {} end
-    return r
-  end
+
+function run_assembler_tests(t)--{{{
 
   local file, result
 
@@ -1198,10 +1220,10 @@ ldat:   resb    0x1]]
   }
   t:equals(assembly_to_lif(file), complete(result), 'unresolved symbols')
 
-end
+end--}}}
 
 
-function run_join_tests(t)
+function run_join_tests(t)--{{{
   local objA = {
     text = { 0x06, 0x00, '@ldat', 0x00, 0x00, 0x00 },
     bss = 2,
@@ -1244,8 +1266,55 @@ function run_join_tests(t)
     },
   }
   
-  t:equals(join_lif_objects({ objA, objB, objC }), complete(result), 'lifs joined')
-end
+  t:title('Assembler: join LIFs')
+  t:equals(join_lif_objects({ complete(objA), complete(objB), complete(objC) }), complete(result), 'lifs joined')
+end--}}}
+
+
+function run_reloc_tests(t)--{{{
+  local ok = { 
+    text = { 0x06, 'private', 0x00, 0x00, 0x00,
+             0x08, '@global', 0x00, 0x00, 0x00,
+             0x0A, 'private', 0x00, 0x00, 0x00,
+             0x0B, '@pending', 0x00, 0x00, 0x00 },
+    data = { 0x24, 0x12 },
+    symbols = {
+      private = { section='text', addr=0x6 },
+      ['@global'] = { section='data', addr=0x1 },
+    },
+  };
+
+  local expected_object = {
+    text = { 0x06, 0x00, 0x00, 0x00, 0x00, 
+             0x08, '@global', 0x00, 0x00, 0x00,
+             0x0A, 0x00, 0x00, 0x00, 0x00,
+             0x0B, '@pending', 0x00, 0x00, 0x00 },
+    data = { 0x24, 0x12 },
+    symbols = {
+      ['@global'] = { section='data', addr=0x1 },
+    },
+    reloc = {
+      { offset=0x1, desloc=0x6, section='text' },
+      { offset=0xB, desloc=0x6, section='text' },
+    },
+  }
+  t:equals(create_relocation_table(ok, 'object'), expected_object, 'object')
+
+  local expected_public = {
+    text = { 0x06, 0x00, 0x00, 0x00, 0x00, 
+             0x08, 0x00, 0x00, 0x00, 0x00,
+             0x0A, 0x00, 0x00, 0x00, 0x00,
+             0x0B, '@pending', 0x00, 0x00, 0x00 },
+    data = { 0x24, 0x12 },
+    reloc = {
+      { offset=0x1, desloc=0x6, section='text' },
+      { offset=0x6, desloc=0x1, section='data' },
+      { offset=0xB, desloc=0x6, section='text' },
+    },
+  }
+  t:equals(create_relocation_table(ok, 'library'), expected_public, 'library')
+  t:throws(function() create_relocation_table(ok, 'executable') end, 'executable')
+end--}}}
 
 
 function run_tests()
@@ -1253,13 +1322,14 @@ function run_tests()
   run_encoder_tests(t)
   run_assembler_tests(t)
   run_join_tests(t)
+  run_reloc_tests(t)
 end
 --}}}
 
 
 ------------------------------------------------------------------
 --
--- MAIN PROCEDURE
+-- c. MAIN PROCEDURE
 --
 ------------------------------------------------------------------
 --{{{
