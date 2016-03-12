@@ -723,6 +723,7 @@ function assembly_to_lif(code)
     rodata = {},
     symbols = {},
     reloc = {},
+    unresolved = {},
     -- auxiliary info
     constants = {},
     current_section = nil,
@@ -828,6 +829,7 @@ function join_lif_objects(objects)
       joined.symbols[k] = sym
     end
 
+    joined.unresolved = {}
     return joined
   end
   
@@ -870,7 +872,42 @@ export function joinLifObjects(objects) {
 -- 4. CREATE RELOCATION TABLE
 --
 ------------------------------------------------------------------
+--{{{
 
+function create_relocation_table(obj, tp)
+
+  -- resolve references in text
+  local resolved = {}
+  for i=1,#obj.text do
+    local opcode = obj.text[i]
+    if type(opcode) == 'string' then
+      local sym = obj.symbols[opcode]
+      if sym == nil and tp ~= 'object' then  -- not found on symbol table
+        table.insert(obj.unresolved, { symbol=opcode, offset=i-1 })
+        obj.text[i] = 0x00
+      end
+      if sym ~= nil then
+        -- found on symbol table, add relocation
+        obj.reloc[#obj.reloc+1] = {
+          offset = i-1,
+          desloc = sym.addr,
+          section = sym.section
+        }
+        resolved[opcode] = true
+        obj.text[i] = 0x00
+      end
+    end
+  end
+
+  -- remove symbols that were resolved
+  for k,_ in pairs(resolved) do
+    obj.symbols[k] = nil
+  end
+
+  return obj
+
+end
+--}}}
 
 ------------------------------------------------------------------
 -- 
@@ -1004,6 +1041,7 @@ local function complete(r)--{{{
   if r.rodata == nil then r.rodata = {} end
   if r.symbols == nil then r.symbols = {} end
   if r.reloc == nil then r.reloc = {} end
+  if r.unresolved == nil then r.unresolved = {} end
   return r
 end--}}}
 
@@ -1272,48 +1310,38 @@ end--}}}
 
 
 function run_reloc_tests(t)--{{{
-  local ok = { 
+
+  t:title('Create relocation table')
+
+  local ok = complete({ 
     text = { 0x06, 'private', 0x00, 0x00, 0x00,
              0x08, '@global', 0x00, 0x00, 0x00,
              0x0A, 'private', 0x00, 0x00, 0x00,
              0x0B, '@pending', 0x00, 0x00, 0x00 },
     data = { 0x24, 0x12 },
     symbols = {
-      private = { section='text', addr=0x6 },
+      ['private'] = { section='text', addr=0x6 },
       ['@global'] = { section='data', addr=0x1 },
     },
-  };
+  })
 
-  local expected_object = {
-    text = { 0x06, 0x00, 0x00, 0x00, 0x00, 
-             0x08, '@global', 0x00, 0x00, 0x00,
-             0x0A, 0x00, 0x00, 0x00, 0x00,
-             0x0B, '@pending', 0x00, 0x00, 0x00 },
-    data = { 0x24, 0x12 },
-    symbols = {
-      ['@global'] = { section='data', addr=0x1 },
-    },
-    reloc = {
-      { offset=0x1, desloc=0x6, section='text' },
-      { offset=0xB, desloc=0x6, section='text' },
-    },
-  }
-  t:equals(create_relocation_table(ok, 'object'), expected_object, 'object')
-
-  local expected_public = {
+  local expected = {
     text = { 0x06, 0x00, 0x00, 0x00, 0x00, 
              0x08, 0x00, 0x00, 0x00, 0x00,
              0x0A, 0x00, 0x00, 0x00, 0x00,
-             0x0B, '@pending', 0x00, 0x00, 0x00 },
+             0x0B, 0x00, 0x00, 0x00, 0x00 },
     data = { 0x24, 0x12 },
     reloc = {
       { offset=0x1, desloc=0x6, section='text' },
       { offset=0x6, desloc=0x1, section='data' },
       { offset=0xB, desloc=0x6, section='text' },
     },
+    unresolved = {
+      { symbol='@pending', offset=0x10 }
+    },
   }
-  t:equals(create_relocation_table(ok, 'library'), expected_public, 'library')
-  t:throws(function() create_relocation_table(ok, 'executable') end, 'executable')
+  t:equals(create_relocation_table(ok), complete(expected), 'relocation table')
+
 end--}}}
 
 
