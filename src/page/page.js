@@ -20,6 +20,7 @@ window.onload = () => {
     videoCanvas.clearScreen(0, 0, 0);
     messageAppears = false;
     worker.postMessage(['run']);
+    document.getElementById('canvas').ondblclick = undefined;
   };
 
   //

@@ -1,0 +1,1567 @@
+#!/usr/bin/env lua
+
+-- this is going to be a long day...
+
+------------------------------------------------------------------
+--
+-- 0. UTILITIES
+--
+------------------------------------------------------------------
+--{{{ strict, inspect, deep equals
+
+--
+-- strict
+--
+local mt = getmetatable(_G)
+if mt == nil then
+  mt = {}
+  setmetatable(_G, mt)
+end
+
+__STRICT = true
+mt.__declared = {}
+
+mt.__newindex = function (t, n, v)
+  if __STRICT and not mt.__declared[n] then
+    local w = debug.getinfo(2, "S").what
+    if w ~= "main" and w ~= "C" then
+      error("assign to undeclared variable '"..n.."'", 2)
+    end
+    mt.__declared[n] = true
+  end
+  rawset(t, n, v)
+end
+  
+mt.__index = function (t, n)
+  if not mt.__declared[n] and debug.getinfo(2, "S").what ~= "C" then
+    error("variable '"..n.."' is not declared", 2)
+  end
+  return rawget(t, n)
+end
+
+function global(...)
+   for _, v in ipairs{...} do mt.__declared[v] = true end
+end
+
+--
+-- inspect
+--
+function filter(table, func)
+  local new_table = {}
+  for _,v in ipairs(table) do
+    if func(v) then new_table[#new_table+1] = v end
+  end
+  return new_table
+end
+
+function filter_tbl(table, func)
+  local new_table = {}
+  for k,v in pairs(table) do
+    if func(k, v) then new_table[k] = v end
+  end
+  return new_table
+end
+
+function map(table, func)
+  local new_table = {}
+  for _,v in ipairs(table) do
+    new_table[#new_table+1] = func(v)
+  end
+  return new_table
+end
+
+function map_tbl(table, func)
+  local new_table = {}
+  for k,v in pairs(table) do
+    new_table[#new_table+1] = func(k, v)
+  end
+  return new_table
+end
+
+local function is_array(t)
+  for k,_ in pairs(t) do
+    if type(k) ~= 'number' then return false end
+  end
+  return true
+end
+
+local parse_table  -- forward declaration
+
+local function value(v, max_depth, cur_depth)
+  if type(v) == 'string' then
+    return "'" .. tostring(v) .. "'"
+  elseif type(v) == 'nil' then
+    return 'nil'
+  elseif type(v) == 'table' then
+    return parse_table(v, max_depth, cur_depth)
+  else
+    return tostring(v)
+  end
+end
+
+parse_table = function(v, max_depth, cur_depth)
+  if cur_depth == max_depth then
+    if is_array(v) then
+      return '{' .. (#v > 0 and '#'..tostring(#v) or '') .. '}'
+    else
+      if v.inspect then
+        return '{ ' .. v:inspect() .. ' }'
+      else
+        return '{ ' .. (v.classname and (v:classname() or '?') or '') .. '... }'
+      end
+    end
+  else
+    if is_array(v) then
+      return '{ ' .. table.concat(map(v, function(w) 
+        return value(w, max_depth, cur_depth+1)
+      end), ', ') .. ' }'
+    else
+      if v.inspect then
+        return '{ ' .. v:inspect() .. ' }'
+      else
+        return '{ ' .. 
+          ((not v.class) and '@' or '') ..
+          (v.classname and (v:classname() or '?') .. ': ' or '') ..   -- name of the class
+          -- values
+          table.concat(
+            map_tbl(
+              filter_tbl(v, 
+                function(k,v) 
+                  return k ~= 'class' and k ~= 'class_desc' and k ~= 'is_a' and k ~= '__index' and k ~= '_init' and k ~= 'classname' and
+                         type(v) ~= 'function'
+                end),
+              function(k, v2)
+                local key = (type(k) == 'string' and k or ('[' .. value(k, 1, 0) .. ']'))
+                local val = value(v2, max_depth, cur_depth+1)
+                return key .. '=' .. val
+              end), 
+            ', ') .. ' }'
+      end
+    end
+  end
+end
+
+function inspect(...)
+  return table.concat(map({...}, 
+    function(v) return value(v, 5, 0) end), '\t')
+end
+
+function p(...)
+  io.write(inspect(...))
+  io.write("\n")
+  io.flush()
+end
+
+--
+-- deep equals
+--
+
+local function equals(t1, t2)
+   if t1 == t2 then
+       return true
+   end
+   if type(t1) ~= "table" or type(t2) ~= "table" then
+       return false
+   end
+   local v2
+   for k,v1 in pairs(t1) do
+       v2 = t2[k]
+       if v1 ~= v2 and not equals(v1, t2[k]) then
+           return false
+       end
+   end
+   for k in pairs(t2) do
+       if t1[k] == nil then
+           return false
+       end
+   end
+   return true
+end
+
+
+--
+-- convert to integer
+--
+function tointeger(str)
+  if str:match('0b[01_]+') then
+    return tonumber(str:gsub('_',''):sub(3), 2)
+  elseif str:match('0[xX][%x_]+') then
+    return tonumber(str:gsub('_',''):sub(3), 16)
+  elseif str:match('%d+') then
+    return tonumber(str, 10)
+  end
+  return nil
+end
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- 1. ENCODER
+--
+------------------------------------------------------------------
+--{{{
+
+local opcodes = {
+  -- movement
+  { 0x01, 'mov', 'reg', 'reg' },
+  { 0x02, 'mov', 'reg', 'v8' },
+  { 0x03, 'mov', 'reg', 'v16' },
+  { 0x04, 'mov', 'reg', 'v32' },
+  { 0x05, 'movb', 'reg', 'indreg' },
+  { 0x06, 'movb', 'reg', 'indv32' },
+  { 0x07, 'movw', 'reg', 'indreg' },
+  { 0x08, 'movw', 'reg', 'indv32' },
+  { 0x09, 'movd', 'reg', 'indreg' },
+  { 0x0A, 'movd', 'reg', 'indv32' },
+
+  { 0x0B, 'movb', 'indreg', 'reg' },
+  { 0x0C, 'movb', 'indreg', 'v8' },
+  { 0x0D, 'movb', 'indreg', 'indreg' },
+  { 0x0E, 'movb', 'indreg', 'indv32' },
+  { 0x0F, 'movw', 'indreg', 'reg' },
+  { 0x1A, 'movw', 'indreg', 'v16' },
+  { 0x1B, 'movw', 'indreg', 'indreg' },
+  { 0x1C, 'movw', 'indreg', 'indv32' },
+  { 0x1D, 'movd', 'indreg', 'reg' },
+  { 0x1E, 'movd', 'indreg', 'v32' },
+  { 0x1F, 'movd', 'indreg', 'indreg' },
+  { 0x20, 'movd', 'indreg', 'indv32' },
+
+  { 0x21, 'movb', 'indv32', 'reg' },
+  { 0x22, 'movb', 'indv32', 'v8' },
+  { 0x23, 'movb', 'indv32', 'indreg' },
+  { 0x24, 'movb', 'indv32', 'indv32' },
+  { 0x25, 'movw', 'indv32', 'reg' },
+  { 0x26, 'movw', 'indv32', 'v16' },
+  { 0x27, 'movw', 'indv32', 'indreg' },
+  { 0x28, 'movw', 'indv32', 'indv32' },
+  { 0x29, 'movd', 'indv32', 'reg' },
+  { 0x2A, 'movd', 'indv32', 'v32' },
+  { 0x2B, 'movd', 'indv32', 'indreg' },
+  { 0x2C, 'movd', 'indv32', 'indv32' },
+
+  -- logic
+  { 0x2D, 'or', 'reg', 'reg' },
+  { 0x2E, 'or', 'reg', 'v8' },
+  { 0x2F, 'or', 'reg', 'v16' },
+  { 0x30, 'or', 'reg', 'v32' },
+  { 0x31, 'xor', 'reg', 'reg' },
+  { 0x32, 'xor', 'reg', 'v8' },
+  { 0x33, 'xor', 'reg', 'v16' },
+  { 0x34, 'xor', 'reg', 'v32' },
+  { 0x35, 'and', 'reg', 'reg' },
+  { 0x36, 'and', 'reg', 'v8' },
+  { 0x37, 'and', 'reg', 'v16' },
+  { 0x38, 'and', 'reg', 'v32' },
+  { 0x39, 'shl', 'reg', 'reg' },
+  { 0x3A, 'shl', 'reg', 'v8' },
+  { 0x3D, 'shr', 'reg', 'reg' },
+  { 0x3E, 'shr', 'reg', 'v8' },
+  { 0x41, 'not', 'reg' },
+
+  -- arithmetic
+  { 0x42, 'add', 'reg', 'reg' },
+  { 0x43, 'add', 'reg', 'v8' },
+  { 0x44, 'add', 'reg', 'v16' },
+  { 0x45, 'add', 'reg', 'v32' },
+  { 0x46, 'sub', 'reg', 'reg' },
+  { 0x47, 'sub', 'reg', 'v8' },
+  { 0x48, 'sub', 'reg', 'v16' },
+  { 0x49, 'sub', 'reg', 'v32' },
+  { 0x4A, 'cmp', 'reg', 'reg' },
+  { 0x4B, 'cmp', 'reg', 'v8' },
+  { 0x4C, 'cmp', 'reg', 'v16' },
+  { 0x4D, 'cmp', 'reg', 'v32' },
+  { 0x4E, 'mul', 'reg', 'reg' },
+  { 0x4F, 'mul', 'reg', 'v8' },
+  { 0x50, 'mul', 'reg', 'v16' },
+  { 0x51, 'mul', 'reg', 'v32' },
+  { 0x52, 'idiv', 'reg', 'reg' },
+  { 0x53, 'idiv', 'reg', 'v8' },
+  { 0x54, 'idiv', 'reg', 'v16' },
+  { 0x55, 'idiv', 'reg', 'v32' },
+  { 0x56, 'mod', 'reg', 'reg' },
+  { 0x57, 'mod', 'reg', 'v8' },
+  { 0x58, 'mod', 'reg', 'v16' },
+  { 0x59, 'mod', 'reg', 'v32' },
+  { 0x5A, 'inc', 'reg' },
+  { 0x5B, 'dec', 'reg' },
+
+  -- jumps
+  { 0x5C, 'bz', 'reg' },
+  { 0x5D, 'bz', 'v32' },
+  { 0x5C, 'beq', 'reg' },
+  { 0x5D, 'beq', 'v32' },
+  { 0x5E, 'bnz', 'reg' },
+  { 0x5F, 'bnz', 'v32' },
+  { 0x60, 'bneg', 'reg' },
+  { 0x61, 'bneg', 'v32' },
+  { 0x62, 'bpos', 'reg' },
+  { 0x63, 'bpos', 'v32' },
+  { 0x64, 'bgt', 'reg' },
+  { 0x65, 'bgt', 'v32' },
+  { 0x66, 'bgte', 'reg' },
+  { 0x67, 'bgte', 'v32' },
+  { 0x68, 'blt', 'reg' },
+  { 0x69, 'blt', 'v32' },
+  { 0x6A, 'blte', 'reg' },
+  { 0x6B, 'blte', 'v32' },
+  { 0x6C, 'bv', 'reg' },
+  { 0x6D, 'bv', 'v32' },
+  { 0x6E, 'bnv', 'reg' },
+  { 0x6F, 'bnv', 'v32' },
+  { 0x70, 'jmp', 'reg' },
+  { 0x71, 'jmp', 'v32' },
+  { 0x72, 'jsr', 'reg' },
+  { 0x73, 'jsr', 'v32' },
+  { 0x74, 'ret' },
+  { 0x75, 'sys', 'reg' },
+  { 0x76, 'sys', 'v8' },
+  { 0x77, 'iret' },
+  { 0x86, 'sret' },
+
+  -- stack
+  { 0x78, 'pushb', 'reg' },
+  { 0x79, 'pushb', 'v8' },
+  { 0x7A, 'pushw', 'reg' },
+  { 0x7B, 'pushw', 'v16' },
+  { 0x7C, 'pushd', 'reg' },
+  { 0x7D, 'pushd', 'v32' },
+  { 0x7E, 'push.a' },
+  { 0x7F, 'popb', 'reg' },
+  { 0x80, 'popw', 'reg' },
+  { 0x81, 'popd', 'reg' },
+  { 0x82, 'pop.a' },
+  { 0x83, 'popx', 'reg' },
+  { 0x84, 'popx', 'v8' },
+  { 0x85, 'popx', 'v9' },
+
+  -- other
+  { 0x87, 'nop' },
+}
+
+
+function encode(line, accept_label, label_prefix)
+  label_prefix = label_prefix or ''
+
+  -- separate operand and parameters
+  local i = line:find('%s')
+  local operand, rest
+  if i then
+    operand, rest = line:sub(1, i-1), line:sub(i+1)
+  else
+    operand, rest = line, ''
+  end
+
+  -- find parameters
+  if #rest:gsub('[^,]','') > 1 then
+    error('Invalid expression '..line)
+  end
+  local parameters = table.pack(rest:gmatch("([-_@%.%w%[%]]+)%s*,%s*([-_@%w%.%[%]]+)")())
+  if #parameters == 0 then
+    parameters = table.pack(rest:gmatch("([-_@%w%.%[%]]+)$")())
+  end
+
+  -- parse parameters
+  local pars = map(parameters, function(p) return parse_parameter(p, accept_label, label_prefix) end)
+  return parse_opcode(operand, pars, line)
+
+end
+
+
+function parse_parameter(par, accept_label, label_prefix)
+
+  local function register_value(r)
+    return ({
+      a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6,
+      h = 7, i = 8, j = 9, k = 10, l = 11, fp = 12,
+      sp = 13, pc = 14, fl = 15
+    })[r]
+  end
+
+  -- if indirect, add indirection and return
+  if par:sub(1,1) == '[' and par:sub(-1) == ']' then
+    local pp = parse_parameter(par:sub(2,-2), accept_label, label_prefix)
+    if pp.type == 'v8' then
+      for _=1,3 do pp.array[#pp.array+1] = 0 end
+      pp.type = 'v32'
+    elseif pp.type == 'v16' then
+      for _=1,2 do pp.array[#pp.array+1] = 0 end
+      pp.type = 'v32'
+    end
+    pp.type = 'ind'..pp.type
+    return pp
+  end
+
+  -- if value, convert to number
+  local pr = tointeger(par)
+  par = pr or par
+
+  -- is it a number?
+  local tp, array
+  if type(par) == 'number' then
+    if par < 0 then
+      par = 0x100000000 + par
+    end
+    if par <= 0xFF then
+      tp, array = 'v8', { par }
+    elseif par <= 0xFFFF then
+      tp, array = 'v16', { par & 0xFF, par >> 8 }
+    elseif par <= 0xFFFFFFFF then
+      tp, array = 'v32', { par & 0xFF, (par >> 8) & 0xFF, (par >> 16) & 0xFF, (par >> 24) & 0xFF }
+    else
+      error('Values higher than 32-bit are unsupported.')
+    end
+  
+  -- is it a register or label?
+  else
+    local value = register_value(par:lower())
+    
+    -- is it a register?
+    if value ~= nil then
+      tp = 'reg'
+      array = { value }
+
+    -- is it a label?
+    elseif accept_label then
+      tp = 'v32'
+      array = { (par:sub(1,1) == '.') and (label_prefix .. par) or par, 0, 0, 0 }
+
+    -- is niether
+    else
+      error('Could not understand expression '..par)
+    end
+
+  end
+
+  return { type=tp, array=array }
+
+end
+
+
+function parse_opcode(operand, pars, line)
+  -- find opcode
+  for _,op in ipairs(opcodes) do
+    local ptype = map(pars, function(p) return p and p.type or nil end)
+    if operand:lower() == op[2] and ptype[1] == op[3] and ptype[2] == op[4] then
+      local a = { op[1] }
+      for i=1,2 do
+        if pars[i] then
+          for _,pr in ipairs(pars[i].array) do a[#a+1] = pr end
+        end
+      end
+      return a
+    end
+  end
+
+  -- if opcode wasn't found, and par is < v32, try to find higher value
+  local function increase_par(pr)
+    if pr.type == 'v16' then
+      return { type='v32', array={ pr.array[1], pr.array[2], 0, 0 } }
+    else 
+      return { type='v16', array={ pr.array[1], 0 } }
+    end
+  end
+  local function can_increase(pr) return pr and (pr.type == 'v8' or pr.type == 'v16') end
+  
+  if can_increase(pars[1]) then
+    return parse_opcode(operand, { increase_par(pars[1]), pars[2] })
+  elseif can_increase(pars[2]) then
+    return parse_opcode(operand, { pars[1], increase_par(pars[2]) })
+  end
+  if can_increase(pars[1]) and can_increase(pars[2]) then
+    return parse_opcode(operand, { increase_par(pars[1]), increase_par(pars[2]) })
+  end
+  error('Invalid command '..line)
+end
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- 2. ASSEMBLER
+--
+------------------------------------------------------------------
+--{{{
+
+local reserved_words = { 
+  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'fp', 'sp', 'pc', 
+  'fl', 'y', 'v', 'z', 's', 'gt', 'lt', 'p', 't', 'mov', 'movb', 'movw', 
+  'movd', 'or', 'xor', 'and', 'shl', 'shr', 'not', 'add', 'sub', 'cmp', 'mul', 
+  'idiv', 'mod', 'inc', 'dec', 'bz', 'beq', 'bnz', 'bneq', 'bneg', 'bpos', 
+  'bgt', 'bgte', 'blt', 'blte', 'bv', 'bnv', 'jmp', 'jsr', 'ret', 'sys', 
+  'iret', 'sret', 'pushb', 'pushw', 'pushd', 'push.a', 'popb', 'popw', 'popd', 
+  'pop.a', 'popx', 'nop', 'db', 'dw', 'dd', 'resb', 'resw', 'resd'
+}
+
+--
+-- CONVERT ASSEMBLY TO LIF
+--
+
+function assembly_to_lif(code)
+  
+  local function replace_constants(line, ctx)
+    for _,k in ipairs(ctx.constant_list) do
+      line = line:gsub(k, ctx.constants[k])
+    end
+    return line
+  end
+
+
+  local function parse_section(pars, ctx)
+    if #pars ~= 1 then
+      error('Syntax error in line '..ctx.nline..'.')
+    end
+    local section = pars[1]
+    if section == 'text' or section == 'bss' or section == 'data' or section == 'rodata' then
+      return section
+    else
+      error('Invalid section '..section..' in line '..ctx.nline..'.')
+    end
+  end
+
+
+  local function parse_constants(pars, ctx)
+    if #pars ~= 2 then
+      error('Syntax error in line '..ctx.nline..'. [define]')
+    end
+    local name, value = table.unpack(pars)
+    if not name:match('^%a[%w_]+$') then
+      error('Invalid name for a define in line '..ctx.nline..'. [define]')
+    end
+    for _,r in ipairs(reserved_words) do
+      if r == name then error(name .. ' is a reserved word in line '..ctx.nline..'. [define]') end
+    end
+    table.insert(ctx.constant_list, name)
+    table.sort(ctx.constant_list, function(a, b) return #a > #b end)
+    ctx.constants[name] = value
+  end
+
+
+  local function parse_import(pars, ctx)
+    if #pars ~= 1 then
+      error('Syntax error in line '..ctx.nline..'. [import]')
+    end
+    local f, err = io.open(pars[1])
+    if err then error('Could not open file '..pars[1]) end
+
+    while true do
+      local line = f:read()
+      if line == nil then break end
+      line = line:gsub(';.*', ''):match("^%s*(.-)%s*$")
+      local fc = line:gmatch('%S+')
+      if fc() == '.define' then
+        parse_constants({ fc(), fc() }, ctx)
+      elseif line ~= '' then
+        error('Invalid line in file '..pars[1]..': "'..line..'"')
+      end
+    end
+  end
+
+
+  local function chomp_labels(line, ctx)
+    local re = line:gmatch('([%.@]?%a[%w_]*):%s*')
+
+    for label in re do
+      -- check if label is local or static
+      if label:sub(1,1) == '.' then
+        label = ctx.current_symbol .. label
+      else
+        ctx.current_symbol = label
+      end
+
+      -- check if symbol is duplicated
+      for k,_ in pairs(ctx.symbols) do 
+        if label == k then error('Symbol '..label..' duplicated in line '..ctx.nline..'.') end
+      end
+
+      -- find address
+      local addr;
+      if ctx.current_section == 'bss' then
+        addr = ctx.bss
+      else
+        addr = #ctx[ctx.current_section]
+      end
+      
+      -- add symbol
+      ctx.symbols[label] = { section=ctx.current_section, addr=addr }
+    end
+
+    return line:reverse():gsub(':.*$', ''):reverse():match("^%s*(.-)%s*$")
+  end
+
+
+  local function parse_text(line, ctx)
+    return encode(line, true, ctx.current_symbol)
+  end
+
+
+  local function parse_bss(line, ctx)
+    local f = line:gmatch('%S+')
+    local cmd, par, extra = f(), f(), f()
+    if extra then 
+      error('Syntax error in line '..ctx.nline..'. [bss]') 
+    end
+    par = tointeger(par)
+    if not par then 
+      error('Invalid number in line '..ctx.nline..'. [bss]') 
+    end
+    local m = ({ resb=1, resw=2, resd=4 })[cmd]
+    if not m then
+      error('Invalid command '..cmd..' in line '..ctx.nline..'. [bss]')
+    end
+    return par * m
+  end
+
+  
+  local function parse_string(s, ctx)
+    s = s:sub(2, -2)  -- remove quotes
+    local data = {}
+    local i = 1
+    while i <= #s do
+      if s:sub(i,i) == '\\' then
+        if i == #s then
+          error('Backslash requires a character afterwards, at '..ctx.nline)
+        end
+        local c = s:sub(i+1,i+1)
+        if c == 'n' then
+          data[#data+1] = 13
+        elseif c == '0' then
+          data[#data+1] = 0
+        elseif c == '\\' then
+          data[#data+1] = string.byte('\\')
+        else
+          error('Invalid backslash at '..ctx.nline..'.')
+        end
+        i = i+1
+      else
+        data[#data+1] = string.byte(s:sub(i,i))
+      end
+      i = i+1
+    end
+    return data
+  end
+
+
+  local function parse_data(line, section, ctx)
+
+    local function split_data(text)
+      local tbl = {}
+      local s = {}
+      local inside_quotes = false
+      local i = 1
+      while i <= #text do
+        local c = text:sub(i,i)
+        if c == '\\' and text:sub(i+1,i+1) == '"' then 
+          s[#s+1] = text:sub(i+1, i+1)
+          i = i+2
+        else 
+          if c == '"' then inside_quotes = not inside_quotes end
+          if c == ',' and not inside_quotes then
+            tbl[#tbl+1] = table.concat(s)
+            s = {}
+          else
+            s[#s+1] = c
+          end
+        end
+        i = i+1
+      end
+      tbl[#tbl+1] = table.concat(s)
+      return tbl
+    end
+
+    local i = line:find('%s')
+    local cmd, pars
+    if i then
+      cmd, pars = line:sub(1, i-1), line:sub(i+1):match("^%s*(.-)%s*$")
+    else
+      cmd, pars = line, ''
+    end
+
+    local data = {}
+    for _,b in ipairs(split_data(pars)) do
+      b = b:match("^%s*(.-)%s*$")  -- trim
+      local value
+      if cmd == 'db' and b:sub(1,1) == '"' and b:sub(-1) == '"' then
+        for _,d in ipairs(parse_string(b, ctx)) do data[#data+1] = d end
+      else
+        value = tointeger(b)
+        if not value then
+          error('Invalid number "'..b..'" in line '..ctx.nline..'.')
+        end
+        if cmd == 'db' then
+          if value > 0xFF then error('Number too large in line '..ctx.nline..'.') end
+          data[#data+1] = value
+        elseif cmd == 'dw' then
+          if value > 0xFFFF then error('Number too large in line '..ctx.nline..'.') end
+          data[#data+1] = value & 0xFF
+          data[#data+1] = value >> 8
+        elseif cmd == 'dd' then
+          if value > 0xFFFFFFFF then error('Number too large in line '..ctx.nline..'.') end
+          data[#data+1] = value & 0xFF
+          data[#data+1] = (value >> 8) & 0xFF
+          data[#data+1] = (value >> 16) & 0xFF
+          data[#data+1] = (value >> 24) & 0xFF
+        else
+          error('Invalid command '..cmd..' in line '..ctx.nline..'.')
+        end
+      end
+    end
+
+    return data
+    
+  end
+
+
+  -- 
+  -- main procedure
+  --
+  local ctx = {
+    -- final info
+    text = {},
+    bss = 0,
+    data = {},
+    rodata = {},
+    symbols = {},
+    reloc = {},
+    unresolved = {},
+    -- auxiliary info
+    constants = {},
+    constant_list = {},
+    current_section = nil,
+    current_symbol = '',
+    nline = 1
+  }
+
+  for line in code:gmatch('[^\n]+') do
+
+    -- remove comments
+    line = line:gsub(';.*', '')
+
+    -- remove spaces around
+    line = line:match("^%s*(.-)%s*$")
+
+    -- replace constants
+    line = replace_constants(line, ctx)
+
+    -- parse line
+    if line:sub(1,1) == '.' and not line:match(':') then
+      -- directive
+      local f = line:gmatch('%S+')
+      local directive = f()
+      local pars = {}
+      for w in f do 
+        pars[#pars+1] = w 
+      end
+      if directive == '.section' then
+        ctx.current_section = parse_section(pars, ctx)
+      elseif directive == '.define' then
+        parse_constants(pars, ctx)
+      elseif directive == '.import' then
+        parse_import(pars, ctx)
+      else
+        error('Invalid directive '..directive..' in line '..ctx.nline..'.')
+      end
+
+    else
+      local orig_line = line
+
+      line = chomp_labels(line, ctx)
+      if line ~= '' then
+        if ctx.current_section == 'text' then
+          for _,v in ipairs(parse_text(line, ctx)) do table.insert(ctx.text, v) end
+        elseif ctx.current_section == 'bss' then
+          ctx.bss = ctx.bss + parse_bss(line, ctx)
+        elseif ctx.current_section == 'data' then
+          for _,v in ipairs(parse_data(line, 'data', ctx)) do table.insert(ctx.data, v) end
+        elseif ctx.current_section == 'rodata' then
+          for _,v in ipairs(parse_data(line, 'rodata', ctx)) do table.insert(ctx.rodata, v) end
+        else
+          error('Invalid section in line '..ctx.nline..'.')
+        end
+      end
+    end
+
+    ctx.nline = ctx.nline + 1
+  end
+
+  ctx.constants = nil
+  ctx.constant_list = nil
+  ctx.current_section = nil
+  ctx.current_symbol = nil
+  ctx.nline = nil
+  return ctx
+end
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- 3. JOIN LIF OBJECTS
+--
+------------------------------------------------------------------
+--{{{
+
+function join_lif_objects(objects) 
+
+  local function join_two_lif_objects(obj_a, obj_b)
+    local joined = {
+      reloc = {}
+    }
+
+    -- join sections text, data and rodata
+    for _,section in ipairs({ 'text', 'data', 'rodata' }) do
+      joined[section] = {}
+      for _,d in ipairs(obj_a[section]) do table.insert(joined[section], d) end
+      for _,d in ipairs(obj_b[section]) do table.insert(joined[section], d) end
+    end
+
+    -- join bss
+    joined.bss = obj_a.bss + obj_b.bss
+
+    -- add symbols
+    joined.symbols = {}
+    for k,v in pairs(obj_a.symbols) do joined.symbols[k] = v end
+    for k,v in pairs(obj_b.symbols) do 
+      local sym = { section=obj_b.symbols[k].section, addr=obj_b.symbols[k].addr }
+      if sym.section == 'bss' then
+        sym.addr = sym.addr + obj_a.bss
+      else
+        sym.addr = sym.addr + #obj_a[sym.section]
+      end
+      joined.symbols[k] = sym
+    end
+
+    joined.unresolved = {}
+    return joined
+  end
+  
+  -- join all lif objects
+  local joined = {
+    text = {},
+    bss = 0,
+    data = {},
+    rodata = {},
+    symbols = {},
+    reloc = {},
+  }
+  for _,obj in ipairs(objects) do
+    joined = join_two_lif_objects(joined, obj)
+  end
+  return joined
+
+end
+
+--[[
+export function joinLifObjects(objects) {
+
+    return joined;
+  }
+
+  
+  // join all LIF objects
+  let joined = {};
+  for (let obj of objects) {
+    joined = joinTwoLifObjects(joined, obj);
+  }
+  return joined;
+}
+]]
+
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- 4. CREATE RELOCATION TABLE
+--
+------------------------------------------------------------------
+--{{{
+
+function create_relocation_table(obj, tp)
+
+  -- resolve references in text
+  local resolved = {}
+  for i=1,#obj.text do
+    local opcode = obj.text[i]
+    if type(opcode) == 'string' then
+      local sym = obj.symbols[opcode]
+      if sym == nil and tp ~= 'object' then  -- not found on symbol table
+        table.insert(obj.unresolved, { symbol=opcode, offset=i-1 })
+        obj.text[i] = 0x00
+      end
+      if sym ~= nil then
+        -- found on symbol table, add relocation
+        obj.reloc[#obj.reloc+1] = {
+          offset = i-1,
+          desloc = sym.addr,
+          section = sym.section
+        }
+        resolved[opcode] = true
+        obj.text[i] = 0x00
+      end
+    end
+  end
+
+  -- remove symbols that were resolved
+  for k,_ in pairs(resolved) do
+    obj.symbols[k] = nil
+  end
+
+  return obj
+
+end
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- 5a. CONVERT LIF TO BINARY
+--
+------------------------------------------------------------------
+--{{{
+
+function convert_lif_to_binary(obj, offset)
+
+  -- TODO check unesolved symbols
+
+  -- find positions
+  local pos = { text = offset }
+  pos.data = pos.text + (obj.text and #obj.text or 0)
+  pos.rodata = pos.data + (obj.data and #obj.data or 0)
+  pos.bss = pos.rodata + (obj.rodata and #obj.rodata or 0)
+
+  -- add data
+  local data = {}
+  for _,section in ipairs({ 'text', 'data', 'rodata' }) do
+    for _,d in ipairs(obj[section]) do data[#data+1] = d end
+  end
+  for _=1,obj.bss do data[#data+1] = 0x0 end
+
+  -- replace relocation symbols
+  local function replace(data, position, new_data)
+    position = position + 1
+    if position + 3 > #data then
+      error(('Invalid relocation in position 0x%X'):format(position))
+    end
+    data[position] = new_data & 0xFF
+    data[position+1] = (new_data >> 8) & 0xFF
+    data[position+2] = (new_data >> 16) & 0xFF
+    data[position+3] = (new_data >> 24) & 0xFF
+  end
+
+  for _,r in ipairs(obj.reloc) do
+    replace(data, r.offset, r.desloc + pos[r.section])
+  end
+
+  return data
+
+end
+
+--}}}
+
+
+------------------------------------------------------------------
+-- 
+-- a. TEST INTERFACE
+--
+------------------------------------------------------------------
+--{{{
+
+TestInterface = {}
+
+function TestInterface:new()
+  local o = {}
+  setmetatable(o, self)
+  self.__index = self
+  return o
+end
+
+
+function TestInterface:title(s)
+  print()
+  print('  ' .. s)
+  print('  ' .. ('-'):rep(#s))
+  print()
+end
+
+
+function TestInterface:equals(result, expected, description)
+  if equals(result, expected) then
+    self:_ok(description)
+  else
+    self:_nok(description, expected, result)
+  end
+end
+
+
+function TestInterface:throws(f, description)
+  if pcall(f) then
+    self:_nok(description)
+  else
+    self:_ok(description)
+  end
+end
+
+
+function TestInterface:_ok(description)
+  print('      ' .. description)
+end
+
+
+function TestInterface:_nok(description, expected, result)
+  io.write('    x ' .. description)
+  if expected then io.write(' (expected: '..inspect(expected)..', got: '..inspect(result)..')') end
+  print()
+end
+--}}}
+
+
+------------------------------------------------------------------
+--
+-- b. TESTS
+--
+------------------------------------------------------------------
+--{{{
+
+--
+-- encoder
+-- 
+function run_encoder_tests(t)--{{{
+
+  t:title('Encoder: valid commands')
+  
+  local function ok(t, s, v)
+    t:equals(encode(s), v, s)
+  end
+
+  ok(t, 'mov A, 0xABCD', { 0x03, 0x00, 0xCD, 0xAB })
+  ok(t, 'mov A, B', { 0x01, 0x00, 0x01 })
+  ok(t, 'movb [A], 0x42', { 0x0C, 0x00, 0x42 })
+  ok(t, 'movw [0x42], K', { 0x25, 0x42, 0x00, 0x00, 0x00, 0x0A })
+  ok(t, 'movd [A], 0x1', { 0x1E, 0x00, 0x01, 0x00, 0x00, 0x00 })
+  ok(t, 'or C, 0x1234', { 0x2F, 0x02, 0x34, 0x12 })
+  ok(t, 'not B', { 0x41, 0x1 })
+  ok(t, 'bz 0x12', { 0x5D, 0x12, 0x00, 0x00, 0x00 })
+  ok(t, 'ret', { 0x74 })
+  ok(t, 'push.a', { 0x7E })
+  ok(t, 'movb A, [0x1000]', { 0x06, 0x00, 0x00, 0x10, 0x00, 0x00 })
+
+  t:title('Encoder: number systems')
+
+  ok(t, 'mov A, 42', { 0x02, 0x00, 0x2A })
+  ok(t, 'mov A, 0x42', { 0x02, 0x00, 0x42 })
+  ok(t, 'mov A, 0b1010_1111', { 0x02, 0x00, 0xAF })
+  ok(t, 'mov A, -42', { 0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF })
+
+  t:title('Encoder: invalid commands')
+
+  local function nok(t, s)
+    t:throws(function() encode(s) end, s)
+  end
+
+  nok(t, 'mov [B], 0x42')
+  nok(t, 'movb A, 0x1234')
+  nok(t, 'movb 0x42, A')
+  nok(t, 'not 0x42')
+  nok(t, 'or A, B, 0x42')
+  nok(t, 'sys 0x1234')
+  nok(t, 'pushb 0x1234')
+  nok(t, 'movb A, [test]')
+
+  t:title('Encoder: labels')
+
+  local function tok(t, s, v)
+    t:equals(encode(s, true), v, s)
+  end
+
+  tok(t, 'movb A, [test]', { 0x6, 0x0, 'test', 0x0, 0x0, 0x0 });
+  tok(t, 'mov A, test', { 0x4, 0x0, 'test', 0x0, 0x0, 0x0 });
+  tok(t, 'jmp label', { 0x71, 'label', 0, 0, 0 });
+  t:equals(encode('jmp .la', true, 'xy'), { 0x71, 'xy.la', 0, 0, 0 }, 'jmp .la');
+
+end--}}}
+
+
+-- 
+-- assembler
+--
+local function complete(r)--{{{
+  if r.text == nil then r.text = {} end
+  if r.bss == nil then r.bss = 0 end
+  if r.data == nil then r.data = {} end
+  if r.rodata == nil then r.rodata = {} end
+  if r.symbols == nil then r.symbols = {} end
+  if r.reloc == nil then r.reloc = {} end
+  if r.unresolved == nil then r.unresolved = {} end
+  return r
+end--}}}
+
+
+function run_assembler_tests(t)--{{{
+
+  local file, result
+
+  t:title('Assembler: assembly to LIF')
+ 
+  -- simplest file
+  file = [[
+.section  text
+        nop     ; some comment]]
+  result = {
+    text = { 0x87 }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'simplest file')
+
+  -- useful code
+  file = [[
+.section text
+        mov     A, 0x4
+        movb    A, [B]
+        movb    A, [0x12345678]
+        movd    [0xABCDEF01], [0x12345678]
+        or      K, 0x4212
+        not     F
+        bz      0x42
+        ret]]
+  result = {
+    text= {0x02, 0x00, 0x04,
+           0x05, 0x00, 0x01,
+           0x06, 0x00, 0x78, 0x56, 0x34, 0x12,
+           0x2C, 0x01, 0xEF, 0xCD, 0xAB, 0x78, 0x56, 0x34, 0x12,
+           0x2F, 0x0A, 0x12, 0x42,
+           0x41, 0x05,
+           0x5D, 0x42, 0x00, 0x00, 0x00,
+           0x74},
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'useful code')
+
+  -- numeric representation
+  file = [[
+.section text
+        mov     A, 42
+        mov     A, 0x42
+        mov     A, 0b1010_1111
+        mov     A, -42]]
+  result = {
+    text= {0x02, 0x00, 0x2A,
+           0x02, 0x00, 0x42,
+           0x02, 0x00, 0xAF,
+           0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF},
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'numberic representation')
+
+  -- bss section
+  file = [[
+.section text
+        nop
+.section bss
+        resb      2
+        resw      2
+        resd      4]]
+  result = {
+    text = { 0x87 },
+    bss = 22,
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'bss section')
+
+  -- data section
+  file = [[
+.section text
+        nop
+.section data
+        db      0x12, 0x34
+        dw      0xABCD
+.section rodata
+        dd      0xABCDEF01]]
+  result = {
+    text = { 0x87 },
+    data = { 0x12, 0x34, 0xCD, 0xAB },
+    rodata = { 0x01, 0xEF, 0xCD, 0xAB },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'data section')
+
+  -- ascii data
+  file = [[
+.section text
+        nop
+.section data
+        db      "Abc\n"
+        db      "Abc\0"
+        db      "A,A"]]
+  result = { 
+    text = { 0x87 },
+    data = { 65, 98, 99, 13, 65, 98, 99, 0, 65, 44, 65 },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'ascii data')
+
+  -- local constants
+  file = [[
+.define TEST 0x1234
+.section text
+        jmp     TEST]]
+  result = {
+    text = { 0x71, 0x34, 0x12, 0x00, 0x00 }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'local constants')
+
+  -- import files
+  file = [[
+.import tools/extra/test1.s
+.section text
+        jmp     TEST]]
+  result = {
+    text = { 0x71, 0x34, 0x12, 0x00, 0x00 }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'import files')
+
+  -- private labels
+  file = [[
+.section text
+label:  nop
+        jmp     label
+        jmp     fwd_label
+        nop
+fwd_label:
+        nop]]
+  result = {
+    text = { 0x87,
+             0x71, 'label', 0x00, 0x00, 0x00,
+             0x71, 'fwd_label', 0x00, 0x00, 0x00,
+             0x87,
+             0x87 },
+    symbols = {
+      label = { section = 'text', addr = 0x0 },
+      fwd_label = { section = 'text', addr = 0xC },
+    }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'private labels')
+
+  -- local labels
+  file = [[
+.section text
+        nop
+.test1: jmp     .test1
+new:    nop
+.test1: jmp     .test1]]
+  result = {
+    text = { 0x87,
+             0x71, '.test1', 0x00, 0x00, 0x00,
+             0x87,
+             0x71, 'new.test1', 0x00, 0x00, 0x00 },
+    symbols = {
+      ['.test1'] =    { section='text', addr=0x01 },
+      new =           { section='text', addr=0x06 },
+      ['new.test1'] = { section='text', addr=0x07 },
+    },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'local labels')
+
+  -- data labels
+  file = [[
+.section text
+        movb    A, [ldat]
+.section data
+        dw      0x1
+ldat:   db      0x1]]
+  result = {
+    text = { 0x06, 0x00, 'ldat', 0x00, 0x00, 0x00 },
+    data = { 0x01, 0x00, 0x01 },
+    symbols = {
+      ldat = { section='data', addr=0x02 },
+    }
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'data labels')
+
+  -- bss labels
+  file = [[
+.section text
+        movb    A, [ldat]
+.section bss
+        resw    0x1
+ldat:   resb    0x1]]
+  result = {
+    text = { 0x06, 0x00, 'ldat', 0x00, 0x00, 0x00 },
+    bss = 3,
+    symbols = {
+      ldat = { section='bss', addr=0x02 },
+    },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'bss labels')
+
+  -- public labels
+  file = [[
+.section text
+@test:  nop]]
+  result = {
+    text = { 0x87 },
+    symbols = {
+      ['@test'] = { section='text', addr=0x00 },
+    },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'public labels')
+
+  -- unresolved symbols
+  file = [[
+.section text
+        jmp     @test]]
+  result = {
+    text = { 0x71, '@test', 0x00, 0x00, 0x00 },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'unresolved symbols')
+
+end--}}}
+
+
+function run_join_tests(t)--{{{
+  local objA = {
+    text = { 0x06, 0x00, '@ldat', 0x00, 0x00, 0x00 },
+    bss = 2,
+    data = { 0x00 },
+    symbols = {
+      ['@ldat'] = { section='text', addr=0x02 },
+    },
+  }
+
+  local objB = {
+    text = { 0x07, 'abc', 0x00, 0x00, 0x00 },
+    bss = 32,
+    data = { 0x24, 0xFF },
+    symbols = {
+      abc = { section='text', addr=0x0 },
+      xxx = { section='bss', addr=0xA },
+      dt = { section='data', addr=0x1 },
+    },
+  }
+
+  local objC = { 
+    text = { 0x4, 0x5 },
+    symbols = {
+      c = { section='text', addr=0x0 },
+    },
+  }
+
+  local result = {
+    text = { 0x06, 0x00, '@ldat', 0x00, 0x00, 0x00,
+             0x07, 'abc', 0x00, 0x00, 0x00,
+             0x04, 0x05 },
+    bss = 34,
+    data = { 0x00, 0x24, 0xFF },
+    symbols = {
+      ['@ldat'] = { section='text', addr=0x02 },
+      abc = { section='text', addr=0x6 },
+      c = { section='text', addr=0xB },
+      xxx = { section='bss', addr=0xC },
+      dt = { section='data', addr=0x2 },
+    },
+  }
+  
+  t:title('Assembler: join LIFs')
+  t:equals(join_lif_objects({ complete(objA), complete(objB), complete(objC) }), complete(result), 'lifs joined')
+end--}}}
+
+
+function run_reloc_tests(t)--{{{
+
+  t:title('Create relocation table')
+
+  local ok = complete({ 
+    text = { 0x06, 'private', 0x00, 0x00, 0x00,
+             0x08, '@global', 0x00, 0x00, 0x00,
+             0x0A, 'private', 0x00, 0x00, 0x00,
+             0x0B, '@pending', 0x00, 0x00, 0x00 },
+    data = { 0x24, 0x12 },
+    symbols = {
+      ['private'] = { section='text', addr=0x6 },
+      ['@global'] = { section='data', addr=0x1 },
+    },
+  })
+
+  local expected = {
+    text = { 0x06, 0x00, 0x00, 0x00, 0x00, 
+             0x08, 0x00, 0x00, 0x00, 0x00,
+             0x0A, 0x00, 0x00, 0x00, 0x00,
+             0x0B, 0x00, 0x00, 0x00, 0x00 },
+    data = { 0x24, 0x12 },
+    reloc = {
+      { offset=0x1, desloc=0x6, section='text' },
+      { offset=0x6, desloc=0x1, section='data' },
+      { offset=0xB, desloc=0x6, section='text' },
+    },
+    unresolved = {
+      { symbol='@pending', offset=0x10 }
+    },
+  }
+  t:equals(create_relocation_table(ok), complete(expected), 'relocation table')
+
+end--}}}
+
+
+function run_binary_tests(t) --{{{ 
+
+  t:title('Create binary file')
+
+  local simple = complete({
+    text = { 0xA, 0x0, 0x0, 0x0, 0x0 },
+    reloc = {
+      { offset=0x1, desloc=0xABCDEF01, section='text' },
+    }
+  })
+  
+  local result = { 0x0A, 0x01, 0xEF, 0xCD, 0xAB }
+
+  t:equals(convert_lif_to_binary(simple, 0x0), result, 'simple example')
+
+
+  local obj = complete({
+    text = { 0x1, 0x2, 0x3, 0x0, 0x0, 0x0, 0x0,
+             0xA, 0x0, 0x0, 0x0, 0x0,
+             0xF, 0x0, 0x0, 0x0, 0x0 },
+    bss = 32,
+    data = { 0xA, 0xB, 0xC },
+    reloc = {
+      { offset=0x3, desloc=0x3, section='text' },
+      { offset=0x8, desloc=0x10, section='bss' },
+      { offset=0xD, desloc=0x1, section='data' },
+    },
+  })
+
+  local expected = {
+    -- text
+    0x01, 0x02, 0x03, 0x03, 0x00, 0x0F, 0x00,  -- F0000
+    0x0A, 0x24, 0x00, 0x0F, 0x00,              -- F0007
+    0x0F, 0x12, 0x00, 0x0F, 0x00,              -- F000C
+    -- data
+    0x0A, 0x0B, 0x0C,                          -- F0011
+    -- bss
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,           -- F0014
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0            -- F0024
+  }
+
+  t:equals(convert_lif_to_binary(obj, 0xF0000), expected, 'convert with offset = 0xF0000')
+
+end
+--}}}
+
+
+function run_tests()
+  local t = TestInterface:new()
+  run_encoder_tests(t)
+  run_assembler_tests(t)
+  run_join_tests(t)
+  run_reloc_tests(t)
+  run_binary_tests(t)
+end
+--}}}
+
+
+------------------------------------------------------------------
+--
+-- c. COMMANDLINE OPTIONS
+--
+------------------------------------------------------------------
+--{{{
+
+function parse_args()
+  local i = 1
+  local a = { sources={} }
+  while i <= #arg do
+    if arg[i] == '-h' or arg[i] == '--help' then
+      a.help = true
+    elseif arg[i] == '-t' then
+      a.run_tests = true
+    elseif arg[i] == '-1' then
+      a.stage = 1
+    elseif arg[i] == '-2' then
+      a.stage = 2
+    elseif arg[i] == '-b' then
+      a.binary = tointeger(arg[i+1])
+      i = i+1
+    elseif arg[i] == '-o' then
+      a.output = arg[i+1]
+      i = i+1
+    elseif arg[i]:sub(1,1) == '-' then
+      error('Invalid option '..arg[i]..'.')
+    else
+      a.sources[#a.sources+1] = arg[i]
+    end
+    i = i+1
+  end
+  return a
+end
+
+-- help, run_tests, stage1, stage2, binary, output, sources
+
+--}}}
+
+
+------------------------------------------------------------------
+--
+-- d. MAIN PROCEDURE
+--
+------------------------------------------------------------------
+--{{{
+
+
+function print_help()
+  print('Usage: '..arg[0]..' [OPTION...] SOURCES...')
+  print()
+  print('   -o FILENAME      output file (if not specified, outputs to stdout)')
+  print('   -1               convert to LIF (Luisa Intermediate Format)')
+  print('   -2               convert to LIF and create relocation table')
+  print('   -b OFFSET        create a binary file instead of a LRF')
+  print('   -t               run unit tests')
+  print('   -h               this help')
+end
+
+
+function compile(a)
+  if #a.sources == 0 then
+    error('No sources defined.')
+  end
+  -- read sources
+  local src = {}
+  for _,source in ipairs(a.sources) do
+    src[#src+1] = assert(io.open(source, 'r')):read('*all')
+  end
+  -- compile
+  local lif = join_lif_objects(map(src, function(s) return assembly_to_lif(s) end))
+  if a.stage == 1 then return lif end
+  local rlif = create_relocation_table(lif)
+  if a.stage == 2 then return rlif end
+  if a.binary then
+    local b = convert_lif_to_binary(rlif, a.binary)
+    return string.pack(string.rep('B', #b), table.unpack(b))  -- convert integer array to binary string
+  else
+    error('LRF files are not supported yet')
+  end
+end
+
+
+function execute_args()
+  local a = parse_args()
+  if a.help then
+    print_help()
+    os.exit(true)
+  elseif a.run_tests then
+    run_tests()
+  elseif #a.sources > 0 then
+    local f = a.output and assert(io.open(a.output, 'wb')) or io.stdout
+    local t = compile(a)
+    if type(t) == 'string' then
+      f:write(t)
+    else
+      f:write(inspect(t))
+    end
+  else
+    io.stderr:write('Usage: '..arg[0]..' [OPTION...] SOURCES...\n')
+    os.exit(false)
+  end
+end
+
+execute_args()
+
+--}}}
+
+-- vim: ts=2:sw=2:sts=2:expandtab:foldmethod=marker

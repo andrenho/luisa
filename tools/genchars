@@ -1,0 +1,46 @@
+#!/usr/bin/env lua
+
+--
+-- parse commandline arguments
+--
+
+if #arg ~= 2 then
+  print('Usage: '..arg[0]..' filename.png last_char')
+  os.exit(false)
+end
+
+--
+-- load file
+--
+
+package.path = './tools/libs/?.lua;./libs/?.lua;' .. package.path
+require('png')
+
+local img = pngImage(arg[1], nil)
+
+print('var chars = [')
+
+for i=0,arg[2] do
+  io.write('  [')
+
+  -- get image
+  local ox, oy = (i // 16) * 6, (i % 16) * 9
+
+  local ns = {}
+  for y=oy,(oy+9-1) do
+    local b = 0
+    for x=ox,(ox+6-1) do
+      b = b << 1
+      b = b | ((img:getPixel(x+1, y+1).R == 0) and 0 or 1)
+    end
+    ns[#ns+1] = string.format('0x%X', b)
+  end
+
+  io.write(table.concat(ns, ','))
+
+  print('],')
+end
+
+print('];')
+
+-- vim: ts=2:sw=2:sts=2:expandtab
