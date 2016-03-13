@@ -358,9 +358,11 @@ function encode(line, accept_label, label_prefix)
   if #rest:gsub('[^,]','') > 1 then
     error('Invalid expression '..line)
   end
-  local parameters = table.pack(rest:gmatch("([-_@%.%w%[%]]+)%s*,%s*([-_@%w%.%[%]]+)")())
+  --local re = '([-_@%.%w%[%]]+)'
+  local re = '([^%s,]+)'
+  local parameters = table.pack(rest:gmatch(re.."%s*,%s*"..re)())
   if #parameters == 0 then
-    parameters = table.pack(rest:gmatch("([-_@%w%.%[%]]+)$")())
+    parameters = table.pack(rest:gmatch(re.."$")())
   end
 
   -- parse parameters
@@ -397,6 +399,11 @@ function parse_parameter(par, accept_label, label_prefix)
   -- if value, convert to number
   local pr = tointeger(par)
   par = pr or par
+
+  -- is it a char?
+  if type(par) == 'string' and #par == 3 and par:sub(1,1) == "'" and par:sub(3,3) == "'" then
+    par = par:sub(2,2):byte()
+  end
 
   -- is it a number?
   local tp, array
@@ -1058,6 +1065,7 @@ function run_encoder_tests(t)--{{{
   ok(t, 'mov A, 0x42', { 0x02, 0x00, 0x42 })
   ok(t, 'mov A, 0b1010_1111', { 0x02, 0x00, 0xAF })
   ok(t, 'mov A, -42', { 0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF })
+  ok(t, 'mov A, \'*\'', { 0x02, 0x00, 0x2A })
 
   t:title('Encoder: invalid commands')
 

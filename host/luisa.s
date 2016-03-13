@@ -8,6 +8,7 @@
 .define MMU_RAM_SZ         0xf0001010
 .define MMU_VMEM           0xf0001014
 .define MMU_ERR            0xf0001018
+.define CPU_NAME	   0xf0002003
 .define CPU_A              0xf0002010
 .define CPU_B              0xf0002014
 .define CPU_C              0xf0002018
@@ -116,5 +117,6 @@
 .define BLACK		0x000000
 .define GREEN		0x00FF00
 .define LIGHTGRAY	0xC0C0C0
+.define LIGHTYELLOW	0xFFFF80
 
 ; vim: syntax=las
