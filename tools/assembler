@@ -934,13 +934,14 @@ function convert_lif_to_binary(obj, offset)
 
   -- add data
   local data = {}
-  for _,section in { 'text', 'data', 'rodata' } do
+  for _,section in ipairs({ 'text', 'data', 'rodata' }) do
     for _,d in ipairs(obj[section]) do data[#data+1] = d end
   end
-  for _=1,#obj.bss do data[#data+1] = 0x0 end
+  for _=1,obj.bss do data[#data+1] = 0x0 end
 
   -- replace relocation symbols
   local function replace(data, position, new_data)
+    position = position + 1
     if position + 3 > #data then
       error(('Invalid relocation in position 0x%X'):format(position))
     end
@@ -959,6 +960,7 @@ function convert_lif_to_binary(obj, offset)
 end
 
 --}}}
+
 
 ------------------------------------------------------------------
 -- 
@@ -1396,7 +1398,21 @@ function run_reloc_tests(t)--{{{
 end--}}}
 
 
-function run_binary_tests() --{{{ 
+function run_binary_tests(t) --{{{ 
+
+  t:title('Create binary file')
+
+  local simple = complete({
+    text = { 0xA, 0x0, 0x0, 0x0, 0x0 },
+    reloc = {
+      { offset=0x1, desloc=0xABCDEF01, section='text' },
+    }
+  })
+  
+  local result = { 0x0A, 0x01, 0xEF, 0xCD, 0xAB }
+
+  t:equals(convert_lif_to_binary(simple, 0x0), result, 'simple example')
+
 
   local obj = complete({
     text = { 0x1, 0x2, 0x3, 0x0, 0x0, 0x0, 0x0,
@@ -1435,6 +1451,7 @@ function run_tests()
   run_assembler_tests(t)
   run_join_tests(t)
   run_reloc_tests(t)
+  run_binary_tests(t)
 end
 --}}}
 
@@ -1450,7 +1467,7 @@ function parse_args()
   local i = 1
   local a = { sources={} }
   while i <= #arg do
-    if arg[i] == '-h' then
+    if arg[i] == '-h' or arg[i] == '--help' then
       a.help = true
     elseif arg[i] == '-t' then
       a.run_tests = true
@@ -1464,6 +1481,8 @@ function parse_args()
     elseif arg[i] == '-o' then
       a.output = arg[i+1]
       i = i+1
+    elseif arg[i]:sub(1,1) == '-' then
+      error('Invalid option '..arg[i]..'.')
     else
       a.sources[#a.sources+1] = arg[i]
     end
@@ -1492,6 +1511,7 @@ function print_help()
   print('   -1               convert to LIF (Luisa Intermediate Format)')
   print('   -2               convert to LIF and create relocation table')
   print('   -b OFFSET        create a binary file instead of a LRF')
+  print('   -t               run unit tests')
   print('   -h               this help')
 end
 
@@ -1512,7 +1532,7 @@ function compile(a)
   if a.stage == 2 then return rlif end
   if a.binary then
     local b = convert_lif_to_binary(rlif, a.binary)
-    return string.pack(string.rep('B', #b), table.unpack(b))
+    return string.pack(string.rep('B', #b), table.unpack(b))  -- convert integer array to binary string
   else
     error('LRF files are not supported yet')
   end
