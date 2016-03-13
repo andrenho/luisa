@@ -561,9 +561,12 @@ function assembly_to_lif(code)
 
 
   local function chomp_labels(line, ctx)
-    local re = line:gmatch('([%.@]?%a[%w_]*):%s*')
+    local re = line:gsub('%b""', ''):gmatch('([%.@]?%a[%w_]*):%s*')
+    local last_label = nil
 
     for label in re do
+      last_label = label
+
       -- check if label is local or static
       if label:sub(1,1) == '.' then
         label = ctx.current_symbol .. label
@@ -588,7 +591,8 @@ function assembly_to_lif(code)
       ctx.symbols[label] = { section=ctx.current_section, addr=addr }
     end
 
-    return line:reverse():gsub(':.*$', ''):reverse():match("^%s*(.-)%s*$")
+    local pos = last_label and table.pack(line:find(last_label..':'))[2]+1 or 0
+    return line:sub(pos):match("^%s*(.-)%s*$")
   end
 
 
@@ -1104,7 +1108,7 @@ function run_assembler_tests(t)--{{{
   local file, result
 
   t:title('Assembler: assembly to LIF')
- 
+
   -- simplest file
   file = [[
 .section  text
@@ -1193,6 +1197,18 @@ function run_assembler_tests(t)--{{{
   result = { 
     text = { 0x87 },
     data = { 65, 98, 99, 13, 65, 98, 99, 0, 65, 44, 65 },
+  }
+  t:equals(assembly_to_lif(file), complete(result), 'ascii data')
+
+  -- ascii data with colon
+  file = [[
+.section text
+        nop
+.section data
+        db      "A:A"]]
+  result = { 
+    text = { 0x87 },
+    data = { 65, 58, 65 },
   }
   t:equals(assembly_to_lif(file), complete(result), 'ascii data')
 

@@ -1,4 +1,4 @@
-.import host/luisa.ls
+.import host/luisa.s
 
 ;------------------------------------
 ;
@@ -15,12 +15,19 @@
 ; print initial messages
 ;
 print_messages:
-	movd	[VID_P1], 0x0 		; x
-	movd	[VID_P2], 0x0 		; y
+	movd	[VID_P1], 0 		; x
+	movd	[VID_P2], 0 		; y
 	movd	[VID_P3], BLACK
 	movd	[VID_P4], GREEN
 
 	mov	A, welcome		; print welcome message
+	jsr	print
+
+	movd	[VID_P1], 5		; x
+	movd	[VID_P2], 3		; y
+	movd	[VID_P4], LIGHTGRAY
+
+	mov	A, t_cpu
 	jsr	print
 
 	ret
@@ -59,5 +66,7 @@ done:	jmp	done
 	db	0	; hang
 welcome:
 	db	"Welcome to LuisaVM!", 0
+t_cpu:
+	db	"Microprocessor:", 0
 
 ; vim: syntax=las

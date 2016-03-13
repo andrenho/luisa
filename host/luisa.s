@@ -115,5 +115,6 @@
 ;
 .define BLACK		0x000000
 .define GREEN		0x00FF00
+.define LIGHTGRAY	0xC0C0C0
 
 ; vim: syntax=las
