@@ -13,7 +13,7 @@ src/emu/bioscode.js: host/bios.rom
 	${LUA} tools/genbios $< > $@
 
 host/bios.rom: host/bios/bios.s
-	${LUA} tools/assembler -b 0xf0006010 $^ > $@
+	${LUA} tools/assembler -b 0xf0006010 -o $@ $^ 
 
 clean:
 	rm -f ${TARGETS} host/bios.rom
