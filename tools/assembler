@@ -1058,6 +1058,7 @@ function run_encoder_tests(t)--{{{
   ok(t, 'ret', { 0x74 })
   ok(t, 'push.a', { 0x7E })
   ok(t, 'movb A, [0x1000]', { 0x06, 0x00, 0x00, 0x10, 0x00, 0x00 })
+  ok(t, 'movd B, [0xf0016018]', { 0x0A, 0x01, 0x18, 0x60, 0x01, 0xf0 })
 
   t:title('Encoder: number systems')
 
@@ -1469,6 +1470,31 @@ end
 --}}}
 
 
+function run_extra_tests(t)    --{{{ extra tests for dealing with specific problems
+
+  t:title('Extra tests')
+
+  local source = [[
+.section text
+	movd	B, [0xf0016018]		; increment something
+]]
+  local expected_lif = complete({
+    text = { 0xA, 0x1, 0x18, 0x60, 0x01, 0xF0 },
+  })
+
+  local lif = assembly_to_lif(source)
+  t:equals(lif, expected_lif, 'LIF generated correctly')
+
+  local expected_bin = { 0xA, 0x1, 0x18, 0x60, 0x01, 0xF0 }
+  t:equals(convert_lif_to_binary(lif, 0xF0006010), expected_bin, 'binary generated correctly')
+
+end
+
+  
+
+--}}}
+
+
 function run_tests()
   local t = TestInterface:new()
   run_encoder_tests(t)
@@ -1476,6 +1502,7 @@ function run_tests()
   run_join_tests(t)
   run_reloc_tests(t)
   run_binary_tests(t)
+  run_extra_tests(t)
 end
 --}}}
 
@@ -1556,7 +1583,7 @@ function compile(a)
   if a.stage == 2 then return rlif end
   if a.binary then
     local b = convert_lif_to_binary(rlif, a.binary)
-    return string.pack(string.rep('B', #b), table.unpack(b))  -- convert integer array to binary string
+    return string.char(table.unpack(b))  -- convert binary array to char
   else
     error('LRF files are not supported yet')
   end
