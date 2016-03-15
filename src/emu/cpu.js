@@ -63,7 +63,11 @@ class CPU extends Device {
     this._mb = motherboard;
     this.reset();
     this._stepFunction = this.initStepFunctions();
-    this.invalidOpcode = false;   // this is meant for the debugger
+
+    // meant for the debugger / executor
+    this.invalidOpcode = false;
+    this.activateDebugger = false;
+    this.systemHalted = false;
   }
 
 
@@ -208,6 +212,7 @@ class CPU extends Device {
       this._push32(this.PC);
       this.T = false;
       this.PC = this._interruptVector[n];
+      this.systemHalted = false;
     }
   }
 
@@ -623,6 +628,18 @@ class CPU extends Device {
       mb.set32(p1, this._affectFlags(r));
       return 8;
     };
+
+    //
+    // SWAP
+    //
+    f[0x8A] = pos => {  // swap R, R
+      let [reg, mb] = [this._reg, this._mb];
+      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
+      [reg[p1], reg[p2]] = [reg[p2], reg[p1]]
+      this._affectFlags(reg[p1]);
+      return 2;
+    };
+
 
     //
     // OR
@@ -1374,7 +1391,17 @@ class CPU extends Device {
     };
 
     f[0x87] = pos => {  // nop
-      return 0;
+      return 1;
+    };
+
+    f[0x88] = pos => {  // halt
+      this.systemHalted = true;
+      return 1;
+    };
+
+    f[0x89] = pos => {  // dbg
+      this.activateDebugger = true;
+      return 1;
     };
 
     return f;

@@ -19,7 +19,7 @@ syn region lsString   start=+'+ skip=+\\'+ end=+'+
 syn keyword lsOpcode mov movb movw movd or xor and shl shr not add sub cmp
 syn keyword lsOpcode mul idiv mod inc dec bz beq bnz bneq bneg bpos bgt bgte
 syn keyword lsOpcode blt blte bv bnv jmp jsr ret sys iret sret pushb pushw
-syn keyword lsOpcode pushd popb popw popd popx nop
+syn keyword lsOpcode pushd popb popw popd popx nop halt dbg swap
 syn match lsOpcode 'push\.a'
 syn match lsOpcode 'pop\.a'
 syn keyword lsIndicator db dw dd resb resw resd

@@ -57,6 +57,8 @@ let opcodes = [
   [ 0x2B, 'movd', 'indv32', 'indreg' ],
   [ 0x2C, 'movd', 'indv32', 'indv32' ],
 
+  [ 0x8A, 'swap', 'reg', 'reg' ],
+
   // logic
   [ 0x2D, 'or', 'reg', 'reg' ],
   [ 0x2E, 'or', 'reg', 'v8' ],
@@ -155,6 +157,8 @@ let opcodes = [
 
   // other
   [ 0x87, 'nop' ],
+  [ 0x88, 'halt' ],
+  [ 0x89, 'dbg' ],
 ];
 
 function parseOpcode(operand, pars, line) {
@@ -761,7 +765,22 @@ test('CPU: Execute valid basic commands', t => {
   t.equal(cpu.A, 0xA1B2C3E4, 'A is restored');
   t.equal(cpu.B, 0xFFFFFFFF, 'B is restored');
 
+  // others
+  t.comment('Others');
+
   opc('nop');
+  
+  s = opc('dbg');
+  t.true(cpu.activateDebugger, s);
+
+  s = opc('halt');
+  t.true(cpu.systemHalted, s);
+
+  s = opc('swap A, B', () => {
+    cpu.A = 0xA;
+    cpu.B = 0xB;
+  });
+  t.true(cpu.A == 0xB && cpu.B == 0xA, s);
 
   t.end();
 

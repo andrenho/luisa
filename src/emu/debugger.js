@@ -112,8 +112,32 @@ ${this._instruction()}`;
 
 
   _step() {
-    this._vm.step();
+    this._debuggerStep();
     return this._instruction();
+  }
+
+
+  _debuggerStep() {
+    this._vm.step();
+    if (this._vm.cpu.invalidUpcode) {
+      this._vm.cpu.invalidUpcode = false;
+      return 'Invalid opcode detected!\n' + this._instruction();
+    }
+    if (this._vm.cpu.activateDebugger) {
+      this._vm.cpu.activateDebugger = false;
+      this._vm.cpu.PC -= 1;
+      return "'dbg' instruction detected!\n" + this._instruction();
+    }
+    if (this._vm.cpu.systemHalted) {
+      let interval = setInterval(() => {
+        if (!this._vm.cpu.systemHalted) {
+          clearInterval(interval);
+          this._continue();
+        }
+      }, 20);
+      return "";
+    }
+    return null;
   }
 
 
@@ -128,10 +152,9 @@ ${this._instruction()}`;
 
   _continue() {
     do {
-      this._vm.step();
-      if (this._vm.cpu.invalidUpcode) {
-        this._vm.cpu.invalidUpcode = false;
-        return 'Invalid opcode detected!\n' + this._instruction();
+      let r = this._debuggerStep();
+      if (r !== null) {
+        return r;
       }
     } while (!(this._vm.cpu.PC in this._breakpoints));
     return this._instruction();
@@ -395,6 +418,8 @@ ${this._instruction()}`;
       0x2B: (p) => [`movd    [${v32(p.slice(0,4))}], [${reg(p[4])}]`, 6],
       0x2C: (p) => [`movd    [${v32(p.slice(0,4))}], [${v32(p.slice(4,8))}]`, 9],
 
+      0x8A: (p) => [`swap    [${reg(p[0])}], [${reg(p[1])}]`, 3],
+
       0x2D: (p) => [`or      ${reg(p[0])}, ${reg(p[1])}`, 3],
       0x2E: (p) => [`or      ${reg(p[0])}, ${v8(p[1])}`, 3],
       0x2F: (p) => [`or      ${reg(p[0])}, ${v16(p.slice(1,3))}`, 4],
@@ -486,6 +511,8 @@ ${this._instruction()}`;
       0x85: (p) => [`popx    ${v16(p.slice(0,2))}`, 3],
 
       0x87: (p) => ['nop', 1],
+      0x88: (p) => ['halt', 1],
+      0x89: (p) => ['dbg', 1],
     };
 
     const op = this._vm.mb.get(addr);

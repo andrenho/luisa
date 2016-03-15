@@ -94,7 +94,7 @@ print:
 ; 
 ; hang microprocessor
 ;
-done:	jmp	done
+done:	halt
 
 
 ;------------------------------------
