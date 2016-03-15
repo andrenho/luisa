@@ -37,7 +37,7 @@ self.addEventListener('message', e => {
 
     // run
     case 'run':
-      luisavm.run();
+      dbg.continue();
       break;
 
     // message to debugger

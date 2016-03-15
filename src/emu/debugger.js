@@ -36,7 +36,7 @@ class Debugger {
       case 'r': return this._registers();
       case 's': return this._step();
       case 'n': return this._stepOver();
-      case 'c': return this._continue();
+      case 'c': return this.continue();
       case 'l': return this._list(pars[0]);
       case 'b': return this._setBreakpoint(pars[0]);
       case 'd': return this._unsetBreakpoint(pars[0]);
@@ -132,7 +132,7 @@ ${this._instruction()}`;
       let interval = setInterval(() => {
         if (!this._vm.cpu.systemHalted) {
           clearInterval(interval);
-          this._continue();
+          this.continue();
         }
       }, 20);
       return "";
@@ -144,13 +144,13 @@ ${this._instruction()}`;
   _stepOver() {
     const next = this._vm.cpu.PC + this.decode()[1];
     this._setBreakpoint(next);
-    const s = this._continue();
+    const s = this.continue();
     this._unsetBreakpoint(next);
     return s;
   }
 
 
-  _continue() {
+  continue() {
     do {
       let r = this._debuggerStep();
       if (r !== null) {
