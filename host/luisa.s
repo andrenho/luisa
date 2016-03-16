@@ -8,6 +8,7 @@
 .define MMU_RAM_SZ         0xf0001010
 .define MMU_VMEM           0xf0001014
 .define MMU_ERR            0xf0001018
+.define CPU_VERSION        0xF0002001
 .define CPU_NAME	   0xf0002003
 .define CPU_A              0xf0002010
 .define CPU_B              0xf0002014

@@ -28,6 +28,7 @@ syn keyword lsSectionType text data bss rodata
 
 syn keyword lsConstant MMU_TYPE MMU_VERSION MMU_INTERRUPT MMU_NAME MMU_RAM_SZ
 syn keyword lsConstant MMU_VMEM MMU_ERR CPU_A CPU_B CPU_C CPU_D CPU_E CPU_F CPU_G
+syn keyword lsConstant CPU_NAME CPU_VERSION
 syn keyword lsConstant CPU_H CPU_I CPU_J CPU_K CPU_L CPU_FP CPU_SP CPU_PC CPU_FL
 syn keyword lsConstant CPU_INTERRUPT_VECT CPU_SYSCALL_VECT STG_TYPE STG_VERSION
 syn keyword lsConstant STG_INTERRUPT STG_NAME STG_MODE STG_OP_STATUS STG_UNIT_LIST

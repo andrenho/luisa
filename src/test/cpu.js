@@ -373,8 +373,8 @@ test('CPU: Execute valid basic commands', t => {
   s = opc('movb A, [0x1000]', () => mb.set(0x1000, 0xAB));
   t.equal(cpu.A, 0xAB, s);
 
-  s = opc('movb [A], A', () => cpu.A = 0x64);
-  t.equal(mb.get(0x64), 0x64, s);
+  s = opc('movb [C], A', () => { cpu.A = 0x64, cpu.C = 0x32 });
+  t.equal(mb.get(0x32), 0x64, s);
 
   s = opc('movb [A], 0xFA', () => cpu.A = 0x64);
   t.equal(mb.get(0x64), 0xFA, s);
