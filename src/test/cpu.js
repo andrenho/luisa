@@ -91,6 +91,7 @@ let opcodes = [
   [ 0x4B, 'cmp', 'reg', 'v8' ],
   [ 0x4C, 'cmp', 'reg', 'v16' ],
   [ 0x4D, 'cmp', 'reg', 'v32' ],
+  [ 0x8B, 'cmp', 'reg' ],
   [ 0x4E, 'mul', 'reg', 'reg' ],
   [ 0x4F, 'mul', 'reg', 'v8' ],
   [ 0x50, 'mul', 'reg', 'v16' ],
@@ -600,6 +601,9 @@ test('CPU: Execute valid basic commands', t => {
 
   s = opc('cmp A, 0x12345678', () => cpu.A = 0xF0000000);
   t.true(!cpu.LT && cpu.GT, s);  // because of the signal!
+
+  s = opc('cmp A', () => cpu.A = 0x0);
+  t.true(cpu.Z, s);
 
   s = opc('mul A, B', () => { cpu.A = 0xF0; cpu.B = 0xF000; });
   t.equal(cpu.A, 0xE10000, s);

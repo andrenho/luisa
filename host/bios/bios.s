@@ -112,8 +112,8 @@ print_storage:
 	mov	F, LIGHTRED
 	mov	A, E
 	jsr	storage_present
-	cmp	A, -1
-	bnz	.red
+	cmp	A
+	bz	.red
 	mov	F, LIGHTGREEN
 .red:
 	movd	[VID_P4], F

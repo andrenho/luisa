@@ -275,6 +275,7 @@ local opcodes = {
   { 0x4B, 'cmp', 'reg', 'v8' },
   { 0x4C, 'cmp', 'reg', 'v16' },
   { 0x4D, 'cmp', 'reg', 'v32' },
+  { 0x8B, 'cmp', 'reg' },
   { 0x4E, 'mul', 'reg', 'reg' },
   { 0x4F, 'mul', 'reg', 'v8' },
   { 0x50, 'mul', 'reg', 'v16' },
@@ -1066,6 +1067,7 @@ function run_encoder_tests(t)--{{{
   ok(t, 'halt', { 0x88 })
   ok(t, 'dbg', { 0x89 })
   ok(t, 'swap A, B', { 0x8A, 0x0, 0x1 })
+  ok(t, 'cmp C', { 0x8B, 0x2 });
 
   t:title('Encoder: number systems')
 

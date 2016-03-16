@@ -916,6 +916,14 @@ class CPU extends Device {
       return 5;
     };
 
+    f[0x8B] = pos => {  // cmp R
+      let [reg, mb] = [this._reg, this._mb];
+      const p1 = mb.get(pos);
+      this._affectFlags(reg[p1]);
+      this.Y = reg[p1] < 0;
+      return 1;
+    };
+    
     f[0x4E] = pos => {  // mul R, R
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];

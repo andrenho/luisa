@@ -450,6 +450,7 @@ ${this._instruction()}`;
       0x4B: (p) => [`cmp     ${reg(p[0])}, ${v8(p[1])}`, 3],
       0x4C: (p) => [`cmp     ${reg(p[0])}, ${v16(p.slice(1,3))}`, 4],
       0x4D: (p) => [`cmp     ${reg(p[0])}, ${v32(p.slice(1,5))}`, 6],
+      0x8B: (p) => [`cmp     ${reg(p[0])}`, 2],
       0x4E: (p) => [`mul     ${reg(p[0])}, ${reg(p[1])}`, 3],
       0x4F: (p) => [`mul     ${reg(p[0])}, ${v8(p[1])}`, 3],
       0x50: (p) => [`mul     ${reg(p[0])}, ${v16(p.slice(1,3))}`, 4],
