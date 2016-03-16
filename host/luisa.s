@@ -119,5 +119,7 @@
 .define GREEN		0x00FF00
 .define LIGHTGRAY	0xC0C0C0
 .define LIGHTYELLOW	0xFFFF80
+.define LIGHTRED	0xFF8080
+.define LIGHTGREEN	0x80FF80
 
 ; vim: syntax=las

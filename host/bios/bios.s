@@ -99,15 +99,30 @@ print_storage:
 	mov	A, t_storage
 	jsr	print
 
-	movd	[VID_P1], 18		; x
-	mov	F, G
-	add	F, 43
-	movd	[VID_P0], F		; numeric char
-	movb	[VID_OP], VID_OP_WRITE	; write
+	inc	A
+	movd	[VID_P1], A		; x
+	mov	A, E
+	jsr	print_dec
 
 	movd	[VID_P0], ':'
-	movd	[VID_P1], 19
+	movd	[VID_P1], A
 	movb	[VID_OP], VID_OP_WRITE
+
+	; choose color
+	mov	F, LIGHTRED
+	mov	A, E
+	jsr	storage_present
+	cmp	A, -1
+	bnz	.red
+	mov	F, LIGHTGREEN
+.red:
+	movd	[VID_P4], F
+
+	; print storage name
+	mov	A, E
+	jsr	storage_name
+	movd	[VID_P1], 21
+	jsr	print
 
 	; go to next storage
 	inc	G			; storage++
@@ -229,8 +244,8 @@ t_storage:
 	db	"Storage unit", 0
 size_def:
 	db	"kB", 0, "MB", 0, "GB"
-no_storage:
-	db	"(no storage present)"
+no_storage_present:
+	db	"(no storage present)", 0
 
 
 ; vim: syntax=las
