@@ -22,13 +22,23 @@ importScripts('tests.js',
 
 let luisavm, dbg;
 
+
+// Temporary: StorageUnit 
+class FakeDisk extends LSBStorage {
+  get(a) { return 0; }
+  set(a, v) { }
+  get size() { return 1024 * 1024; }
+}
+// Temporary: StorageUnit 
+
+
 self.addEventListener('message', e => {
   const pars = e.data.slice(1);
   switch (e.data[0]) {
 
     // initialize VM and debugger
     case 'init':
-      luisavm = new LuisaVM(256, [], biosCode, pars[0], pars[1], data => self.postMessage(['callback', data]));
+      luisavm = new LuisaVM(256, [new FakeDisk()], biosCode, pars[0], pars[1], data => self.postMessage(['callback', data]));
       console.log('Virtual machine initalized.');
       dbg = new Debugger(luisavm);
       self.postMessage(['print_debugger', '<div>Done!</div><div>&nbsp;</div>']);
