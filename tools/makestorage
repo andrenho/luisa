@@ -1,5 +1,152 @@
 #!/usr/bin/env lua
 
+--{{{ utility functions
+
+--
+-- strict
+--
+local mt = getmetatable(_G)
+if mt == nil then
+  mt = {}
+  setmetatable(_G, mt)
+end
+
+__STRICT = true
+mt.__declared = {}
+
+mt.__newindex = function (t, n, v)
+  if __STRICT and not mt.__declared[n] then
+    local w = debug.getinfo(2, "S").what
+    if w ~= "main" and w ~= "C" then
+      error("assign to undeclared variable '"..n.."'", 2)
+    end
+    mt.__declared[n] = true
+  end
+  rawset(t, n, v)
+end
+  
+mt.__index = function (t, n)
+  if not mt.__declared[n] and debug.getinfo(2, "S").what ~= "C" then
+    error("variable '"..n.."' is not declared", 2)
+  end
+  return rawget(t, n)
+end
+
+function global(...)
+   for _, v in ipairs{...} do mt.__declared[v] = true end
+end
+
+--
+-- inspect
+--
+function filter(table, func)
+  local new_table = {}
+  for _,v in ipairs(table) do
+    if func(v) then new_table[#new_table+1] = v end
+  end
+  return new_table
+end
+
+function filter_tbl(table, func)
+  local new_table = {}
+  for k,v in pairs(table) do
+    if func(k, v) then new_table[k] = v end
+  end
+  return new_table
+end
+
+function map(table, func)
+  local new_table = {}
+  for _,v in ipairs(table) do
+    new_table[#new_table+1] = func(v)
+  end
+  return new_table
+end
+
+function map_tbl(table, func)
+  local new_table = {}
+  for k,v in pairs(table) do
+    new_table[#new_table+1] = func(k, v)
+  end
+  return new_table
+end
+
+local function is_array(t)
+  for k,_ in pairs(t) do
+    if type(k) ~= 'number' then return false end
+  end
+  return true
+end
+
+local parse_table  -- forward declaration
+
+local function value(v, max_depth, cur_depth)
+  if type(v) == 'string' then
+    return "'" .. tostring(v) .. "'"
+  elseif type(v) == 'nil' then
+    return 'nil'
+  elseif type(v) == 'table' then
+    return parse_table(v, max_depth, cur_depth)
+  else
+    return tostring(v)
+  end
+end
+
+parse_table = function(v, max_depth, cur_depth)
+  if cur_depth == max_depth then
+    if is_array(v) then
+      return '{' .. (#v > 0 and '#'..tostring(#v) or '') .. '}'
+    else
+      if v.inspect then
+        return '{ ' .. v:inspect() .. ' }'
+      else
+        return '{ ' .. (v.classname and (v:classname() or '?') or '') .. '... }'
+      end
+    end
+  else
+    if is_array(v) then
+      return '{ ' .. table.concat(map(v, function(w) 
+        return value(w, max_depth, cur_depth+1)
+      end), ', ') .. ' }'
+    else
+      if v.inspect then
+        return '{ ' .. v:inspect() .. ' }'
+      else
+        return '{ ' .. 
+          ((not v.class) and '@' or '') ..
+          (v.classname and (v:classname() or '?') .. ': ' or '') ..   -- name of the class
+          -- values
+          table.concat(
+            map_tbl(
+              filter_tbl(v, 
+                function(k,v) 
+                  return k ~= 'class' and k ~= 'class_desc' and k ~= 'is_a' and k ~= '__index' and k ~= '_init' and k ~= 'classname' and
+                         type(v) ~= 'function'
+                end),
+              function(k, v2)
+                local key = (type(k) == 'string' and k or ('[' .. value(k, 1, 0) .. ']'))
+                local val = value(v2, max_depth, cur_depth+1)
+                return key .. '=' .. val
+              end), 
+            ', ') .. ' }'
+      end
+    end
+  end
+end
+
+function inspect(...)
+  return table.concat(map({...}, 
+    function(v) return value(v, 5, 0) end), '\t')
+end
+
+function p(...)
+  io.write(inspect(...))
+  io.write("\n")
+  io.flush()
+end
+
+--}}}
+
 ------------------------------------------------------------------
 --
 -- STORAGE CREATION
@@ -7,16 +154,124 @@
 ------------------------------------------------------------------
 function make_storage(origin_dir, boot)
 
-  local fs = {
-    ['test.txt'] = { file=true, data={ 65, 66, 67 } },
+  local root = {
+    ['test.txt'] = { data={ 65, 66, 67 } },
     ['test'] = {
       ['new_test.txt'] = { data={ 85, 84, 83 } },
     },
   }
 
+
+  --{{{ cluster management
+
+  local function format_filerecord(fr)
+    local function push16(t, v)
+      t[#t+1] = v & 0xFF
+      t[#t+1] = v >> 8
+    end
+    local function push64(t, v)
+      for i=1,8 do
+        t[#t+1] = (v >> (i*8)) & 0xFF
+      end
+    end
+    
+    local t = {}
+    push16(t, fr.file_information)
+    push16(t, fr.filename_length+1)
+    push16(t, fr.sector.cluster)
+    push16(t, fr.sector.sector)
+    push64(t, fr.filesize)
+    push64(t, fr.created)
+    push64(t, fr.modified)
+    for i=1,#fr.filename do
+      t[#t+1] = fr.filename:sub(i,i)
+    end
+    t[#t+1] = 0  -- EOS
+    return t
+  end
+
+
+  local clusters = {
+     
+    index = {},
+
+    { 
+      {}, -- disk info
+      {}, -- root sector
+    },  -- cluster 0
+
+
+    add_sector = function(self)
+      local current = #self
+      if #self[current] == 1023 then
+        self[#self+1] = { index={}, }  -- add cluster
+        current = current+1
+      end
+      table.insert(self[current], {})
+      return { cluster=current-1, sector=#self[current] }
+    end,
+
+
+    add_to_sector = function(self, sector, data)
+      -- TODO
+    end,
+
+
+    add_to_directory_sector = function(self, parent, current, filename, filesize)
+      parent = parent or { cluster=0, sector=2 }
+      local filerecord = {
+        file_information = 1,
+        filename_length = #filename,
+        sector = current,
+        filesize = filesize,
+        created = os.time(),
+        modified = os.time(),
+        filename = filename
+      }
+      self:add_to_sector(parent, format_filerecord(filerecord))
+    end,
+
+
+    add_file = function(self, filename, contents, parent)
+      local current = self:add_sector()
+      self:add_to_directory_sector(parent, current, filename, #contents.data)
+      self:add_to_sector(contents.data)
+    end,
   
-  
-  return {}
+
+    add_inode = function(self, ref, parent)
+      local function is_directory(ref) return ref.data == nil end
+      local function is_file(ref) return ref.data ~= nil end
+
+      for k,v in pairs(ref) do
+        if v.data == nil then  -- is directory
+          -- TODO
+        elseif v.data ~= nil then   -- is file
+          return self:add_file(k, v, parent)
+        else
+          error()
+        end
+      end
+    end,
+
+
+    add_disk_info = function(self)
+      return self
+    end,
+
+
+    parse_fs = function(self)
+      return {}
+    end
+
+  }
+
+  --}}}
+
+  clusters:add_inode(root)
+  clusters:add_disk_info()
+  p(clusters)
+  return clusters:parse_fs()
 
 end
 
